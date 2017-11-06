@@ -11,13 +11,20 @@ use ieee.std_logic_1164.all;
 
 package fec_pkg is
 
-    -- why subtype?
-    subtype t_wrf_bus    is std_logic_vector(15 downto 0);
-    subtype t_mac_addr   is std_logic_vector(47 downto 0);
-    subtype t_eth_type   is std_logic_vector(15 downto 0);
-    subtype t_eth_hdr    is std_logic_vector(111 downto 0);
+    constant c_eth_hdr_len      : integer := 7;  -- 16 bit word
+    constant c_eth_hdr_vlan_len : integer := 9;  -- 16 bit word
+    constant c_eth_payload      : integer := 94; -- 16 bit word
+ 
+    -- Fabric
+    type t_wrf_bus  is std_logic_vector(15 downto 0);
 
-    -- FEC header
+    -- Ethernet Header
+    type t_eth_vlan is std_logic_vector(15 downto 0);
+    type t_mac_addr is std_logic_vector(47 downto 0);
+    type t_eth_type is std_logic_vector(15 downto 0);
+    type t_eth_hdr  is std_logic_vector(111 downto 0);
+
+    -- FEC Header
     type t_pkt_erasure_code is std_logic_vector(1 downto 0);
     type t_bit_erasure_code is std_logic_vector(1 downto 0);
     type t_enc_frame_id     is std_logic_vector(5 downto 0);
@@ -62,6 +69,14 @@ package fec_pkg is
         eth_etherType   : t_eth_type;
     end record;
      
+    type t_eth_frame_header is
+        record
+        eth_src_addr    : t_mac_addr;
+        eth_des_addr    : t_mac_addr;
+        eth_vlan        : t_eth_vlan;
+        eth_etherType   : t_eth_type;
+    end record;
+    
     constant c_eth_frame_header_default : t_eth_frame_header := (
         eth_src_addr   => x"abababababab",
         eth_des_addr   => x"ffffffffffff",
