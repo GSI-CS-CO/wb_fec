@@ -9,14 +9,24 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
+library work;
+use 
+
 package fec_pkg is
 
-    constant c_eth_hdr_len      : integer := 7;  -- 16 bit word
-    constant c_eth_hdr_vlan_len : integer := 9;  -- 16 bit word
-    constant c_eth_payload      : integer := 94; -- 16 bit word
+    constant c_eth_hdr_len      : integer := 7;   -- 16 bit word
+    constant c_eth_hdr_vlan_len : integer := 9;   -- 16 bit word
+    constant c_eth_payload      : integer := 750; -- 16 bit word
+    constant c_block_max_len    : integer := 188; -- 16 bit word
+    constant c_FROM_PKT         : std_logic := '0';
+    constant c_FROM_FIFO        : std_logic := '1';
+    constant c_FIFO_ON          : std_logic := '1';
+    constant c_FIFO_OFF         : std_logic := '1';
  
     -- Fabric
-    type t_wrf_bus  is std_logic_vector(15 downto 0);
+    constant c_wrf_width : integer := 16;
+    subtype t_wrf_bus  is std_logic_vector(c_wrf_width - 1 downto 0);
+    type t_wrf_bus_array is array (natural range <>) of t_wrf_source_in;
 
     -- Ethernet Header
     type t_eth_vlan is std_logic_vector(15 downto 0);
@@ -99,8 +109,21 @@ package fec_pkg is
         reserved        => (others => '0'));
     end record;
 
+  function f_calc_len_block (pl_len  : t_eth_type, integer  : c_div_num_block) return std_logic_vector;
+
 end package fec_pkg;
 
 package body fec_pkg is
 
+  function f_calc_len_block (pl_len  : t_eth_type, integer  : c_div_num_block)
+  return std_logic_vector is
+    variable mod_block : t_eth_type;
+    variable len_block : t_eth_type;
+  begin
+    mod_block <= pl_len and std_logic_vector(to_unsigned(c_div_num_block - 1,t_eth_type'length);
+    len_block <= pl_len_i slr c_div_num_block when mond_block /= (others => '0') else
+                (pl_len_i slr g_num_block) + 1;
+
+    return  len_block;
+  end function;
 end fec_pkg;
