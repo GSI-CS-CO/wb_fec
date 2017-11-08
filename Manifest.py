@@ -1,3 +1,2 @@
- modules = {"local" : ["rtl/erasure_channel"]}
+modules = {"local" : ["rtl/erasure_channel"]}
 
-#rtl/golay
