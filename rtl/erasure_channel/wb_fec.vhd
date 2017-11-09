@@ -41,8 +41,13 @@ entity wb_fec is
 end wb_fec;
 
 architecture rtl of wb_fec is
+<<<<<<< HEAD
   signal fec_ctrl_reg : t_enc_ctrl_reg;
   signal fec_stat_reg : t_enc_stat_reg;
+=======
+  signal enc_ctrl_reg : t_enc_ctrl_reg;
+  signal enc_stat_reg : t_enc_stat_reg;
+>>>>>>> df68d61... fec: work in proges
 
 begin 
 
@@ -57,8 +62,8 @@ begin
       snk_o       => fec_enc_sink_o,
       src_i       => fec_enc_src_i,
       src_o       => fec_enc_src_o,
-      ctrl_reg_i  => fec_ctrl_reg,
-      stat_reg_o  => fec_stat_reg);
+      ctrl_reg_i  => enc_ctrl_reg,
+      stat_reg_o  => enc_stat_reg);
 
   ----FEC_DEC : wb_fec_decoder is
 

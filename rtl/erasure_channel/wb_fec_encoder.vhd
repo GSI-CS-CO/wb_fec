@@ -24,8 +24,8 @@ entity wb_fec_encoder is
       snk_o         : out t_wrf_sink_out;
       src_i         : in  t_wrf_source_in;
       src_o         : out t_wrf_source_out;
-      ctrl_reg_i    : in  t_enc_ctrl_reg;
-      stat_reg_o    : out t_enc_stat_reg);
+      ctrl_reg_i    : in  t_fec_ctrl_reg;
+      stat_reg_o    : out t_fec_stat_reg);
 end wb_fec_encoder;
 
 architecture rtl of wb_fec_encoder is
