@@ -1,4 +1,5 @@
 action = "simulation"
+
 #target = "altera"
 #syn_device = "5agxma3d4f"
 #syn_grade = "i3"
