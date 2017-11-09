@@ -63,18 +63,34 @@ package fec_pkg is
     date            => x"20170303",
     name            => "GSI:FEC            ")));
 
-  type t_enc_ctrl_reg is record
-      fec_enc_en_golay : std_logic;
-      fec_enc_en       : std_logic;
+  type t_time_code is record
+    time_valid  : std_logic;
+    tai         : std_logic_vector(39 downto 0);
+    cycles      : std_logic_vector(27 downto 0);
   end record;
 
-  constant c_enc_ctrl_reg : t_enc_ctrl_reg := (
+  constant c_time_code : t_time_code := (
+    time_valid  => '0',
+    tai         => (others => '0'),
+    cycles      => (others => '0'));
+
+  type t_fec_ctrl_reg is record
+    --time_code         : t_time_code;
+    fec_enc_en_golay  : std_logic;
+    fec_enc_en        : std_logic;
+  end record;
+
+  constant c_fec_ctrl_reg : t_fec_ctrl_reg := (
+    --time_code         => c_time_code
     fec_enc_en_golay  => c_DISABLE,
     fec_enc_en        => c_ENABLE);
 
-  type t_enc_stat_reg is record
-      fec_enc_err :  std_logic_vector(1 downto 0);
+  type t_fec_stat_reg is record
+    fec_enc_err :  std_logic_vector(1 downto 0);
   end record;
+
+  constant c_fec_stat_reg : t_fec_stat_reg := (
+    fec_enc_err  => (others => '0'));
     
   type t_frame_fsm  is (  
       INIT_HDR,
@@ -127,6 +143,17 @@ package fec_pkg is
       enc_frame_subid => (others => '0'),
       reserved        => (others => '0'));
 
+  component wb_slave_fec is
+    port (
+      clk_i          : in  std_logic;
+      rst_n_i        : in  std_logic;
+      wb_slave_i     : in  t_wishbone_slave_in;
+      wb_slave_o     : out t_wishbone_slave_out;
+      fec_stat_reg_i : in  t_fec_stat_reg;
+      fec_ctrl_reg_o : out t_fec_ctrl_reg;
+      time_code_i    : in  t_time_code);
+  end component;
+
   component wb_fec is
     generic (
       g_en_fec_enc    : boolean;
@@ -160,8 +187,8 @@ package fec_pkg is
       snk_o         : out t_wrf_sink_out;
       src_i         : in  t_wrf_source_in;
       src_o         : out t_wrf_source_out;
-      ctrl_reg_i    : out t_enc_ctrl_reg;
-      stat_reg_o    : out t_enc_stat_reg);
+      ctrl_reg_i    : out t_fec_ctrl_reg;
+      stat_reg_o    : out t_fec_stat_reg);
   end component;
 
   component fec_encoder is
