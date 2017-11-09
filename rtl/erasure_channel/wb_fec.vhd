@@ -10,7 +10,7 @@ use ieee.numeric_std.all;
 
 library work;
 use work.fec_pkg.all;
-use work.golay_pk.all;
+--use work.golay_pk.all;
 use work.wishbone_pkg.all;
 use work.wr_fabric_pkg.all;
 use work.endpoint_pkg.all;
@@ -24,17 +24,16 @@ entity wb_fec is
     port ( 
         clk_i           : in  std_logic;
         rst_n_i         : in  std_logic;    
-        ctrl_reg_i      : in  t_fec_ctrl_reg;
-        stat_reg_o      : out t_fec_stat_reg;
         fec_timestamps_i: in  t_txtsu_timestamp;
         fec_tm_tai_i    : in  std_logic_vector(39 downto 0);
         fec_tm_cycle_i  : in  std_logic_vector(27 downto 0);        
-        fec_dec_sink_i  : in  t_wrd_sink_in;
-        fec_dec_sink_o  : in  t_wrd_sink_out;
+        fec_dec_sink_i  : in  t_wrf_sink_in;
+        fec_dec_sink_o  : in  t_wrf_sink_out;
         fec_dec_src_i   : in  t_wrf_source_in;
-        fec_dec_src_o   : out t_wrf_source_out
-        fec_enc_sink_i  : in  t_wrd_sink_in;
-        fec_enc_sink_o  : in  t_wrd_sink_out;
+        fec_dec_src_o   : out t_wrf_source_out;
+
+        fec_enc_sink_i  : in  t_wrf_sink_in;
+        fec_enc_sink_o  : out t_wrf_sink_out;
         fec_enc_src_i   : in  t_wrf_source_in;
         fec_enc_src_o   : out t_wrf_source_out;
         wb_slave_o      : out t_wishbone_slave_out;
@@ -44,22 +43,24 @@ end wb_fec;
 architecture rtl of wb_fec is
   signal enc_ctrl_reg : t_enc_ctrl_reg;
   signal enc_stat_reg : t_enc_stat_reg;
+
 begin 
 
-  FEC_ENC: wb_fec_encoder is
-    generic ( g_en_golay  <= true ); 
-      port (
-        clk_i         <= clk_i,
-        rst_n_i       <= rst_n_i,
-        snk_i         <= fec_enc_sink_i,
-        snk_o         <= fec_enc_sink_o,
-        src_i         <= fec_enc_src_i,
-        src_o         <= fec_enc_src_o,
-        ctrl_reg      <= enc_ctrl_reg,
-        stat_reg      <= enc_stat_reg);
-  end wb_fec_encoder;
+  FEC_ENC: wb_fec_encoder
+    generic map (
+      g_en_golay => FALSE
+      )
+    port map (
+      clk_i       => clk_i,
+      rst_n_i     => rst_n_i,
+      snk_i       => fec_enc_sink_i,
+      snk_o       => fec_enc_sink_o,
+      src_i       => fec_enc_src_i,
+      src_o       => fec_enc_src_o,
+      ctrl_reg_i  => enc_ctrl_reg,
+      stat_reg_o  => enc_stat_reg);
 
-  --FEC_DEC : wb_fec_decoder is
+  ----FEC_DEC : wb_fec_decoder is
 
   --end wb_fec_decoder;
 
