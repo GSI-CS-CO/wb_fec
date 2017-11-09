@@ -63,16 +63,16 @@ package fec_pkg is
     date            => x"20170303",
     name            => "GSI:FEC            ")));
 
-  type t_enc_ctrl_reg is record
+  type t_fec_ctrl_reg is record
       fec_enc_en_golay : std_logic;
       fec_enc_en       : std_logic;
   end record;
 
-  constant c_enc_ctrl_reg : t_enc_ctrl_reg := (
+  constant c_fec_ctrl_reg : t_enc_ctrl_reg := (
     fec_enc_en_golay  => c_DISABLE,
     fec_enc_en        => c_ENABLE);
 
-  type t_enc_stat_reg is record
+  type t_fec_stat_reg is record
       fec_enc_err :  std_logic_vector(1 downto 0);
   end record;
     

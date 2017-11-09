@@ -41,8 +41,8 @@ entity wb_fec is
 end wb_fec;
 
 architecture rtl of wb_fec is
-  signal enc_ctrl_reg : t_enc_ctrl_reg;
-  signal enc_stat_reg : t_enc_stat_reg;
+  signal fec_ctrl_reg : t_enc_ctrl_reg;
+  signal fec_stat_reg : t_enc_stat_reg;
 
 begin 
 
@@ -57,11 +57,19 @@ begin
       snk_o       => fec_enc_sink_o,
       src_i       => fec_enc_src_i,
       src_o       => fec_enc_src_o,
-      ctrl_reg_i  => enc_ctrl_reg,
-      stat_reg_o  => enc_stat_reg);
+      ctrl_reg_i  => fec_ctrl_reg,
+      stat_reg_o  => fec_stat_reg);
 
   ----FEC_DEC : wb_fec_decoder is
 
   --end wb_fec_decoder;
 
-end rtl;
+  WB_SLAVE: wb_slave_fec
+    port (
+      clk_i           => clk_i,
+      rst_n_i         => rst_n_i,
+      wb_slave_i      => wb_slave_i,
+      wb_slave_o      => wb_slave_o,
+      fec_stat_reg_i  => fec_stat_reg,
+      fec_ctrl_reg_o  => fec_ctrl_reg,
+      time_code_i     => (others => '0'));
