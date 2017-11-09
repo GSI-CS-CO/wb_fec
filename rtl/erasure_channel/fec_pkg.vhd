@@ -57,6 +57,17 @@ package fec_pkg is
         date            => x"20170303",
         name            => "GSI:FEC  ")));
 
+  type t_enc_ctrl_reg is
+    record
+      signal fec_enc_en_golay : std_logic;
+  end record;
+
+  type t_enc_stat_reg is
+    record
+      signal fec_enc_err :  std_logic_vector(1 downto 0);
+  end record;
+    
+
     type t_frame_fsm  is (  
         INIT_HDR,
         ETH_HDR,
@@ -108,6 +119,58 @@ package fec_pkg is
         enc_frame_subid => (others => '0'),
         reserved        => (others => '0'));
     end record;
+
+  component wb_fec is
+    generic (
+        g_en_fec_enc    : boolean;
+        g_en_fec_dec    : boolean;
+        g_en_golay      : boolean;
+        g_en_dec_time   : boolean);
+    port ( 
+        clk_i           : in  std_logic;
+        rst_n_i         : in  std_logic;    
+        ctrl_reg_i      : in  t_fec_ctrl_reg;
+        stat_reg_o      : out t_fec_stat_reg;
+        fec_timestamps_i: in  t_txtsu_timestamp;
+        fec_tm_tai_i    : in  std_logic_vector(39 downto 0);
+        fec_tm_cycle_i  : in  std_logic_vector(27 downto 0);        
+        fec_dec_sink_i  : in  t_wrd_sink_in;
+        fec_dec_sink_o  : in  t_wrd_sink_out;
+        fec_dec_src_i   : in  t_wrf_source_in;
+        fec_dec_src_o   : out t_wrf_source_out
+        fec_enc_sink_i  : in  t_wrd_sink_in;
+        fec_enc_sink_o  : in  t_wrd_sink_out;
+        fec_enc_src_i   : in  t_wrf_source_in;
+        fec_enc_src_o   : out t_wrf_source_out;
+        wb_slave_o      : out t_wishbone_slave_out;
+        wb_slave_i      : in  t_wishbone_slave_in);
+  end component;
+
+  component wb_fec_encoder is
+    generic ( g_en_golay    : boolean);    
+      port (
+        clk_i         : in  std_logic;
+        rst_n_i       : in  std_logic;     
+        snk_i         : in  t_wrf_sink_in;
+        snk_o         : out t_wrf_sink_out;
+        src_i         : in  t_wrf_source_in;
+        src_o         : out t_wrf_source_out;
+        ctrl_reg      : out t_enc_ctrl_reg;
+        stat_reg      : out t_enc_stat_reg);
+  end component;
+
+  component fec_encoder is
+    generic (g_num_block : integer := 4);
+    port (
+      clk_i         : in  std_logic;
+      rst_n_i       : in  std_logic;
+      payload_i     : in  t_wrf_bus;
+      stb_i         : in  std_logic;
+      pl_len_i      : in  t_eth_type;
+      enc_err_o     : out std_logic;
+      stb_o         : out std_logic;
+      enc_payload_o : out t_wrf_bus);
+  end component;
 
   function f_calc_len_block (pl_len  : t_eth_type, integer  : c_div_num_block) return std_logic_vector;
 

@@ -3,6 +3,7 @@
 --! @author C.Prados <cprados@mailfence.com>
 --!
 --! See the file "LICENSE" for the full license governing this code.
+--! TODO bypass if the encoder is not enable
 --!-------------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
@@ -17,19 +18,17 @@ use work.endpoint_pkg.all;
 entity wb_fec_encoder is
   generic ( g_en_golay    : boolean);    
     port (
-      clk_i       : in  std_logic;
-      rst_n_i     : in  std_logic;     
-      snk_i       : in  t_wrf_sink_in;
-      snk_o       : out t_wrf_sink_out;
-      src_i       : in  t_wrf_source_in;
-      src_o       : out t_wrf_source_out;
-      slave_o     : out t_wishbone_slave_out;
-      slave_i     : in  t_wishbone_slave_in);
+      clk_i         : in  std_logic;
+      rst_n_i       : in  std_logic;     
+      snk_i         : in  t_wrf_sink_in;
+      snk_o         : out t_wrf_sink_out;
+      src_i         : in  t_wrf_source_in;
+      src_o         : out t_wrf_source_out;
+      ctrl_reg      : out t_enc_ctrl_reg;
+      stat_reg      : out t_enc_stat_reg);
 end wb_fec_encoder;
 
 architecture rtl of wb_fec_encoder is
-  --signal eth_hrd_cnt      : unsigned(5 downto 0);
-  --signal eth_payload_cnt  : unsigned(5 downto 0);
   signal eth_hdr_cnt      : integer range 0 to c_eth_hdr_len - 1;
   signal eth_payload_cnt  : integer range 0 to c_eth_hdr_vlan_len; -- covers jumbo frames
   signal eth_hdr_reg      : t_eth_hdr;
@@ -38,16 +37,18 @@ architecture rtl of wb_fec_encoder is
   signal enc_err          : std_logic;
   signal pkt_stb          : std_logic;
   signal pkt_enc_stb      : std_logic;
-  signal fec_enc_err      : std_logic(1 downto 0);
+  signal fec_enc_err      : std_logic_vector(1 downto 0);
   signal enc_err          : std_logic;
   signal pkt_err          : std_logic;
+  signal ctrl_reg         : t_enc_ctrl_reg;
+  signal stat_reg         : t_enc_stat_reg;
+  signal enc_payload      : std_logic_vector(c_wrf_width - 1 downto 0);
 
 begin 
 
 
   PKT_ERASURE_ENC : fec_encoder
-    generic map (
-  );
+    --generic map ();
     port (
       clk_i         => clk_i,
       rst_n_i       => rst_n_i,
@@ -56,26 +57,19 @@ begin
       pl_len_i      => eth_hdr.eth_etherType, -- payload in 16 bit words
       enc_err_o     => enc_err,
       stb_o         => pkt_enc_stb,
-      enc_payload_o => );
- 
-    port map (
-      clk_i     => clk_i,
-      rst_n_i   => rst_n_i,
-      snk_i     => snk_i,
-      snk_o     => snk_o
-  );
-  
-  fec_enc_err <= enc_err & pkt_err;
+      enc_payload_o => enc_payload);
 
-  g_GOLAY_ENC : if g_en_golay generate
-    GOLAY_ENC : golay_encoder
-      port map (
-        clk_i       => clk_i,
-        rst_n_i     => rst_n_i,
-        stb_i       => 
-        payload_i   =>
-        code_word_o => );
-  end generate;
+  ctrl_reg.fec_enc_err  <= enc_err & pkt_err;
+ 
+  --g_GOLAY_ENC : if g_en_golay generate
+  --  GOLAY_ENC : golay_encoder
+  --    port map (
+  --      clk_i       => clk_i,
+  --      rst_n_i     => rst_n_i,
+  --      stb_i       => 
+  --      payload_i   =>
+  --      code_word_o => );
+  --end generate;
 
   ----- Fabric Interface
   -- Rx

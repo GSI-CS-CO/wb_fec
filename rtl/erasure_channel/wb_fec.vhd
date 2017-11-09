@@ -42,7 +42,25 @@ entity wb_fec is
 end wb_fec;
 
 architecture rtl of wb_fec is
+  signal enc_ctrl_reg : t_enc_ctrl_reg;
+  signal enc_stat_reg : t_enc_stat_reg;
 begin 
 
+  FEC_ENC: wb_fec_encoder is
+    generic ( g_en_golay  <= true ); 
+      port (
+        clk_i         <= clk_i,
+        rst_n_i       <= rst_n_i,
+        snk_i         <= fec_enc_sink_i,
+        snk_o         <= fec_enc_sink_o,
+        src_i         <= fec_enc_src_i,
+        src_o         <= fec_enc_src_o,
+        ctrl_reg      <= enc_ctrl_reg,
+        stat_reg      <= enc_stat_reg);
+  end wb_fec_encoder;
+
+  --FEC_DEC : wb_fec_decoder is
+
+  --end wb_fec_decoder;
 
 end rtl;

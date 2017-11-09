@@ -14,7 +14,7 @@ use work.wishbone_pkg.all;
 
 entity fec_encoder is
   generic (
-    g_num_block : integer := 4); -- power of 2
+    g_num_block : integer := 4); -- power of 2 e.g. 8, 16...
   port (
     clk_i         : in  std_logic;
     rst_n_i       : in  std_logic;
@@ -23,9 +23,7 @@ entity fec_encoder is
     pl_len_i      : in  t_eth_type;
     enc_err_o     : out std_logic;
     stb_o         : out std_logic;
-    enc_payload_o : out t_wrf_bus;
-    );
-
+    enc_payload_o : out t_wrf_bus);
 end fec_encoder;
 
 architecture rtl of fec is
