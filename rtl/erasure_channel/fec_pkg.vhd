@@ -167,7 +167,7 @@ package fec_pkg is
       fec_tm_tai_i    : in  std_logic_vector(39 downto 0);
       fec_tm_cycle_i  : in  std_logic_vector(27 downto 0);        
       fec_dec_sink_i  : in  t_wrf_sink_in;
-      fec_dec_sink_o  : in  t_wrf_sink_out;
+      fec_dec_sink_o  : out t_wrf_sink_out;
       fec_dec_src_i   : in  t_wrf_source_in;
       fec_dec_src_o   : out t_wrf_source_out;
       fec_enc_sink_i  : in  t_wrf_sink_in;
@@ -187,7 +187,7 @@ package fec_pkg is
       snk_o         : out t_wrf_sink_out;
       src_i         : in  t_wrf_source_in;
       src_o         : out t_wrf_source_out;
-      ctrl_reg_i    : out t_fec_ctrl_reg;
+      ctrl_reg_i    : in  t_fec_ctrl_reg;
       stat_reg_o    : out t_fec_stat_reg);
   end component;
 

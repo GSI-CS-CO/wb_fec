@@ -28,7 +28,7 @@ entity wb_fec is
         fec_tm_tai_i    : in  std_logic_vector(39 downto 0);
         fec_tm_cycle_i  : in  std_logic_vector(27 downto 0);        
         fec_dec_sink_i  : in  t_wrf_sink_in;
-        fec_dec_sink_o  : in  t_wrf_sink_out;
+        fec_dec_sink_o  : out t_wrf_sink_out;
         fec_dec_src_i   : in  t_wrf_source_in;
         fec_dec_src_o   : out t_wrf_source_out;
 

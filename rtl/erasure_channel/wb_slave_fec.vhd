@@ -24,9 +24,9 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library work;
+use work.fec_pkg.all;
 use work.wr_fabric_pkg.all;
 use work.wishbone_pkg.all;
-use work.fec_pkg.all;
 
 entity wb_slave_fec is
   port (
