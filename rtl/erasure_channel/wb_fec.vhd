@@ -17,10 +17,10 @@ use work.endpoint_pkg.all;
 
 entity wb_fec is
     generic (
-        g_en_fec_enc    : boolean;
-        g_en_fec_dec    : boolean;
-        g_en_golay      : boolean;
-        g_en_dec_time   : boolean);
+        g_en_fec_enc    : boolean := true;
+        g_en_fec_dec    : boolean := false;
+        g_en_golay      : boolean := false;
+        g_en_dec_time   : boolean := false);
     port ( 
         clk_i           : in  std_logic;
         rst_n_i         : in  std_logic;    
