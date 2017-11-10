@@ -44,7 +44,15 @@ architecture rtl of wb_fec is
   signal fec_ctrl_reg : t_fec_ctrl_reg;
   signal fec_stat_reg : t_fec_stat_reg;
 
+  signal fec_dec_sink_in  : t_wrf_sink_in;
+  signal fec_dec_sink_ot  : t_wrf_sink_out;
+  signal fec_dec_src_in   : t_wrf_source_in;
+  signal fec_dec_src_ot   : t_wrf_source_out;
+
 begin 
+
+  fec_dec_src_ot <= fec_dec_sink_in;
+  fec_dec_sink_ot <= fec_dec_src_in;
 
   FEC_ENC: wb_fec_encoder
     generic map (

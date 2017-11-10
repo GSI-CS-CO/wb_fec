@@ -73,8 +73,9 @@ package xfec_pkg is
         wb_slave_rty    : out std_logic;
         wb_slave_stall  : out std_logic;
         wb_slave_int    : out std_logic;
-        wb_slave_dat    : out t_wishbone_data;
-  
+        wb_slave_dat_o  : out t_wishbone_data;
+
+        wb_slave_dat_i  : in t_wishbone_data;
         wb_slave_cyc    : in std_logic;
         wb_slave_stb    : in std_logic;
         wb_slave_adr    : in t_wishbone_address;

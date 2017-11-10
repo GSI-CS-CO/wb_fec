@@ -65,6 +65,7 @@ begin
         wb_slave_o.dat    <= (others => '0');
 
       else
+        wb_slave_o.stall <= '0';
         wb_slave_o.ack <= wb_slave_i.cyc and wb_slave_i.stb;
 
         if wb_slave_i.cyc = '1' and wb_slave_i.stb = '1' then

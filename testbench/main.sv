@@ -69,7 +69,7 @@ module main;
 		.fec_dec_src_we(dec_snk.slave.we),
 		.fec_dec_src_sel(dec_snk.slave.sel),
 		.fec_dec_src_adr(dec_snk.slave.adr),
-		.fec_dec_src_dat(dec_snk.slave.dat_o),
+		.fec_dec_src_dat(dec_snk.slave.dat_i),
 		.fec_dec_src_stall(dec_snk.slave.stall),
 		.fec_dec_src_ack(dec_snk.slave.ack),
 
@@ -87,7 +87,7 @@ module main;
 		.fec_enc_src_we(enc_snk.slave.we),
 		.fec_enc_src_sel(enc_snk.slave.sel),
 		.fec_enc_src_adr(enc_snk.slave.adr),
-		.fec_enc_src_dat(enc_snk.slave.dat_o),
+		.fec_enc_src_dat(enc_snk.slave.dat_i),
 		.fec_enc_src_stall(enc_snk.slave.stall),
 		.fec_enc_src_ack(enc_snk.slave.ack),
 
@@ -96,7 +96,8 @@ module main;
 		.wb_slave_we(WB_fec.master.we),
 		.wb_slave_sel(4'b1111),
 		.wb_slave_adr(WB_fec.master.adr),
-		.wb_slave_dat(WB_fec.master.dat_o),
+		.wb_slave_dat_i(WB_fec.master.dat_o),
+		.wb_slave_dat_o(WB_fec.master.dat_i),
 		.wb_slave_ack(WB_fec.master.ack),
 		.wb_slave_stall(WB_fec.master.stall));
 
@@ -114,18 +115,19 @@ module main;
 		fec_src = new(dec_src.get_accessor());
 		dec_src.settings.cyc_on_stall = 1;
 
-    //#1us;
-		//acc_fec.write(`ADDR_LBK_DMAC_H, 32'h00001122);
+    #1us;
+		acc_fec.write(`FEC_ENC_EN, 1'h0);
 		//#1us;
 		//acc_fec.write(`ADDR_LBK_DMAC_L, 32'h33445566);
 		//#1us;
 		//acc_fec.write(`ADDR_LBK_MCR, `LBK_MCR_ENA | `LBK_MCR_FDMAC);
 		//acc_fec.write(`ADDR_LBK_MCR, `LBK_MCR_ENA);
 
-    #1500ns;
+    //#1500ns;
     tx_sizes = {};
     //NOW LET'S SEND SOME FRAMES
     send_frames(fec_src, 1500);
+	  $warning("--> sending");
   end
 
   initial begin
@@ -136,6 +138,7 @@ module main;
     dec_snk.settings.gen_random_stalls = 1;
     fec_snk = new(dec_snk.get_accessor());
 
+	  $warning("--> starting");
 		#5us;
     while(1) begin
 			#1us;

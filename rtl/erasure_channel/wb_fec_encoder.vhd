@@ -54,16 +54,16 @@ architecture rtl of wb_fec_encoder is
 
 begin 
 
-  PKT_ERASURE_ENC : fec_encoder
-    port  map(
-      clk_i         => clk_i,
-      rst_n_i       => rst_n_i,
-      payload_i     => snk_i.dat,
-      stb_i         => pkt_stb,
-      pl_len_i      => eth_hdr.eth_etherType, -- payload in 16 bit words
-      enc_err_o     => enc_err,
-      stb_o         => pkt_enc_stb,
-      enc_payload_o => enc_payload);
+  --PKT_ERASURE_ENC : fec_encoder
+  --  port  map(
+  --    clk_i         => clk_i,
+  --    rst_n_i       => rst_n_i,
+  --    payload_i     => snk_i.dat,
+  --    stb_i         => pkt_stb,
+  --    pl_len_i      => eth_hdr.eth_etherType, -- payload in 16 bit words
+  --    enc_err_o     => enc_err,
+  --    stb_o         => pkt_enc_stb,
+  --    enc_payload_o => enc_payload);
 
   stat_reg_o.fec_enc_err  <= enc_err & pkt_err;
  
@@ -88,86 +88,88 @@ begin
       else
         case s_enc_switch is
           when ENC_ENABLE =>
-            if (ctrl_reg_i.fec_enc_en = '0') then
-            --TODO wait till the encoder finish
+            --if (ctrl_reg_i.fec_enc_en = '0') then
+            ----TODO wait till the encoder finish
               enc_en  <= c_DISABLE;  
-            end if;
+            --end if;
           when ENC_DISABLE =>
-            if (ctrl_reg_i.fec_enc_en = '1') then
-            --TODO wait till the encoder finish
+            --if (ctrl_reg_i.fec_enc_en = '1') then
+            ----TODO wait till the encoder finish
               enc_en  <= c_ENABLE;  
-            end if;
+            --end if;
         end case;
       end if;
     end if;
   end process;
 
+  src_o <= snk_i;
+  snk_o <= src_i;
   -- Rx from WR Fabric
   -- parsing ethernet header
-  eth_hdr_reg <= eth_hdr_shift(t_eth_hdr'left - snk_i.dat'length downto 0) & snk_i.dat;
-  eth_hdr     <= f_parse_eth(eth_hdr_reg);
-
-  rx_fabric : process(clk_i) is
-  begin
-    if rising_edge(clk_i) then
-      if rst_n_i = '0' then
-        eth_hdr_cnt     <= 0;
-        eth_payload_cnt <= 0;
-        eth_hdr_shift   <= (others => '0');
-        pkt_stb         <= '0';
-        pkt_err         <= '0';
-      else
-        if (enc_en =  c_ENABLE) then
-          snk_ack   <= snk_i.cyc and snk_i.stb;
-          --snk_stall <=;
-
-          if snk_i.cyc = '0' then
-            eth_hdr_cnt     <= 0;
-            eth_payload_cnt <= 0;
-            eth_hdr_shift   <= (others => '0');
-            pkt_stb         <= '0';
-            pkt_err         <= '0';
-          elsif snk_i.cyc = '1' and snk_i.stb = '1' and snk_stall = '0' then
-            if snk_i.adr = c_WRF_DATA then
-              if (eth_hdr_cnt < c_eth_hdr_len) then
-                eth_hdr_shift <= eth_hdr_reg;
-                pkt_stb     <= '0';
-                eth_hdr_cnt <= eth_hdr_cnt + 1;
-              elsif (eth_payload_cnt < c_eth_payload) then
-                pkt_stb         <= '1';
-                eth_payload_cnt <= eth_payload_cnt + 1;
-              elsif (eth_payload_cnt >= c_eth_payload) then
-                -- jumbo frames error
-                pkt_err <= '1';
-                pkt_stb <= '0';
-              end if;          
-            else -- snk_i.adr = c_WRF_OOB or snk_i.adr = c_WRF_STATUS          
-              eth_hdr_cnt     <= 0;
-              eth_payload_cnt <= 0;
-              eth_hdr_shift   <= (others => '0');
-              pkt_stb         <= '0';
-              pkt_err         <= '0';
-            end if;
-          end if;
-        else -- c_DISABLE
-          src_o <= snk_i;
-        end if;
-      end if;
-    end if;
-  end process;
-
-  --Tx to WR Fabric
-  tx_fabric : process(clk_i) is
-  begin
-    if rising_edge(clk_i) then
-      if rst_n_i = '0' then
-      else
-        if (enc_en =  c_ENABLE) then
-        else -- c_DISABLE
-          snk_o <= src_i;
-        end if;
-      end if;
-    end if;
-  end process;
+--  eth_hdr_reg <= eth_hdr_shift(t_eth_hdr'left - snk_i.dat'length downto 0) & snk_i.dat;
+--  eth_hdr     <= f_parse_eth(eth_hdr_reg);
+--
+--  rx_fabric : process(clk_i) is
+--  begin
+--    if rising_edge(clk_i) then
+--      if rst_n_i = '0' then
+--        eth_hdr_cnt     <= 0;
+--        eth_payload_cnt <= 0;
+--        eth_hdr_shift   <= (others => '0');
+--        pkt_stb         <= '0';
+--        pkt_err         <= '0';
+--      else
+--        if (enc_en =  c_ENABLE) then
+--          snk_ack   <= snk_i.cyc and snk_i.stb;
+--          --snk_stall <=;
+--
+--          if snk_i.cyc = '0' then
+--            eth_hdr_cnt     <= 0;
+--            eth_payload_cnt <= 0;
+--            eth_hdr_shift   <= (others => '0');
+--            pkt_stb         <= '0';
+--            pkt_err         <= '0';
+--          elsif snk_i.cyc = '1' and snk_i.stb = '1' and snk_stall = '0' then
+--            if snk_i.adr = c_WRF_DATA then
+--              if (eth_hdr_cnt < c_eth_hdr_len) then
+--                eth_hdr_shift <= eth_hdr_reg;
+--                pkt_stb     <= '0';
+--                eth_hdr_cnt <= eth_hdr_cnt + 1;
+--              elsif (eth_payload_cnt < c_eth_payload) then
+--                pkt_stb         <= '1';
+--                eth_payload_cnt <= eth_payload_cnt + 1;
+--              elsif (eth_payload_cnt >= c_eth_payload) then
+--                -- jumbo frames error
+--                pkt_err <= '1';
+--                pkt_stb <= '0';
+--              end if;          
+--            else -- snk_i.adr = c_WRF_OOB or snk_i.adr = c_WRF_STATUS          
+--              eth_hdr_cnt     <= 0;
+--              eth_payload_cnt <= 0;
+--              eth_hdr_shift   <= (others => '0');
+--              pkt_stb         <= '0';
+--              pkt_err         <= '0';
+--            end if;
+--          end if;
+--        else -- c_DISABLE
+--          src_o <= snk_i;
+--        end if;
+--      end if;
+--    end if;
+--  end process;
+--
+--  --Tx to WR Fabric
+--  tx_fabric : process(clk_i) is
+--  begin
+--    if rising_edge(clk_i) then
+--      if rst_n_i = '0' then
+--      else
+--        if (enc_en =  c_ENABLE) then
+--        else -- c_DISABLE
+--          snk_o <= src_i;
+--        end if;
+--      end if;
+--    end if;
+--  end process;
 
 end rtl;
