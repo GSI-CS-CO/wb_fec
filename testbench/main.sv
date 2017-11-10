@@ -1,36 +1,172 @@
+`timescale 1ns/1ps
+
+`include "tbi_utils.sv"
+
+`include "simdrv_defs.svh"
 `include "if_wb_master.svh"
 `include "if_wb_slave.svh"
 `include "wb_packet_source.svh"
 `include "wb_packet_sink.svh"
+`include "if_wb_link.svh"
+`include "functions.svh"
+`include "fec_regs.v"
 
-`timescale 1ps/1ps
+`define true 1
+`define false 0
 
 module main;
 
-  /* clock & reset generator */   
-   reg clk_sys  = 1'b0;
-   reg rst_n    = 1'b0;
+  wire clk_ref;
+  wire clk_sys;
+  wire rst_n;
 
-  /* WB accessors */
-  CWishboneAccessor acc_wrc, acc_ep, acc_lbk;
+	/* WB masters */
+  IWishboneMaster WB_lbk (clk_sys, rst_n);
 
-  /* Fabrics */
-  IWishboneMaster #(2,16) WB_wrc_src (clk_sys, rst_n);
-  IWishboneSlave  #(2,16) WB_wrc_snk (clk_sys, rst_n);
-  IWishboneMaster #(2,16) WB_ep_src  (clk_sys, rst_n);
-  IWishboneSlave  #(2,16) WB_ep_snk  (clk_sys, rst_n);
+	/* WB accessors */
+  CWishboneAccessor acc_fec;
 
-  /* Fabrics accessors */
-  WBPacketSource wrc_src, ep_src;
-  WBPacketSink   wrc_snk, ep_snk;
+	/* Fabrics */
+  IWishboneMaster #(2,16) dec_src (clk_sys, rst_n);
+  IWishboneSlave  #(2,16) dec_snk (clk_sys, rst_n); 
+  
+  IWishboneMaster #(2,16) enc_src (clk_sys, rst_n);
+  IWishboneSlave  #(2,16) enc_snk (clk_sys, rst_n);
 
-  always #4ns clk_sys <= ~clk_sys;
-   initial begin
-      repeat(3) @(posedge clk_sys);
-      rst_n <= 1'b1;
-   end
+	/* Fabrics accessors */
+  WBPacketSource fec_src;
+  WBPacketSink   fec_snk;
 
+  tbi_clock_rst_gen
+  #(
+    .g_rbclk_period(8000))
+  clkgen(
+    .clk_ref_o(clk_ref),
+    .clk_sys_o(clk_sys),
+    .phy_rbclk_o(phy_rbclk),
+    .rst_n_o(rst_n)
+  );
 
+  wb_fec #(
+    .g_en_fec_enc(`true),
+    .g_en_fec_dec(`false),
+    .g_en_golay(`false),
+    .g_en_dec_time(`false))
+  WB_FEC ( 
+    .clk_i(clk_sys),
+    .rst_n_i(rst_n),
+    .fec_dec_sink_i.cyc(dec_src.master.cyc),
+		.fec_dec_sink_i.stb(dec_src.master.stb),
+		.fec_dec_sink_i.we(dec_src.master.we),
+		.fec_dec_sink_i.adr(dec_src.master.sel),
+		.fec_dec_sink_i.dat(dec_src.master.adr),
+		.fec_dec_sink_i.stall(dec_src.master.dat_o),
+		.fec_dec_sink_o.ack(dec_src.master.ack),
+		//.fec_dec_sink_o.stall(dec_src.master.stall),
+		.fec_dec_sink_o.stall(dec_src.master.stall));
 
+		//.fec_dec_src_o.cyc(dec_snk.slave.cyc),
+		//.fec_dec_src_o.stb(dec_snk.slave.stb),
+		//.fec_dec_src_o.we(dec_snk.slave.we),
+		//.fec_dec_src_o.adr(dec_snk.slave.sel),
+		//.fec_dec_src_o.dat(dec_snk.slave.adr),
+		//.fec_dec_src_o.stall(dec_snk.slave.dat_i),
+		//.fec_dec_src_i.ack(dec_snk.slave.ack),
+		//.fec_dec_src_i.stall(dec_snk.slave.stall),
 
+    //.fec_enc_sink_i.cyc(enc_src.master.cyc),
+		//.fec_enc_sink_i.stb(enc_src.master.stb),
+		//.fec_enc_sink_i.we(enc_src.master.we),
+		//.fec_enc_sink_i.adr(enc_src.master.sel),
+		//.fec_enc_sink_i.dat(enc_src.master.adr),
+		//.fec_enc_sink_i.stall(enc_src.master.dat_o),
+		//.fec_enc_sink_o.ack(enc_src.master.ack),
+		//.fec_enc_sink_o.stall(enc_src.master.stall),
 
+		//.fec_enc_src_o.cyc(enc_snk.slave.cyc),
+		//.fec_enc_src_o.stb(enc_snk.slave.stb),
+		//.fec_enc_src_o.we(enc_snk.slave.we),
+		//.fec_enc_src_o.adr(enc_snk.slave.sel),
+		//.fec_enc_src_o.dat(enc_snk.slave.adr),
+		//.fec_enc_src_o.stall(enc_snk.slave.dat_i),
+		//.fec_enc_src_i.ack(enc_snk.slave.ack),
+		//.fec_enc_src_i.stall(enc_snk.slave.stall),
+
+    //.wb_slave_i.cyc(WB_lbk.master.cyc),
+		//.wb_slave_i.stb(WB_lbk.master.stb),
+		//.wb_slave_i.we(WB_lbk.master.we),
+		//.wb_slave_i.sel(4'b1111),
+		//.wb_slave_i.adr(WB_lbk.master.adr),
+		//.wb_slave_i.dat(WB_lbk.master.dat_o),
+		//.wb_slave_o.dat(WB_lbk.master.dat_i),
+		//.wb_slave_o.ack(WB_lbk.master.ack),
+		//.wb_slave_o.stall(WB_lbk.master.stall));
+
+//  initial begin
+//
+//    @(posedge rst_n);
+//    repeat(3) @(posedge clk_sys);
+//
+//    #1us;
+//
+//    acc_fec = WB_lbk.get_accessor();
+//    acc_fec.set_mode(PIPELINED);
+//    WB_lbk.settings.cyc_on_stall = 1;
+//
+//		fec_src = new(dec_src.get_accessor());
+//		dec_src.settings.cyc_on_stall = 1;
+//
+//    #1us;
+//		acc_fec.write(`ADDR_LBK_DMAC_H, 32'h00001122);
+//		#1us;
+//		acc_fec.write(`ADDR_LBK_DMAC_L, 32'h33445566);
+//		#1us;
+//		acc_fec.write(`ADDR_LBK_MCR, `LBK_MCR_ENA | `LBK_MCR_FDMAC);
+//		//acc_fec.write(`ADDR_LBK_MCR, `LBK_MCR_ENA);
+//
+//    #1500ns;
+//    tx_sizes = {};
+//    //NOW LET'S SEND SOME FRAMES
+//    send_frames(fec_src, 1500);
+//  end
+//
+//  initial begin
+//    EthPacket pkt;
+//		int prev_size=0;
+//		uint64_t val64;
+//
+//    dec_snk.settings.gen_random_stalls = 1;
+//    fec_snk = new(dec_snk.get_accessor());
+//
+//		#5us;
+//    while(1) begin
+//			#1us;
+//			fec_snk.recv(pkt);
+//			//if(pkt.size-prev_size!=1)
+//			//	$warning("--> recv: size=%4d, %4d", pkt.size, pkt.size-prev_size);
+//			if(pkt.dst[0]!=8'h11 || pkt.dst[1]!=8'h22 || pkt.dst[2]!=8'h33 || 
+//				 pkt.dst[3]!=8'h44 || pkt.dst[4]!=8'h55 || pkt.dst[5]!=8'h66)
+//			//if(pkt.dst[0]!=8'h16 || pkt.dst[1]!=8'h21 || pkt.dst[2]!=8'h2c || 
+//			//	 pkt.dst[3]!=8'h2c || pkt.dst[4]!=8'h37 || pkt.dst[5]!=8'h42)
+//			begin
+//				$write("%02X:", pkt.dst[0]);
+//				$write("%02X:", pkt.dst[1]);
+//				$write("%02X:", pkt.dst[2]);
+//				$write("%02X:", pkt.dst[3]);
+//				$write("%02X:", pkt.dst[4]);
+//				$write("%02X",  pkt.dst[5]);
+//				$warning("--> recv: size=%4d, %4d", pkt.size, pkt.size-prev_size);
+//			end;
+//			prev_size = pkt.size;
+//			//acc_fec.read(`ADDR_LBK_RCV_CNT, val64);
+//			//$display("rcv_cnt: %d", val64);
+//			//acc_fec.read(`ADDR_LBK_DRP_CNT, val64);
+//			//$display("drp_cnt: %d", val64);
+//			//acc_fec.read(`ADDR_LBK_FWD_CNT, val64);
+//			//$display("fwd_cnt: %d", val64);
+//			//acc_fec.write(`ADDR_LBK_MCR, `LBK_MCR_CLR);
+//			//acc_fec.write(`ADDR_LBK_MCR, 0);
+//    end
+//  end
+
+endmodule // main
