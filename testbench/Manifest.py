@@ -12,8 +12,8 @@ syn_package = "fgg484"
 
 sim_tool = "modelsim"
 top_module = "main"
-
-include_dirs = [ "../../../sim" ]
+vlog_opt = "+incdir+../../../sim"
+include_dirs = [ "../../../sim", "./" ]
 
 files = [ "main.sv" ]
 
