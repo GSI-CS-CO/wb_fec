@@ -18,7 +18,12 @@ module main;
 
   wire clk_ref;
   wire clk_sys;
-  wire rst_n;
+  wire rst_n;    
+  
+  int seed;
+  uint32_t data;
+  int lenght = 0;
+  int i = 0;
 
 	/* WB masters */
   IWishboneMaster WB_fec (clk_sys, rst_n);
@@ -101,7 +106,41 @@ module main;
 		.wb_slave_ack(WB_fec.master.ack),
 		.wb_slave_stall(WB_fec.master.stall));
 
+  //initial begin
+
+  //  @(posedge rst_n);
+  //  repeat(3) @(posedge clk_sys);
+
+  //  #1us;
+
+  //  acc_fec = WB_fec.get_accessor();
+  //  acc_fec.set_mode(PIPELINED);
+  //  WB_fec.settings.cyc_on_stall = 1;
+
+	//	//fec_src = new(dec_src.get_accessor());
+	//	//dec_src.settings.cyc_on_stall = 1;
+
+	//	fec_src = new(enc_src.get_accessor());
+	//	dec_src.settings.cyc_on_stall = 1;
+
+  //  #1us;
+	//	acc_fec.write(`FEC_ENC_EN, 1'h0);
+	//	//#1us;
+	//	//acc_fec.write(`ADDR_LBK_DMAC_L, 32'h33445566);
+	//	//#1us;
+	//	//acc_fec.write(`ADDR_LBK_MCR, `LBK_MCR_ENA | `LBK_MCR_FDMAC);
+	//	//acc_fec.write(`ADDR_LBK_MCR, `LBK_MCR_ENA);
+
+  //  //#1500ns;
+  //  tx_sizes = {};
+  //  //NOW LET'S SEND SOME FRAMES
+  //  send_frames(fec_src, 1500);
+  //end
+
   initial begin
+    EthPacket pkt;
+    pkt = new; 
+
 
     @(posedge rst_n);
     repeat(3) @(posedge clk_sys);
@@ -112,22 +151,40 @@ module main;
     acc_fec.set_mode(PIPELINED);
     WB_fec.settings.cyc_on_stall = 1;
 
-		fec_src = new(dec_src.get_accessor());
+		//fec_src = new(dec_src.get_accessor());
+		//dec_src.settings.cyc_on_stall = 1;
+
+		fec_src = new(enc_src.get_accessor());
 		dec_src.settings.cyc_on_stall = 1;
 
-    #1us;
-		acc_fec.write(`FEC_ENC_EN, 1'h0);
-		//#1us;
-		//acc_fec.write(`ADDR_LBK_DMAC_L, 32'h33445566);
-		//#1us;
-		//acc_fec.write(`ADDR_LBK_MCR, `LBK_MCR_ENA | `LBK_MCR_FDMAC);
-		//acc_fec.write(`ADDR_LBK_MCR, `LBK_MCR_ENA);
+    //#10us;
+		//acc_fec.write(`FEC_ENC_EN, 1'h1);
 
     //#1500ns;
-    tx_sizes = {};
-    //NOW LET'S SEND SOME FRAMES
-    send_frames(fec_src, 1500);
-	  $warning("--> sending");
+    
+    /* some dummy addresses */
+    lenght = 'h002e;
+    pkt.dst        = '{'hff, 'hff, 'hff, 'hff, 'hff, 'hff};
+    pkt.src        = '{1,2,3,4,5,6};
+    pkt.ethertype  = lenght;
+
+    /* set the payload size to the minimum acceptable value:
+       (46 bytes payload + 14 bytes header + 4 bytes CRC) */
+    pkt.set_size(lenght);
+
+    seed = 100;
+  
+    for(i=0; i < lenght; i++)
+      begin
+      data = $dist_uniform(seed, 0, (1<<31)-1);
+      pkt.payload[i] = data & 'hff;
+    end
+
+    
+    while(1) begin
+      /* send the packet */
+      fec_src.send(pkt);
+    end
   end
 
   initial begin
@@ -135,8 +192,9 @@ module main;
 		int prev_size=0;
 		uint64_t val64;
 
-    dec_snk.settings.gen_random_stalls = 1;
-    fec_snk = new(dec_snk.get_accessor());
+    //dec_snk.settings.gen_random_stalls = 1;
+    enc_snk.settings.gen_random_stalls = 1;
+    fec_snk = new(enc_snk.get_accessor());
 
 	  $warning("--> starting");
 		#5us;
@@ -156,7 +214,7 @@ module main;
 				$write("%02X:", pkt.dst[3]);
 				$write("%02X:", pkt.dst[4]);
 				$write("%02X",  pkt.dst[5]);
-				$warning("--> recv: size=%4d, %4d", pkt.size, pkt.size-prev_size);
+				$info("--> recv: size=%4d, %4d", pkt.size, pkt.size-prev_size);
 			end;
 			prev_size = pkt.size;
 			//acc_fec.read(`ADDR_LBK_RCV_CNT, val64);
