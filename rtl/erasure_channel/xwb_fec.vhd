@@ -97,6 +97,9 @@ architecture rtl of xwb_fec is
   signal wb_slave_i      :  t_wishbone_slave_in;
 
 begin 
+
+  -- bypass
+
    fec_dec_sink_ack    <= fec_dec_src_ack;
    fec_dec_sink_stall  <= fec_dec_src_stall;
 
@@ -132,42 +135,42 @@ begin
 --   fec_dec_sink_o   <= c_dummy_src_in;
 --   fec_dec_src_o    <= c_dummy_snk_in;
 --
---  -- Encoder
---
---   fec_enc_sink_ack    <= fec_enc_sink_o.ack;
---   fec_enc_sink_stall  <= fec_enc_sink_o.stall;
---
---   fec_enc_sink_i.adr  <= fec_enc_sink_adr; 
---   fec_enc_sink_i.dat  <= fec_enc_sink_dat;
---   fec_enc_sink_i.cyc  <= fec_enc_sink_cyc;
---   fec_enc_sink_i.stb  <= fec_enc_sink_stb;
---   fec_enc_sink_i.we   <= fec_enc_sink_we ;
---   fec_enc_sink_i.sel  <= fec_enc_sink_sel;
---
---
---   fec_enc_src_i.ack   <= fec_enc_src_ack;
---   fec_enc_src_i.stall <= fec_enc_src_stall;
--- 
---   fec_enc_src_adr   <=  fec_enc_src_o.adr; 
---   fec_enc_src_dat   <=  fec_enc_src_o.dat;
---   fec_enc_src_cyc   <=  fec_enc_src_o.cyc;
---   fec_enc_src_stb   <=  fec_enc_src_o.stb;
---   fec_enc_src_we    <=  fec_enc_src_o.we;
---   fec_enc_src_sel   <=  fec_enc_src_o.sel;
---
---  FEC_ENC: wb_fec_encoder
---    generic map (
---      g_en_golay => FALSE
---      )
---    port map (
---      clk_i       => clk_i,
---      rst_n_i     => rst_n_i,
---      snk_i       => fec_enc_sink_i,
---      snk_o       => fec_enc_sink_o,
---      src_i       => fec_enc_src_i,
---      src_o       => fec_enc_src_o,
---      ctrl_reg_i  => fec_ctrl_reg,
---      stat_reg_o  => fec_stat_reg);
+  -- Encoder
+
+   fec_enc_sink_ack    <= fec_enc_sink_o.ack;
+   fec_enc_sink_stall  <= fec_enc_sink_o.stall;
+
+   fec_enc_sink_i.adr  <= fec_enc_sink_adr; 
+   fec_enc_sink_i.dat  <= fec_enc_sink_dat;
+   fec_enc_sink_i.cyc  <= fec_enc_sink_cyc;
+   fec_enc_sink_i.stb  <= fec_enc_sink_stb;
+   fec_enc_sink_i.we   <= fec_enc_sink_we ;
+   fec_enc_sink_i.sel  <= fec_enc_sink_sel;
+
+
+   fec_enc_src_i.ack   <= fec_enc_src_ack;
+   fec_enc_src_i.stall <= fec_enc_src_stall;
+ 
+   fec_enc_src_adr   <=  fec_enc_src_o.adr; 
+   fec_enc_src_dat   <=  fec_enc_src_o.dat;
+   fec_enc_src_cyc   <=  fec_enc_src_o.cyc;
+   fec_enc_src_stb   <=  fec_enc_src_o.stb;
+   fec_enc_src_we    <=  fec_enc_src_o.we;
+   fec_enc_src_sel   <=  fec_enc_src_o.sel;
+
+  FEC_ENC: wb_fec_encoder
+    generic map (
+      g_en_golay => FALSE
+      )
+    port map (
+      clk_i       => clk_i,
+      rst_n_i     => rst_n_i,
+      snk_i       => fec_enc_sink_i,
+      snk_o       => fec_enc_sink_o,
+      src_i       => fec_enc_src_i,
+      src_o       => fec_enc_src_o,
+      ctrl_reg_i  => fec_ctrl_reg,
+      stat_reg_o  => fec_stat_reg);
 
   ----FEC_DEC : wb_fec_decoder is
 

@@ -6,11 +6,11 @@
 --!-------------------------------------------------------------------------------
 --! Register Map
 --! Ctrl Enc/Dec
---! 0x00, wr, enable/disable encoder 
---! 0x04, wr, 
+--! 0x00, wr, enable/disable encoder 1bit
+--! 0x04, wr, Pkt Erasure Code 2bit - Bit Erasure Code 2 bit
 -- Stat Enc/Dec
---! 0x08, wr, number of frames encoded
---! 0x0C, wr, number of frames decoded
+--! 0x08, wr, Encoded Error 2bit
+--! 0x0C, wr, Encoded Frames Counter 32bit
 -- Decoder Latency Statitcis 
 --! 0x28, wr, decoder last latency
 --! 0x2C, wr, decoder max latency
@@ -30,13 +30,14 @@ use work.wishbone_pkg.all;
 
 entity wb_slave_fec is
   port (
-    clk_i          : in  std_logic;
-    rst_n_i        : in  std_logic;
-    wb_slave_i     : in  t_wishbone_slave_in;
-    wb_slave_o     : out t_wishbone_slave_out;
-    fec_stat_reg_i : in  t_fec_stat_reg;
-    fec_ctrl_reg_o : out t_fec_ctrl_reg;
-    time_code_i    : in  t_time_code);
+    clk_i             : in  std_logic;
+    rst_n_i           : in  std_logic;
+    wb_slave_i        : in  t_wishbone_slave_in;
+    wb_slave_o        : out t_wishbone_slave_out;
+    fec_stat_reg_i    : in  t_fec_stat_reg;
+    fec_ctrl_reg_o    : out t_fec_ctrl_reg;
+    fec_ctrl_refres_o : out std_logic;
+    time_code_i       : in  t_time_code);
 end wb_slave_fec;
 
 architecture rtl of wb_slave_fec is
@@ -78,6 +79,8 @@ begin
               wb_slave_o.dat(31 downto 1) <= (others => '0');
             when "0001"    => -- 
               if wb_slave_i.we = '1' then
+                s_fec_ctrl.fec_pkt_er_code <= wb_slave_i.dat(1 downto 0);
+                s_fec_ctrl.fec_bit_er_code <= wb_slave_i.dat(3 downto 2);
               end if;
               wb_slave_o.dat(31 downto 1) <= (others => '0');
             when "0010"    => -- encoded frames 0x8
@@ -90,14 +93,20 @@ begin
               end if;
               --wb_slave_o.dat <= s_fec_stat.stat_dec.err_dec;
             when others =>
-    end case;
-    end if;
+          end case;
+          
+          -- progates the changes in the reg
+          if (wb_slave_i.we = '1') then
+            s_fec_ctrl.fec_ctrl_refresh <= '1';
+          end if;
+        else
+            s_fec_ctrl.fec_ctrl_refresh <= '0';
+        end if;
 
-    --s_fec_ctrl.time_code <= time_code_i;
-    fec_ctrl_reg_o <= s_fec_ctrl;
-    s_fec_stat     <= fec_stat_reg_i;
-
-    end if;
+      --s_fec_ctrl.time_code <= time_code_i;
+      fec_ctrl_reg_o <= s_fec_ctrl;
+      s_fec_stat     <= fec_stat_reg_i;
+      end if;
     end if;
   end process;
 
