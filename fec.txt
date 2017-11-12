@@ -1,0 +1,22 @@
+
+
+FEC HEADER
+----------
+
+FEC ALGORITHMS [4bits]
+
+Packet Erasure Code [2bits]
+    Simple Code           -> 0x1
+    LDPC Code            -> 0x2
+    Reed Solomon         -> 0x3
+
+Bit Erasure Code [2bits]
+    No Code              -> 0x0
+    Golay Code           -> 0x1
+    LDPC Code            -> 0x2
+    Hamming Code         -> 0x3
+
+ENCODED FRAME ID [6 bits]
+ENCODED FRAME SUB-ID [3 bits]
+
+RESERVED [3 bits]
