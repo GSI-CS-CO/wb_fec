@@ -20,6 +20,8 @@ package fec_pkg is
 
   constant c_eth_hdr_len      : integer := 7;   -- 16 bit word
   constant c_eth_hdr_vlan_len : integer := 9;   -- 16 bit word
+  constant c_fec_hdr_len      : integer := 8;
+  constant c_fec_hdr_vlan_len : integer := 10;
   constant c_eth_payload      : integer := 750; -- 16 bit word
   constant c_eth_pl_width     : integer := f_ceil_log2(c_eth_payload);
   constant c_block_max_len    : integer := 188; -- 16 bit word
@@ -180,16 +182,16 @@ package fec_pkg is
       g_id_width    : integer;
       g_subid_width : integer);
     port (
-      clk_i         : in  std_logic;
-      rst_n_i       : in  std_logic;
-      hdr_i         : in  t_wrf_bus;
-      hdr_stb_i     : in  std_logic;
-      block_len_i   : in  t_block_len; 
-      stb_i         : in  std_logic;
-      fec_stb_i     : in  std_logic;
-      fec_hdr_o     : out t_wrf_bus;      
-      enc_cnt_o     : out std_logic_vector(c_fec_cnt_width - 1 downto 0);
-      ctrl_reg_i    : in  t_fec_ctrl_reg);
+      clk_i             : in  std_logic;
+      rst_n_i           : in  std_logic;
+      hdr_i             : in  t_wrf_bus;
+      hdr_stb_i         : in  std_logic;
+      block_len_i       : in  t_block_len; 
+      fec_stb_i         : in  std_logic;
+      fec_hdr_stb_i     : in  std_logic;
+      fec_hdr_o         : out t_wrf_bus;      
+      enc_cnt_o         : out std_logic_vector(c_fec_cnt_width - 1 downto 0);
+      ctrl_reg_i        : in  t_fec_ctrl_reg);
   end component;
 
   component wb_fec is
@@ -247,6 +249,7 @@ package fec_pkg is
 
   function f_calc_len_block (pl_len : t_eth_type; div_num_block, num_block : integer) return unsigned;
   function f_parse_eth (x : std_logic_vector) return t_eth_frame_header;
+  function f_extract_eth (idx : integer; x : std_logic_vector) return t_wrf_bus;
 
 end package fec_pkg;
 
@@ -269,12 +272,20 @@ package body fec_pkg is
     return len_block(c_eth_pl_width - 1 downto 0);
   end function;
 
-  function f_parse_eth(x : std_logic_vector) return t_eth_frame_header is
+  function f_parse_eth (x : std_logic_vector) return t_eth_frame_header is
     variable y : t_eth_frame_header;
     begin
       y.eth_src_addr  := x(111 downto 64);
       y.eth_des_addr  := x( 63 downto 16);
       y.eth_etherType := x( 15 downto  0);    
      return y;
+   end function;  
+   
+   function f_extract_eth (idx : integer; x : std_logic_vector) return t_wrf_bus is
+    variable y : t_wrf_bus;
+    begin
+      y := x((x'left - (idx * y'length)) downto (x'left - ((idx + 1) * y'length) + 1));
+     return y;
    end function;
+
 end fec_pkg;
