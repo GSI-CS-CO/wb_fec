@@ -34,15 +34,20 @@ package fec_pkg is
   constant c_DISABLE          : std_logic := '0';
 
   -- Fabric
-  constant c_wrf_width : integer := 16;
+  constant c_wrf_width      : integer := 16;
+  constant c_wrf_adr_width  : integer := 2;
+  subtype t_wrf_adr  is std_logic_vector(c_wrf_adr_width - 1 downto 0);
   subtype t_wrf_bus  is std_logic_vector(c_wrf_width - 1 downto 0);
   type t_wrf_bus_array is array (natural range <>) of t_wrf_bus;
 
   -- Enc FIFOs
-  constant c_fifo_cnt_width   : integer := f_ceil_log2(c_block_max_len);
+  constant c_output_fifo_width  : integer := c_wrf_width + c_wrf_adr_width;
+  subtype t_fifo_out        is std_logic_vector(c_output_fifo_width - 1 downto 0);
+  constant c_fifo_cnt_width     : integer := f_ceil_log2(c_block_max_len);
   subtype t_fifo_cnt_width  is std_logic_vector(c_fifo_cnt_width - 1 downto 0);
-  subtype te_fifo_cnt_width  is std_logic_vector(8 downto 0);
-  type t_fifo_cnt_array is array (natural range <>) of t_fifo_cnt_width;
+  subtype te_fifo_cnt_width is std_logic_vector(7 downto 0); --FIXME
+  type t_fifo_cnt_array     is array (natural range <>) of t_fifo_cnt_width;
+  subtype t_wrd_adr_width   is std_logic_vector(1 downto 0);
 
   -- Ethernet Header
   subtype t_eth_vlan is std_logic_vector(15 downto 0);

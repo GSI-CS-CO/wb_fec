@@ -34,6 +34,7 @@ end wb_fec_encoder;
 
 architecture rtl of wb_fec_encoder is
   signal src_cyc          : std_logic;
+  --signal src_cyc_d        : std_logic;
   signal fec_stb_d        : std_logic;
   signal enc_err          : std_logic;
   signal pkt_err          : std_logic;
@@ -44,13 +45,18 @@ architecture rtl of wb_fec_encoder is
   signal snk_stall        : std_logic;
   signal enc_payload      : t_wrf_bus;
   signal fec_hdr          : t_wrf_bus;
-  signal fec_pkt          : t_wrf_bus;
+  signal data_payload     : unsigned(15 downto 0);
   signal fec_stb          : std_logic;
   signal fec_hdr_stb      : std_logic;
+  signal data_fifo_i      : t_fifo_out;  
+  alias  fec_pkt_i        : t_wrf_bus is data_fifo_i(15 downto 0);
+  alias  wrf_adr_i        : t_wrf_adr is data_fifo_i(17 downto 16);
+  signal data_fifo_o      : t_fifo_out;
+  alias  fec_pkt_o        : t_wrf_bus is data_fifo_o(15 downto 0);
+  alias  wrf_adr_o        : t_wrf_adr is data_fifo_o(17 downto 16);
   signal fec_payload_stb  : std_logic;
-  signal dat_fifo_out     : t_wrf_bus;
-  signal wr_fifo_out      : std_logic;
-  signal rd_fifo_out      : std_logic;
+  signal wr_fifo_o        : std_logic;
+  signal rd_fifo_o        : std_logic;
   signal fifo_empty       : std_logic;
   signal fifo_full        : std_logic;
   signal fifo_cnt         : te_fifo_cnt_width; --FIXME
@@ -159,10 +165,10 @@ begin
         fec_stb         <= '0';
         s_fec_strm      <= IDLE;
       else
-        fec_hdr_payload_len := c_fec_hdr_len + (2 * to_integer(fec_block_len)) + 6;
+        fec_hdr_payload_len := c_fec_hdr_len + (2 * to_integer(fec_block_len));
         case s_fec_strm is
           when IDLE =>
-            if (eth_cnt >= fec_block_len - 2) then --CHECK!!
+            if (eth_cnt >= fec_block_len - 2) then
               s_fec_strm  <= SEND_OOB;
               fec_stb     <= '1';
             else
@@ -181,20 +187,29 @@ begin
             end if;
             fec_word_cnt <= fec_word_cnt + 1;          
           when SEND_FEC_PAYLOAD =>
-            if (fec_word_cnt < fec_hdr_payload_len - 1) then
+            if (fec_word_cnt <= fec_hdr_payload_len - 1) then
               s_fec_strm      <= SEND_FEC_PAYLOAD;
-            elsif(fec_pkt_cnt < g_num_block - 1) then
+            elsif(fec_pkt_cnt <= g_num_block - 1) then
               s_fec_strm      <= IDLE_FEC;
               fec_pkt_cnt <= fec_pkt_cnt + 1;
             else
               fec_stb         <= '0';
-              s_fec_strm      <= IDLE;
+              s_fec_strm      <= IDLE_FEC;
             end if;
             fec_word_cnt <= fec_word_cnt + 1;
 
           when IDLE_FEC =>
-            s_fec_strm  <= SEND_OOB;
-            fec_word_cnt  <= 0;
+            if (fifo_empty = '1') then
+              if (fec_pkt_cnt <= g_num_block - 1) then
+                s_fec_strm  <= SEND_OOB;
+                fec_word_cnt  <= 0;
+              else
+                s_fec_strm  <= IDLE;
+                fec_word_cnt  <= 0;
+              end if;
+            else
+              s_fec_strm  <= IDLE_FEC;
+            end if;
         end case;
       end if;
     end if;
@@ -255,67 +270,120 @@ begin
   snk_o.stall <= snk_stall;
 
   --Tx to WR Fabric
-  src_o.sel <= "11";
-  src_o.we  <= '1';
+  --tx_fabric : process(clk_i) is
+  --begin
+  --  if rising_edge(clk_i) then
+  --    if rst_n_i = '0' then
+  --      src_cyc <= '0';
+  --    else
+  --      if (s_fec_strm = SEND_OOB or  
+  --          s_fec_strm = SEND_FEC_HDR or
+  --          s_fec_strm = SEND_FEC_PAYLOAD or  
+  --          (fifo_empty = '0' and  s_fec_strm = IDLE_FEC)) then
+  --        src_cyc <= '1';
+  --      else
+  --        src_cyc <= '0';
+  --      end if;
+  --      --src_cyc_d <= src_cyc;
+  --    end if;
+  --  end if;
+  --end process;
   
-  src_cyc   <=  snk_i.cyc when  ctrl_reg_i.fec_enc_en = c_DISABLE else
-                '1'       when  s_fec_strm = SEND_OOB or 
-                                s_fec_strm = SEND_FEC_HDR or
-                                s_fec_strm = SEND_FEC_PAYLOAD or
-                                fifo_empty = '0'                  else
+  data_fabric : process(clk_i) is
+  begin
+    if rising_edge(clk_i) then
+      if rst_n_i = '0' then
+        data_payload  <= x"0001";
+      else
+        if (src_cyc = '1') then
+          data_payload <= data_payload + 1;
+        else
+          data_payload <= x"0001";
+        end if;
+      end if;
+    end if;
+  end process;
+
+  enc_payload <= std_logic_vector(data_payload);
+
+  --src_cyc <= '1' when (s_fec_strm = SEND_OOB or  
+            --s_fec_strm = SEND_FEC_HDR or
+  src_cyc <= '1' when (s_fec_strm = SEND_FEC_HDR or
+                        s_fec_strm = SEND_FEC_PAYLOAD or  
+                        (fifo_empty = '0' and  s_fec_strm = IDLE_FEC)) and
+                        fifo_empty = '0' else
+            '0';
+
+  -- FIXME the problem is with the de-cyc it takes two cycles
+  src_o.cyc <=  snk_i.cyc when ctrl_reg_i.fec_enc_en = c_DISABLE else
+                src_cyc  when ctrl_reg_i.fec_enc_en = c_ENABLE else --FIXME something more elegant..
+                --src_cyc  when ctrl_reg_i.fec_enc_en = c_ENABLE and fifo_empty = '0' else --FIXME something more elegant..
+                '0';
+  
+  src_o.stb <=  snk_i.stb when ctrl_reg_i.fec_enc_en = c_DISABLE else
+                src_cyc  when ctrl_reg_i.fec_enc_en = c_ENABLE else -- FIXME something more elegant
+                --src_cyc  when ctrl_reg_i.fec_enc_en = c_ENABLE and fifo_empty = '0' else -- FIXME something more elegant
                 '0';
 
-  src_o.cyc <= src_cyc;
+  src_o.sel <=  snk_i.sel when  ctrl_reg_i.fec_enc_en = c_DISABLE else
+                "11";
 
-  src_o.stb <= snk_i.stb  when  ctrl_reg_i.fec_enc_en = c_DISABLE  else                
-               --'1'        when  s_fec_strm = SEND_OOB or 
-               --                 s_fec_strm = SEND_FEC_HDR or
-               --                 s_fec_strm = SEND_FEC_PAYLOAD     else
-               '1'        when  src_cyc = '1' and fifo_empty = '0'   else
-               '0';
-
-  enc_payload <= (others => '1');
-
-  fec_pkt   <= c_WRF_OOB_TYPE_TX & x"aaa" when s_fec_strm = SEND_OOB else
-               fec_hdr                    when s_fec_strm = SEND_FEC_HDR      else
-               enc_payload                when s_fec_strm = SEND_FEC_PAYLOAD  else
-               (others => '0');
-
-  src_o.dat <= snk_i.dat        when ctrl_reg_i.fec_enc_en = c_DISABLE  else
-               dat_fifo_out     when ctrl_reg_i.fec_enc_en = c_ENABLE   else
-               (others => '0');
-               
-  src_o.adr <= snk_i.adr        when ctrl_reg_i.fec_enc_en = c_DISABLE  else
-               c_WRF_OOB        when s_fec_strm = SEND_OOB              else
+  src_o.we  <=  snk_i.we when  ctrl_reg_i.fec_enc_en = c_DISABLE else
+                '1';
+  
+  wrf_adr_i <= c_WRF_OOB        when s_fec_strm = SEND_OOB              else
                c_WRF_DATA       when s_fec_strm = SEND_FEC_HDR or s_fec_strm = SEND_FEC_PAYLOAD else
                (others => '0');
 
-  wr_fifo_out <=  '1'  when s_fec_strm = SEND_OOB or
-                            s_fec_strm = SEND_FEC_HDR or 
-                            s_fec_strm = SEND_FEC_PAYLOAD else
-                  '0';
+  src_o.adr <=  snk_i.adr   when ctrl_reg_i.fec_enc_en = c_DISABLE else
+                wrf_adr_o   when ctrl_reg_i.fec_enc_en = c_ENABLE;
 
-  rd_fifo_out <= (not src_i.stall) and src_cyc;
+  fec_pkt_i <= c_WRF_OOB_TYPE_TX & x"aaa" when s_fec_strm = SEND_OOB          else
+               fec_hdr                    when s_fec_strm = SEND_FEC_HDR      else
+               enc_payload                when s_fec_strm = SEND_FEC_PAYLOAD  else
+               (others => '0');
+  
+  src_o.dat <= snk_i.dat        when ctrl_reg_i.fec_enc_en = c_DISABLE  else
+               fec_pkt_o        when ctrl_reg_i.fec_enc_en = c_ENABLE   else
+               (others => '0');
+
+  wr_fifo_o <=  '1'  when s_fec_strm = SEND_OOB or
+                          s_fec_strm = SEND_FEC_HDR or 
+                          s_fec_strm = SEND_FEC_PAYLOAD else
+                '0';
+
+  --rd_fifo_out <= (not src_i.stall) and src_cyc;  
+  
+  rd_fifo_o <=  '1'  when  (s_fec_strm = SEND_OOB or 
+                            s_fec_strm = SEND_FEC_PAYLOAD  or
+                            s_fec_strm = SEND_FEC_HDR or
+                            s_fec_strm = IDLE_FEC) and
+                            src_i.stall = '0' and 
+                            fifo_empty = '0'else
+                  '0';
 
   ENC_HDR_PKT_FIFO : generic_sync_fifo
     generic map (
-      g_data_width => c_wrf_width,
-      g_size       => c_block_max_len * 2,
-      g_with_count => true,
-      g_show_ahead => true)
+      g_data_width  => c_wrf_width + 2,
+      g_size        => 256,
+      g_with_full   => true,
+      g_with_empty  => true,
+      g_with_count  => true,
+      g_show_ahead  => true)
     port  map (
       clk_i   => clk_i,
       rst_n_i => rst_n_i,
-      d_i     => fec_pkt,
-      we_i    => wr_fifo_out,
+      d_i     => data_fifo_i,
+      we_i    => wr_fifo_o,
       empty_o => fifo_empty,
       full_o  => fifo_full,
       count_o => fifo_cnt, 
-      q_o     => dat_fifo_out,
-      rd_i    => rd_fifo_out);
+      q_o     => data_fifo_o,
+      rd_i    => rd_fifo_o);
 
+    -- TODO
     -- IF HALT TOO LONG AND FIFO FULL, ERROR and RESET EVERYTHING
     -- ACK THE CHANGE IN THE CTRL REGISTER
-    -- WHEN ENC DISABLE
+    -- WHEN ENC DISABLE REVIEW
 
 end rtl;

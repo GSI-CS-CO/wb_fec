@@ -34,6 +34,7 @@ architecture rtl of fec_hdr_gen is
   signal fec_hdr_stb_d: std_logic;
   signal fec_stb_d    : std_logic;
   signal fec_hdr      : t_wrf_bus;
+  signal tmp          : t_wrf_bus;
   signal fec_hdr_len  : integer range 0 to c_fec_hdr_len;
   signal eth_hdr_reg  : t_eth_hdr;
   signal eth_hdr_shift: t_eth_hdr;
@@ -55,11 +56,12 @@ begin
           fec_hdr_len <= 0;
         end if;
 
-        if (fec_hdr_len <=  c_fec_hdr_len - 3) then
-          fec_hdr_o <= f_extract_eth(fec_hdr_len, eth_hdr_shift);
-        elsif (fec_hdr_len =  c_fec_hdr_len - 2) then
-          fec_hdr_o <= std_logic_vector(resize(block_len_i, 16));
-        elsif (fec_hdr_len <=  c_fec_hdr_len - 1) then
+        if (fec_hdr_len <=  c_fec_hdr_len - 4) then
+          fec_hdr_o <= f_extract_eth(fec_hdr_len, eth_hdr_reg);
+        elsif (fec_hdr_len <=  c_fec_hdr_len - 3) then
+          --fec_hdr_o <= std_logic_vector(resize(block_len_i, 16));
+          fec_hdr_o <= x"cafe";
+        elsif (fec_hdr_len <=  c_fec_hdr_len - 2) then
           fec_hdr_o <= fec_hdr;
         end if;
       end if;
