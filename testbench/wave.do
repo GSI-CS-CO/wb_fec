@@ -106,14 +106,17 @@ add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/hdr_etherType
 add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/ctrl_reg
 add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/snk_stall
 add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/enc_payload
-add wave -noupdate -expand -group WB_FEC_ENC -expand -group fifo /main/XWB_FEC/FEC_ENC/dat_fifo_out
-add wave -noupdate -expand -group WB_FEC_ENC -expand -group fifo /main/XWB_FEC/FEC_ENC/wr_fifo_out
-add wave -noupdate -expand -group WB_FEC_ENC -expand -group fifo /main/XWB_FEC/FEC_ENC/rd_fifo_out
+add wave -noupdate -expand -group WB_FEC_ENC -expand -group fifo /main/XWB_FEC/FEC_ENC/wrf_adr_o
+add wave -noupdate -expand -group WB_FEC_ENC -expand -group fifo /main/XWB_FEC/FEC_ENC/wrf_adr_i
+add wave -noupdate -expand -group WB_FEC_ENC -expand -group fifo /main/XWB_FEC/FEC_ENC/fec_pkt_o
+add wave -noupdate -expand -group WB_FEC_ENC -expand -group fifo /main/XWB_FEC/FEC_ENC/fec_pkt_i
+add wave -noupdate -expand -group WB_FEC_ENC -expand -group fifo /main/XWB_FEC/FEC_ENC/rd_fifo_o
+add wave -noupdate -expand -group WB_FEC_ENC -expand -group fifo /main/XWB_FEC/FEC_ENC/rd_fifo_o
+add wave -noupdate -expand -group WB_FEC_ENC -expand -group fifo /main/XWB_FEC/FEC_ENC/wr_fifo_o
 add wave -noupdate -expand -group WB_FEC_ENC -expand -group fifo /main/XWB_FEC/FEC_ENC/fifo_empty
 add wave -noupdate -expand -group WB_FEC_ENC -expand -group fifo /main/XWB_FEC/FEC_ENC/fifo_full
 add wave -noupdate -expand -group WB_FEC_ENC -expand -group fifo /main/XWB_FEC/FEC_ENC/fifo_cnt
 add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/fec_hdr
-add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/fec_pkt
 add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/fec_block_len
 add wave -noupdate -expand -group WB_FEC_ENC -height 16 /main/XWB_FEC/FEC_ENC/s_enc_refresh
 add wave -noupdate -expand -group WB_FEC_ENC -height 16 /main/XWB_FEC/FEC_ENC/s_fec_strm
@@ -138,8 +141,39 @@ add wave -noupdate -expand -group HDR_GEN /main/XWB_FEC/FEC_ENC/FEC_HDR_PROC/eth
 add wave -noupdate -expand -group HDR_GEN /main/XWB_FEC/FEC_ENC/FEC_HDR_PROC/eth_hdr_shift
 add wave -noupdate -expand -group HDR_GEN /main/XWB_FEC/FEC_ENC/FEC_HDR_PROC/eth_hdr
 add wave -noupdate -expand -group HDR_GEN /main/XWB_FEC/FEC_ENC/FEC_HDR_PROC/hdr_reserved
+add wave -noupdate -group FIFO_FEC /main/XWB_FEC/FEC_ENC/ENC_HDR_PKT_FIFO/U_Inferred_FIFO/U_FIFO_Ram/bwea_i
+add wave -noupdate -group FIFO_FEC /main/XWB_FEC/FEC_ENC/ENC_HDR_PKT_FIFO/U_Inferred_FIFO/U_FIFO_Ram/wea_i
+add wave -noupdate -group FIFO_FEC /main/XWB_FEC/FEC_ENC/ENC_HDR_PKT_FIFO/U_Inferred_FIFO/U_FIFO_Ram/aa_i
+add wave -noupdate -group FIFO_FEC /main/XWB_FEC/FEC_ENC/ENC_HDR_PKT_FIFO/U_Inferred_FIFO/U_FIFO_Ram/da_i
+add wave -noupdate -group FIFO_FEC /main/XWB_FEC/FEC_ENC/ENC_HDR_PKT_FIFO/U_Inferred_FIFO/U_FIFO_Ram/qa_o
+add wave -noupdate -group FIFO_FEC /main/XWB_FEC/FEC_ENC/ENC_HDR_PKT_FIFO/U_Inferred_FIFO/U_FIFO_Ram/clkb_i
+add wave -noupdate -group FIFO_FEC /main/XWB_FEC/FEC_ENC/ENC_HDR_PKT_FIFO/U_Inferred_FIFO/U_FIFO_Ram/bweb_i
+add wave -noupdate -group FIFO_FEC /main/XWB_FEC/FEC_ENC/ENC_HDR_PKT_FIFO/U_Inferred_FIFO/U_FIFO_Ram/web_i
+add wave -noupdate -group FIFO_FEC /main/XWB_FEC/FEC_ENC/ENC_HDR_PKT_FIFO/U_Inferred_FIFO/U_FIFO_Ram/ab_i
+add wave -noupdate -group FIFO_FEC /main/XWB_FEC/FEC_ENC/ENC_HDR_PKT_FIFO/U_Inferred_FIFO/U_FIFO_Ram/db_i
+add wave -noupdate -group FIFO_FEC /main/XWB_FEC/FEC_ENC/ENC_HDR_PKT_FIFO/U_Inferred_FIFO/U_FIFO_Ram/qb_o
+add wave -noupdate -group DP_RAM /main/XWB_FEC/FEC_ENC/ENC_HDR_PKT_FIFO/U_Inferred_FIFO/d_i
+add wave -noupdate -group DP_RAM /main/XWB_FEC/FEC_ENC/ENC_HDR_PKT_FIFO/U_Inferred_FIFO/we_i
+add wave -noupdate -group DP_RAM /main/XWB_FEC/FEC_ENC/ENC_HDR_PKT_FIFO/U_Inferred_FIFO/q_o
+add wave -noupdate -group DP_RAM /main/XWB_FEC/FEC_ENC/ENC_HDR_PKT_FIFO/U_Inferred_FIFO/rd_i
+add wave -noupdate -group DP_RAM /main/XWB_FEC/FEC_ENC/ENC_HDR_PKT_FIFO/U_Inferred_FIFO/empty_o
+add wave -noupdate -group DP_RAM /main/XWB_FEC/FEC_ENC/ENC_HDR_PKT_FIFO/U_Inferred_FIFO/full_o
+add wave -noupdate -group DP_RAM /main/XWB_FEC/FEC_ENC/ENC_HDR_PKT_FIFO/U_Inferred_FIFO/almost_empty_o
+add wave -noupdate -group DP_RAM /main/XWB_FEC/FEC_ENC/ENC_HDR_PKT_FIFO/U_Inferred_FIFO/almost_full_o
+add wave -noupdate -group DP_RAM /main/XWB_FEC/FEC_ENC/ENC_HDR_PKT_FIFO/U_Inferred_FIFO/count_o
+add wave -noupdate -group DP_RAM /main/XWB_FEC/FEC_ENC/ENC_HDR_PKT_FIFO/U_Inferred_FIFO/rd_ptr
+add wave -noupdate -group DP_RAM /main/XWB_FEC/FEC_ENC/ENC_HDR_PKT_FIFO/U_Inferred_FIFO/wr_ptr
+add wave -noupdate -group DP_RAM /main/XWB_FEC/FEC_ENC/ENC_HDR_PKT_FIFO/U_Inferred_FIFO/wr_ptr_d0
+add wave -noupdate -group DP_RAM /main/XWB_FEC/FEC_ENC/ENC_HDR_PKT_FIFO/U_Inferred_FIFO/rd_ptr_muxed
+add wave -noupdate -group DP_RAM /main/XWB_FEC/FEC_ENC/ENC_HDR_PKT_FIFO/U_Inferred_FIFO/usedw
+add wave -noupdate -group DP_RAM /main/XWB_FEC/FEC_ENC/ENC_HDR_PKT_FIFO/U_Inferred_FIFO/full
+add wave -noupdate -group DP_RAM /main/XWB_FEC/FEC_ENC/ENC_HDR_PKT_FIFO/U_Inferred_FIFO/empty
+add wave -noupdate -group DP_RAM /main/XWB_FEC/FEC_ENC/ENC_HDR_PKT_FIFO/U_Inferred_FIFO/q_int
+add wave -noupdate -group DP_RAM /main/XWB_FEC/FEC_ENC/ENC_HDR_PKT_FIFO/U_Inferred_FIFO/we_int
+add wave -noupdate -group DP_RAM /main/XWB_FEC/FEC_ENC/ENC_HDR_PKT_FIFO/U_Inferred_FIFO/rd_int
+add wave -noupdate -group DP_RAM /main/XWB_FEC/FEC_ENC/ENC_HDR_PKT_FIFO/U_Inferred_FIFO/guard_bit
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {1477919380 fs} 0}
+WaveRestoreCursors {{Cursor 1} {1669396640120 fs} 0}
 configure wave -namecolwidth 194
 configure wave -valuecolwidth 130
 configure wave -justifyvalue left
@@ -154,4 +188,4 @@ configure wave -griddelta 10
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {1299738690 fs} {1694158090 fs}
+WaveRestoreZoom {1669027446810 fs} {1669606853190 fs}

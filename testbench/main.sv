@@ -163,7 +163,7 @@ module main;
     //#1500ns;
     
     /* some dummy addresses */
-    lenght = 'h0038;
+    lenght = 'h01f4;
     pkt.dst        = '{'hff, 'hff, 'hff, 'hff, 'hff, 'hff};
     pkt.src        = '{1,2,3,4,5,6};
     pkt.ethertype  = lenght;
@@ -194,6 +194,7 @@ module main;
 		uint64_t val64;
 
     //dec_snk.settings.gen_random_stalls = 1;
+
     enc_snk.settings.gen_random_stalls = 1;
     fec_snk = new(enc_snk.get_accessor());
 
@@ -204,8 +205,8 @@ module main;
 			fec_snk.recv(pkt);
 			//if(pkt.size-prev_size!=1)
 			//	$warning("--> recv: size=%4d, %4d", pkt.size, pkt.size-prev_size);
-			if(pkt.dst[0]!=8'h11 || pkt.dst[1]!=8'h22 || pkt.dst[2]!=8'h33 || 
-				 pkt.dst[3]!=8'h44 || pkt.dst[4]!=8'h55 || pkt.dst[5]!=8'h66)
+			//if(pkt.dst[0]!=8'h11 || pkt.dst[1]!=8'h22 || pkt.dst[2]!=8'h33 || 
+			//	 pkt.dst[3]!=8'h44 || pkt.dst[4]!=8'h55 || pkt.dst[5]!=8'h66)
 			//if(pkt.dst[0]!=8'h16 || pkt.dst[1]!=8'h21 || pkt.dst[2]!=8'h2c || 
 			//	 pkt.dst[3]!=8'h2c || pkt.dst[4]!=8'h37 || pkt.dst[5]!=8'h42)
 			begin
@@ -214,7 +215,13 @@ module main;
 				$write("%02X:", pkt.dst[2]);
 				$write("%02X:", pkt.dst[3]);
 				$write("%02X:", pkt.dst[4]);
-				$write("%02X",  pkt.dst[5]);
+				$write("%02X:", pkt.dst[5]);
+				$write("%02X:", pkt.src[0]);
+				$write("%02X:", pkt.src[1]);
+				$write("%02X:", pkt.src[2]);
+				$write("%02X:", pkt.src[3]);
+				$write("%02X:", pkt.src[4]);
+				$write("%02X",  pkt.src[5]);
 				$info("--> recv: size=%4d, %4d", pkt.size, pkt.size-prev_size);
 			end;
 			prev_size = pkt.size;
