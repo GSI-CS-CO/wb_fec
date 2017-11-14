@@ -34,7 +34,7 @@ architecture rtl of fec_hdr_gen is
   signal fec_hdr_stb_d: std_logic;
   signal fec_stb_d    : std_logic;
   signal fec_hdr      : t_wrf_bus;
-  signal fec_hdr_len  : integer range 0 to c_fec_hdr_len - 1;
+  signal fec_hdr_len  : integer range 0 to c_fec_hdr_len;
   signal eth_hdr_reg  : t_eth_hdr;
   signal eth_hdr_shift: t_eth_hdr;
   signal eth_hdr      : t_eth_frame_header;
@@ -51,16 +51,16 @@ begin
       else
         if (fec_hdr_stb_i = '1') then
           fec_hdr_len <= fec_hdr_len + 1;
-          if (fec_hdr_len <=  c_fec_hdr_len - 3) then
-            fec_hdr_o <= f_extract_eth(fec_hdr_len, eth_hdr_shift);
-          elsif (fec_hdr_len =  c_fec_hdr_len - 2) then
-            fec_hdr_o <= std_logic_vector(resize(block_len_i, 16));
-          elsif (fec_hdr_len =  c_fec_hdr_len - 1) then
-            fec_hdr_o <= fec_hdr;
-          end if;
         else
-          fec_hdr_o   <= (others => '0');
           fec_hdr_len <= 0;
+        end if;
+
+        if (fec_hdr_len <=  c_fec_hdr_len - 3) then
+          fec_hdr_o <= f_extract_eth(fec_hdr_len, eth_hdr_shift);
+        elsif (fec_hdr_len =  c_fec_hdr_len - 2) then
+          fec_hdr_o <= std_logic_vector(resize(block_len_i, 16));
+        elsif (fec_hdr_len <=  c_fec_hdr_len - 1) then
+          fec_hdr_o <= fec_hdr;
         end if;
       end if;
     end if;
@@ -110,12 +110,12 @@ begin
         fec_stb_d     <= fec_stb_i;
         fec_hdr_stb_d <= fec_hdr_stb_i;
 
-        if (fec_stb_d = '0' and fec_stb_i = '1') then
+        if (fec_stb_d = '1' and fec_stb_i = '0') then
           id_cnt    <= id_cnt + 1;
           subid_cnt <= (others => '0');
         end if;
 
-        if (fec_hdr_stb_d = '0' and fec_hdr_stb_i = '1') then
+        if (fec_hdr_stb_d = '1' and fec_hdr_stb_i = '0') then
           subid_cnt    <= subid_cnt + 1;
         end if;
       end if;

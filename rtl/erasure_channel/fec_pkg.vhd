@@ -23,6 +23,7 @@ package fec_pkg is
   constant c_fec_hdr_len      : integer := 8;
   constant c_fec_hdr_vlan_len : integer := 10;
   constant c_eth_payload      : integer := 750; -- 16 bit word
+  constant c_eth_pkt          : integer := c_eth_hdr_len + c_eth_payload;
   constant c_eth_pl_width     : integer := f_ceil_log2(c_eth_payload);
   constant c_block_max_len    : integer := 188; -- 16 bit word
   constant c_FROM_PKT         : std_logic := '0';
@@ -39,8 +40,8 @@ package fec_pkg is
 
   -- Enc FIFOs
   constant c_fifo_cnt_width   : integer := f_ceil_log2(c_block_max_len);
-  --subtype t_fifo_cnt_width  is std_logic_vector(c_fifo_cnt_width - 1 downto 0);
-  subtype t_fifo_cnt_width  is std_logic_vector(7 downto 0);
+  subtype t_fifo_cnt_width  is std_logic_vector(c_fifo_cnt_width - 1 downto 0);
+  subtype te_fifo_cnt_width  is std_logic_vector(8 downto 0);
   type t_fifo_cnt_array is array (natural range <>) of t_fifo_cnt_width;
 
   -- Ethernet Header
