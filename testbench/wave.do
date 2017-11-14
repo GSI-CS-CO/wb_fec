@@ -86,36 +86,35 @@ add wave -noupdate -group FIFO_3 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLO
 add wave -noupdate -group FIFO_3 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLOCK_FIFO(3)/PKT_BLOCK_FIFO/almost_empty_o
 add wave -noupdate -group FIFO_3 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLOCK_FIFO(3)/PKT_BLOCK_FIFO/almost_full_o
 add wave -noupdate -group FIFO_3 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLOCK_FIFO(3)/PKT_BLOCK_FIFO/count_o
-add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/snk_i
+add wave -noupdate -expand -group WB_FEC_ENC -expand /main/XWB_FEC/FEC_ENC/snk_i
 add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/snk_o
 add wave -noupdate -expand -group WB_FEC_ENC -expand /main/XWB_FEC/FEC_ENC/src_i
 add wave -noupdate -expand -group WB_FEC_ENC -expand /main/XWB_FEC/FEC_ENC/src_o
 add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/ctrl_reg_i
 add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/stat_reg_o
 add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/src_cyc
-add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/enc_err
-add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/pkt_err
-add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/pkt_stb
+add wave -noupdate -expand -group WB_FEC_ENC -group err /main/XWB_FEC/FEC_ENC/enc_err
+add wave -noupdate -expand -group WB_FEC_ENC -group err /main/XWB_FEC/FEC_ENC/pkt_err
+add wave -noupdate -expand -group WB_FEC_ENC -expand -group STB /main/XWB_FEC/FEC_ENC/fec_stb_d
+add wave -noupdate -expand -group WB_FEC_ENC -expand -group STB /main/XWB_FEC/FEC_ENC/fec_stb
+add wave -noupdate -expand -group WB_FEC_ENC -expand -group STB /main/XWB_FEC/FEC_ENC/hdr_stb
+add wave -noupdate -expand -group WB_FEC_ENC -expand -group STB /main/XWB_FEC/FEC_ENC/pkt_stb
+add wave -noupdate -expand -group WB_FEC_ENC -expand -group STB /main/XWB_FEC/FEC_ENC/fec_hdr_stb
+add wave -noupdate -expand -group WB_FEC_ENC -expand -group STB /main/XWB_FEC/FEC_ENC/fec_payload_stb
 add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/pkt_enc_stb
 add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/hdr_etherType
 add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/ctrl_reg
-add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/snk_ack
 add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/snk_stall
 add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/enc_payload
+add wave -noupdate -expand -group WB_FEC_ENC -expand -group fifo /main/XWB_FEC/FEC_ENC/dat_fifo_out
+add wave -noupdate -expand -group WB_FEC_ENC -expand -group fifo /main/XWB_FEC/FEC_ENC/wr_fifo_out
+add wave -noupdate -expand -group WB_FEC_ENC -expand -group fifo /main/XWB_FEC/FEC_ENC/rd_fifo_out
+add wave -noupdate -expand -group WB_FEC_ENC -expand -group fifo /main/XWB_FEC/FEC_ENC/fifo_empty
+add wave -noupdate -expand -group WB_FEC_ENC -expand -group fifo /main/XWB_FEC/FEC_ENC/fifo_full
+add wave -noupdate -expand -group WB_FEC_ENC -expand -group fifo /main/XWB_FEC/FEC_ENC/fifo_cnt
 add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/fec_hdr
 add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/fec_pkt
-add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/fec_stb
-add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/fec_stb_d
-add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/fec_hdr_stb
-add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/fec_payload_stb
-add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/fec_oob_stb
-add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/dat_fifo_out
-add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/wr_fifo_out
-add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/rd_fifo_out
-add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/code_empty
-add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/code_full
 add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/fec_block_len
-add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/hdr_stb
 add wave -noupdate -expand -group WB_FEC_ENC -height 16 /main/XWB_FEC/FEC_ENC/s_enc_refresh
 add wave -noupdate -expand -group WB_FEC_ENC -height 16 /main/XWB_FEC/FEC_ENC/s_fec_strm
 add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/eth_cnt
@@ -140,9 +139,9 @@ add wave -noupdate -expand -group HDR_GEN /main/XWB_FEC/FEC_ENC/FEC_HDR_PROC/eth
 add wave -noupdate -expand -group HDR_GEN /main/XWB_FEC/FEC_ENC/FEC_HDR_PROC/eth_hdr
 add wave -noupdate -expand -group HDR_GEN /main/XWB_FEC/FEC_ENC/FEC_HDR_PROC/hdr_reserved
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {209991670 fs} 0}
-configure wave -namecolwidth 165
-configure wave -valuecolwidth 75
+WaveRestoreCursors {{Cursor 1} {1477919380 fs} 0}
+configure wave -namecolwidth 194
+configure wave -valuecolwidth 130
 configure wave -justifyvalue left
 configure wave -signalnamewidth 1
 configure wave -snapdistance 10
@@ -155,4 +154,4 @@ configure wave -griddelta 10
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {0 fs} {6212480860 fs}
+WaveRestoreZoom {1299738690 fs} {1694158090 fs}

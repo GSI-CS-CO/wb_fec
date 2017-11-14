@@ -163,7 +163,7 @@ module main;
     //#1500ns;
     
     /* some dummy addresses */
-    lenght = 'h002e;
+    lenght = 'h0038;
     pkt.dst        = '{'hff, 'hff, 'hff, 'hff, 'hff, 'hff};
     pkt.src        = '{1,2,3,4,5,6};
     pkt.ethertype  = lenght;
@@ -184,6 +184,7 @@ module main;
     while(1) begin
       /* send the packet */
       fec_src.send(pkt);
+      #100us;
     end
   end
 
