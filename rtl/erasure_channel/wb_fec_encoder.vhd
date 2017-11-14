@@ -63,7 +63,7 @@ architecture rtl of wb_fec_encoder is
   signal fec_block_len    : t_block_len;
   signal hdr_stb          : std_logic;
   type t_enc_refresh is (REFRESH, WAIT_REFRESH);
-  type t_fec_strm is (IDLE, SEND_OOB, SEND_FEC_HDR, SEND_FEC_PAYLOAD, IDLE_FEC);
+  type t_fec_strm is (IDLE, SEND_OOB, SEND_OOB1, SEND_FEC_HDR, SEND_FEC_PAYLOAD, IDLE_FEC);
   signal s_enc_refresh    : t_enc_refresh;
   signal s_fec_strm       : t_fec_strm;
   signal eth_cnt          : integer range 0 to c_eth_hdr_len + c_eth_payload;
@@ -178,6 +178,8 @@ begin
               fec_pkt_cnt     <= 0;
             end if;
           when SEND_OOB => 
+              s_fec_strm  <= SEND_OOB1;
+          when SEND_OOB1=>
               s_fec_strm  <= SEND_FEC_HDR;
           when SEND_FEC_HDR =>
             if (fec_word_cnt < c_fec_hdr_len - 1) then
@@ -331,7 +333,9 @@ begin
   src_o.we  <=  snk_i.we when  ctrl_reg_i.fec_enc_en = c_DISABLE else
                 '1';
   
-  wrf_adr_i <= c_WRF_OOB        when s_fec_strm = SEND_OOB              else
+  wrf_adr_i <= c_WRF_OOB        when s_fec_strm = SEND_OOB  or           
+                                     s_fec_strm = SEND_OOB1          else
+  --wrf_adr_i <= c_WRF_STATUS     when s_fec_strm = SEND_OOB              else
                c_WRF_DATA       when s_fec_strm = SEND_FEC_HDR or s_fec_strm = SEND_FEC_PAYLOAD else
                (others => '0');
 
@@ -348,6 +352,7 @@ begin
                (others => '0');
 
   wr_fifo_o <=  '1'  when s_fec_strm = SEND_OOB or
+                          s_fec_strm = SEND_OOB1 or 
                           s_fec_strm = SEND_FEC_HDR or 
                           s_fec_strm = SEND_FEC_PAYLOAD else
                 '0';
@@ -355,6 +360,7 @@ begin
   --rd_fifo_out <= (not src_i.stall) and src_cyc;  
   
   rd_fifo_o <=  '1'  when  (s_fec_strm = SEND_OOB or 
+                            s_fec_strm = SEND_OOB1  or
                             s_fec_strm = SEND_FEC_PAYLOAD  or
                             s_fec_strm = SEND_FEC_HDR or
                             s_fec_strm = IDLE_FEC) and

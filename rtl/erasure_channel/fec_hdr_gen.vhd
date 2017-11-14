@@ -51,7 +51,11 @@ begin
         fec_hdr_len <= 0;
       else
         if (fec_hdr_stb_i = '1') then
-          fec_hdr_len <= fec_hdr_len + 1;
+          if (fec_hdr_len <= c_fec_hdr_len - 1) then
+            fec_hdr_len <= fec_hdr_len + 1;
+          else
+            fec_hdr_len <= 0;
+          end if;
         else
           fec_hdr_len <= 0;
         end if;
