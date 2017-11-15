@@ -48,7 +48,9 @@ architecture rtl of wb_fec_encoder is
   signal data_payload     : unsigned(15 downto 0);
   signal fec_stb          : std_logic;
   signal fec_hdr_stb      : std_logic;
+  signal pkt_id           : std_logic_vector(c_fec_cnt_width - 1 downto 0);
   signal data_fifo_i      : t_fifo_out;  
+  signal OOB_frame_id     : t_wrf_bus;
   alias  fec_pkt_i        : t_wrf_bus is data_fifo_i(15 downto 0);
   alias  wrf_adr_i        : t_wrf_adr is data_fifo_i(17 downto 16);
   signal data_fifo_o      : t_fifo_out;
@@ -63,14 +65,14 @@ architecture rtl of wb_fec_encoder is
   signal fec_block_len    : t_block_len;
   signal hdr_stb          : std_logic;
   type t_enc_refresh is (REFRESH, WAIT_REFRESH);
-  type t_fec_strm is (IDLE, SEND_OOB, SEND_OOB1, SEND_FEC_HDR, SEND_FEC_PAYLOAD, IDLE_FEC);
+  type t_fec_strm is (IDLE, SEND_STATUS, SEND_OOB0, SEND_OOB1, SEND_FEC_HDR, SEND_FEC_PAYLOAD, IDLE_FEC);
   signal s_enc_refresh    : t_enc_refresh;
   signal s_fec_strm       : t_fec_strm;
   signal eth_cnt          : integer range 0 to c_eth_hdr_len + c_eth_payload;
   signal fec_pkt_cnt      : integer range 0 to g_num_block;
   signal fec_word_cnt     : integer range 0 to c_fec_hdr_len + c_eth_payload;
 
-  constant c_div_num_block : integer := f_log2_size(g_num_block) + 1; -- 16 bit word
+  constant c_div_num_block : integer := f_log2_size(g_num_block) + 1; -- in 16bit words
 begin 
 
   PKT_ERASURE_ENC : fec_encoder
@@ -88,7 +90,6 @@ begin
   fec_payload_stb <=  '1' when s_fec_strm  = SEND_FEC_PAYLOAD else
                       '0';
 
-  stat_reg_o.fec_enc_err  <= enc_err & pkt_err;
  
   --g_GOLAY_ENC : if g_en_golay generate
   --  GOLAY_ENC : golay_encoder
@@ -113,7 +114,7 @@ begin
       fec_stb_i     => fec_stb,
       fec_hdr_stb_i => fec_hdr_stb,
       fec_hdr_o     => fec_hdr,
-      enc_cnt_o     => stat_reg_o.fec_enc_cnt,
+      enc_cnt_o     => pkt_id,
       ctrl_reg_i    => ctrl_reg);
   
   hdr_stb <= '1' when (snk_i.cyc = '1' and snk_i.stb = '1' and pkt_stb = '0' and
@@ -152,6 +153,8 @@ begin
       end if;
     end if;
   end process;
+  stat_reg_o.fec_enc_err  <= enc_err & pkt_err;
+  stat_reg_o.fec_enc_cnt  <= pkt_id;
   
   -- Ctrl the streaming of FEC pkts
   fec_streaming : process(clk_i) is
@@ -169,7 +172,7 @@ begin
         case s_fec_strm is
           when IDLE =>
             if (eth_cnt >= fec_block_len - 2) then
-              s_fec_strm  <= SEND_OOB;
+              s_fec_strm  <= SEND_STATUS;
               fec_stb     <= '1';
             else
               s_fec_strm  <= IDLE;            
@@ -177,10 +180,8 @@ begin
               fec_word_cnt    <= 0;
               fec_pkt_cnt     <= 0;
             end if;
-          when SEND_OOB => 
-              s_fec_strm  <= SEND_OOB1;
-          when SEND_OOB1=>
-              s_fec_strm  <= SEND_FEC_HDR;
+          when SEND_STATUS =>
+            s_fec_strm  <= SEND_FEC_HDR;
           when SEND_FEC_HDR =>
             if (fec_word_cnt < c_fec_hdr_len - 1) then
               s_fec_strm  <= SEND_FEC_HDR;
@@ -199,11 +200,14 @@ begin
               s_fec_strm      <= IDLE_FEC;
             end if;
             fec_word_cnt <= fec_word_cnt + 1;
-
+          when SEND_OOB0 => 
+              s_fec_strm  <= SEND_OOB1; -- not used, reduce latency
+          when SEND_OOB1=>
+              s_fec_strm  <= IDLE_FEC;  -- not used, reduce latency
           when IDLE_FEC =>
             if (fifo_empty = '1') then
               if (fec_pkt_cnt <= g_num_block - 1) then
-                s_fec_strm  <= SEND_OOB;
+                s_fec_strm  <= SEND_STATUS;
                 fec_word_cnt  <= 0;
               else
                 s_fec_strm  <= IDLE;
@@ -278,7 +282,7 @@ begin
   --    if rst_n_i = '0' then
   --      src_cyc <= '0';
   --    else
-  --      if (s_fec_strm = SEND_OOB or  
+  --      if (s_fec_strm = SEND_OOB0 or  
   --          s_fec_strm = SEND_FEC_HDR or
   --          s_fec_strm = SEND_FEC_PAYLOAD or  
   --          (fifo_empty = '0' and  s_fec_strm = IDLE_FEC)) then
@@ -308,23 +312,20 @@ begin
 
   enc_payload <= std_logic_vector(data_payload);
 
-  --src_cyc <= '1' when (s_fec_strm = SEND_OOB or  
+  --src_cyc <= '1' when (s_fec_strm = SEND_OOB0 or  
             --s_fec_strm = SEND_FEC_HDR or
-  src_cyc <= '1' when (s_fec_strm = SEND_FEC_HDR or
+  src_cyc <=  '1'  when (s_fec_strm = SEND_FEC_HDR or
                         s_fec_strm = SEND_FEC_PAYLOAD or  
                         (fifo_empty = '0' and  s_fec_strm = IDLE_FEC)) and
                         fifo_empty = '0' else
-            '0';
+              '0';
 
-  -- FIXME the problem is with the de-cyc it takes two cycles
-  src_o.cyc <=  snk_i.cyc when ctrl_reg_i.fec_enc_en = c_DISABLE else
-                src_cyc  when ctrl_reg_i.fec_enc_en = c_ENABLE else --FIXME something more elegant..
-                --src_cyc  when ctrl_reg_i.fec_enc_en = c_ENABLE and fifo_empty = '0' else --FIXME something more elegant..
+  src_o.cyc <=  snk_i.cyc when ctrl_reg_i.fec_enc_en = c_DISABLE  else
+                src_cyc   when ctrl_reg_i.fec_enc_en = c_ENABLE   else
                 '0';
   
   src_o.stb <=  snk_i.stb when ctrl_reg_i.fec_enc_en = c_DISABLE else
-                src_cyc  when ctrl_reg_i.fec_enc_en = c_ENABLE else -- FIXME something more elegant
-                --src_cyc  when ctrl_reg_i.fec_enc_en = c_ENABLE and fifo_empty = '0' else -- FIXME something more elegant
+                src_cyc   when ctrl_reg_i.fec_enc_en = c_ENABLE else
                 '0';
 
   src_o.sel <=  snk_i.sel when  ctrl_reg_i.fec_enc_en = c_DISABLE else
@@ -333,44 +334,51 @@ begin
   src_o.we  <=  snk_i.we when  ctrl_reg_i.fec_enc_en = c_DISABLE else
                 '1';
   
-  wrf_adr_i <= c_WRF_OOB        when s_fec_strm = SEND_OOB  or           
-                                     s_fec_strm = SEND_OOB1          else
-  --wrf_adr_i <= c_WRF_STATUS     when s_fec_strm = SEND_OOB              else
-               c_WRF_DATA       when s_fec_strm = SEND_FEC_HDR or s_fec_strm = SEND_FEC_PAYLOAD else
+  wrf_adr_i <= c_WRF_STATUS     when s_fec_strm = SEND_STATUS       else
+               c_WRF_DATA       when s_fec_strm = SEND_FEC_HDR or
+                                     s_fec_strm = SEND_FEC_PAYLOAD  else  
+               c_WRF_OOB        when s_fec_strm = SEND_OOB0   or
+                                     s_fec_strm = SEND_OOB1        else
                (others => '0');
 
   src_o.adr <=  snk_i.adr   when ctrl_reg_i.fec_enc_en = c_DISABLE else
                 wrf_adr_o   when ctrl_reg_i.fec_enc_en = c_ENABLE;
 
-  fec_pkt_i <= c_WRF_OOB_TYPE_TX & x"aaa" when s_fec_strm = SEND_OOB          else
-               fec_hdr                    when s_fec_strm = SEND_FEC_HDR      else
-               enc_payload                when s_fec_strm = SEND_FEC_PAYLOAD  else
+  fec_pkt_i <= c_WRF_STATUS_FEC when s_fec_strm = SEND_STATUS       else
+               fec_hdr          when s_fec_strm = SEND_FEC_HDR      else
+               enc_payload      when s_fec_strm = SEND_FEC_PAYLOAD  else
+               c_WRF_OOB_FEC    when s_fec_strm = SEND_OOB0         else
+               OOB_frame_id     when s_fec_strm = SEND_OOB1         else
                (others => '0');
+
+  OOB_frame_id  <= pkt_id(c_wrf_width -1  downto 0);
   
   src_o.dat <= snk_i.dat        when ctrl_reg_i.fec_enc_en = c_DISABLE  else
                fec_pkt_o        when ctrl_reg_i.fec_enc_en = c_ENABLE   else
                (others => '0');
 
-  wr_fifo_o <=  '1'  when s_fec_strm = SEND_OOB or
-                          s_fec_strm = SEND_OOB1 or 
+  wr_fifo_o <=  '1'  when s_fec_strm = SEND_STATUS or
                           s_fec_strm = SEND_FEC_HDR or 
-                          s_fec_strm = SEND_FEC_PAYLOAD else
+                          s_fec_strm = SEND_FEC_PAYLOAD or
+                          s_fec_strm = SEND_OOB0 or
+                          s_fec_strm = SEND_OOB1   else
                 '0';
 
   --rd_fifo_out <= (not src_i.stall) and src_cyc;  
   
-  rd_fifo_o <=  '1'  when  (s_fec_strm = SEND_OOB or 
-                            s_fec_strm = SEND_OOB1  or
+  rd_fifo_o <=  '1'  when  (s_fec_strm = SEND_STATUS or
                             s_fec_strm = SEND_FEC_PAYLOAD  or
                             s_fec_strm = SEND_FEC_HDR or
-                            s_fec_strm = IDLE_FEC) and
+                            s_fec_strm = IDLE_FEC or
+                            s_fec_strm = SEND_OOB0 or 
+                            s_fec_strm = SEND_OOB1) and
                             src_i.stall = '0' and 
                             fifo_empty = '0'else
-                  '0';
+                '0';
 
   ENC_HDR_PKT_FIFO : generic_sync_fifo
     generic map (
-      g_data_width  => c_wrf_width + 2,
+      g_data_width  => c_wrf_width + c_wrf_adr_width,
       g_size        => 256,
       g_with_full   => true,
       g_with_empty  => true,
@@ -388,6 +396,7 @@ begin
       rd_i    => rd_fifo_o);
 
     -- TODO
+    -- homogenize pkt and frame names
     -- IF HALT TOO LONG AND FIFO FULL, ERROR and RESET EVERYTHING
     -- ACK THE CHANGE IN THE CTRL REGISTER
     -- WHEN ENC DISABLE REVIEW

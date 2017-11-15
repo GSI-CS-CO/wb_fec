@@ -39,6 +39,8 @@ package fec_pkg is
   subtype t_wrf_adr  is std_logic_vector(c_wrf_adr_width - 1 downto 0);
   subtype t_wrf_bus  is std_logic_vector(c_wrf_width - 1 downto 0);
   type t_wrf_bus_array is array (natural range <>) of t_wrf_bus;
+  constant c_WRF_STATUS_FEC   : t_wrf_bus := x"0005"; -- vCRC = 0, vSMAC = 1, err = 1, isHP = 1
+  constant c_WRF_OOB_FEC      : t_wrf_bus := c_WRF_OOB_TYPE_TX & x"aaa";
 
   -- Enc FIFOs
   constant c_output_fifo_width  : integer := c_wrf_width + c_wrf_adr_width;
