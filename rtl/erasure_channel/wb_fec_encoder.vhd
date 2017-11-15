@@ -61,7 +61,7 @@ architecture rtl of wb_fec_encoder is
   signal rd_fifo_o        : std_logic;
   signal fifo_empty       : std_logic;
   signal fifo_full        : std_logic;
-  signal fifo_cnt         : te_fifo_cnt_width; --FIXME
+  signal fifo_cnt         : t_out_fifo_cnt_width;
   signal fec_block_len    : t_block_len;
   signal hdr_stb          : std_logic;
   type t_enc_refresh is (REFRESH, WAIT_REFRESH);
@@ -155,7 +155,7 @@ begin
   end process;
   stat_reg_o.fec_enc_err  <= enc_err & pkt_err;
   stat_reg_o.fec_enc_cnt  <= pkt_id;
-  
+
   -- Ctrl the streaming of FEC pkts
   fec_streaming : process(clk_i) is
     variable fec_hdr_payload_len  : integer range 0 to c_eth_pkt;
@@ -312,18 +312,17 @@ begin
 
   enc_payload <= std_logic_vector(data_payload);
 
-  --src_cyc <= '1' when (s_fec_strm = SEND_OOB0 or  
-            --s_fec_strm = SEND_FEC_HDR or
   src_cyc <=  '1'  when (s_fec_strm = SEND_FEC_HDR or
                         s_fec_strm = SEND_FEC_PAYLOAD or  
                         (fifo_empty = '0' and  s_fec_strm = IDLE_FEC)) and
                         fifo_empty = '0' else
               '0';
-
+  
   src_o.cyc <=  snk_i.cyc when ctrl_reg_i.fec_enc_en = c_DISABLE  else
                 src_cyc   when ctrl_reg_i.fec_enc_en = c_ENABLE   else
                 '0';
-  
+
+  --FIXME it works but it is not 100% compliant with the WRF spec
   src_o.stb <=  snk_i.stb when ctrl_reg_i.fec_enc_en = c_DISABLE else
                 src_cyc   when ctrl_reg_i.fec_enc_en = c_ENABLE else
                 '0';
@@ -364,8 +363,6 @@ begin
                           s_fec_strm = SEND_OOB1   else
                 '0';
 
-  --rd_fifo_out <= (not src_i.stall) and src_cyc;  
-  
   rd_fifo_o <=  '1'  when  (s_fec_strm = SEND_STATUS or
                             s_fec_strm = SEND_FEC_PAYLOAD  or
                             s_fec_strm = SEND_FEC_HDR or
@@ -378,8 +375,8 @@ begin
 
   ENC_HDR_PKT_FIFO : generic_sync_fifo
     generic map (
-      g_data_width  => c_wrf_width + c_wrf_adr_width,
-      g_size        => 256,
+      g_data_width  => c_out_fifo_width,
+      g_size        => c_out_fifo_size,
       g_with_full   => true,
       g_with_empty  => true,
       g_with_count  => true,
@@ -398,7 +395,9 @@ begin
     -- TODO
     -- homogenize pkt and frame names
     -- IF HALT TOO LONG AND FIFO FULL, ERROR and RESET EVERYTHING
+    -- CHECK WHAT HAPPENS IF STALL TOO LONG
     -- ACK THE CHANGE IN THE CTRL REGISTER
     -- WHEN ENC DISABLE REVIEW
+    -- ETHERTYPE KONFIGURIRBAR 
 
 end rtl;

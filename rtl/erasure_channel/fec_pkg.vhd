@@ -43,12 +43,15 @@ package fec_pkg is
   constant c_WRF_OOB_FEC      : t_wrf_bus := c_WRF_OOB_TYPE_TX & x"aaa";
 
   -- Enc FIFOs
-  constant c_output_fifo_width  : integer := c_wrf_width + c_wrf_adr_width;
-  subtype t_fifo_out        is std_logic_vector(c_output_fifo_width - 1 downto 0);
-  constant c_fifo_cnt_width     : integer := f_ceil_log2(c_block_max_len);
-  subtype t_fifo_cnt_width  is std_logic_vector(c_fifo_cnt_width - 1 downto 0);
-  subtype te_fifo_cnt_width is std_logic_vector(7 downto 0); --FIXME
-  type t_fifo_cnt_array     is array (natural range <>) of t_fifo_cnt_width;
+  constant c_out_fifo_size   : integer := 512;
+  constant c_fec_fifo_size      : integer := 256;
+  constant c_out_fifo_cnt_width : integer := f_log2_size(c_out_fifo_size);
+  constant c_fec_fifo_cnt_width : integer := f_log2_size(c_fec_fifo_size);
+  subtype t_fec_fifo_cnt_width  is std_logic_vector(c_fec_fifo_cnt_width - 1 downto 0);
+  subtype t_out_fifo_cnt_width  is std_logic_vector(c_out_fifo_cnt_width - 1 downto 0);
+  constant c_out_fifo_width     : integer := c_wrf_width + c_wrf_adr_width;
+  subtype t_fifo_out        is std_logic_vector(c_out_fifo_width - 1 downto 0);
+  type t_fifo_cnt_array     is array (natural range <>) of t_fec_fifo_cnt_width;
   subtype t_wrd_adr_width   is std_logic_vector(1 downto 0);
 
   -- Ethernet Header
@@ -102,6 +105,7 @@ package fec_pkg is
     fec_pkt_er_code   : std_logic_vector(1 downto 0);
     fec_bit_er_code   : std_logic_vector(1 downto 0);
     --time_code         : t_time_code;
+    fec_ethtype       : t_eth_type;
     fec_enc_en_golay  : std_logic;
     fec_enc_en        : std_logic;
   end record;
@@ -111,6 +115,7 @@ package fec_pkg is
     fec_pkt_er_code   => "01", -- Simple Code
     fec_bit_er_code   => "00", -- No Code
     --time_code         => c_time_code
+    fec_ethtype       => x"cafe",
     fec_enc_en_golay  => c_DISABLE,
     fec_enc_en        => c_ENABLE);
 
