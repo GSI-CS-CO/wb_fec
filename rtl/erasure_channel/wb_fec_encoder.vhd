@@ -64,7 +64,7 @@ architecture rtl of wb_fec_encoder is
   signal fifo_cnt         : t_out_fifo_cnt_width;
   signal fec_block_len    : t_block_len;
   signal hdr_stb          : std_logic;
-  type t_enc_refresh is (REFRESH, WAIT_REFRESH);
+  type t_enc_refresh is (IDLE, WAIT_TO_APPLY);
   type t_fec_strm is (IDLE, SEND_STATUS, SEND_OOB0, SEND_OOB1, SEND_FEC_HDR, SEND_FEC_PAYLOAD, IDLE_FEC);
   signal s_enc_refresh    : t_enc_refresh;
   signal s_fec_strm       : t_fec_strm;
@@ -131,24 +131,26 @@ begin
   begin
     if rising_edge(clk_i) then
       if rst_n_i = '0' then
-          s_enc_refresh <= REFRESH;
+          s_enc_refresh <= IDLE;
           fec_stb_d     <= '0';
       else
         fec_stb_d <= fec_stb;
-        ctrl_reg  <= ctrl_reg_i; --FIXME
+        --ctrl_reg  <= ctrl_reg_i; --FIXME
         case s_enc_refresh is
-          when REFRESH =>
+          when IDLE =>
             if (ctrl_reg_i.fec_ctrl_refresh = '1' and fec_stb = '0') then
               ctrl_reg  <= ctrl_reg_i;
-              s_enc_refresh <= REFRESH;
+              s_enc_refresh <= IDLE;
             elsif (ctrl_reg_i.fec_ctrl_refresh = '1' and fec_stb = '1') then
-              s_enc_refresh <= WAIT_REFRESH;
+              s_enc_refresh <= WAIT_TO_APPLY;
             end if;
-          when WAIT_REFRESH => -- wait till the last enc pkt has been sent
+          when WAIT_TO_APPLY => -- wait till the last enc pkt has been sent
             if ((fec_stb = '0') and (fec_stb_d = '1')) then
               ctrl_reg  <= ctrl_reg_i;
+              s_enc_refresh <= IDLE;
+            else
+              s_enc_refresh <= WAIT_TO_APPLY;
             end if;
-            s_enc_refresh <= REFRESH;
         end case;
       end if;
     end if;
@@ -398,6 +400,5 @@ begin
     -- CHECK WHAT HAPPENS IF STALL TOO LONG
     -- ACK THE CHANGE IN THE CTRL REGISTER
     -- WHEN ENC DISABLE REVIEW
-    -- ETHERTYPE KONFIGURIRBAR 
 
 end rtl;

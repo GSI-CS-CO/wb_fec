@@ -64,7 +64,7 @@ begin
           fec_hdr_o <= f_extract_eth(fec_hdr_len, eth_hdr_reg);
         elsif (fec_hdr_len <=  c_fec_hdr_len - 3) then
           --fec_hdr_o <= std_logic_vector(resize(block_len_i, 16));
-          fec_hdr_o <= x"cafe";
+          fec_hdr_o <= ctrl_reg_i.fec_ethtype;
         elsif (fec_hdr_len <=  c_fec_hdr_len - 2) then
           fec_hdr_o <= fec_hdr;
         end if;

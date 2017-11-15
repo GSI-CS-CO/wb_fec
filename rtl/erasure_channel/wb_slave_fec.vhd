@@ -7,16 +7,17 @@
 --! Register Map
 --! Ctrl Enc/Dec
 --! 0x00, wr, enable/disable encoder 1bit
---! 0x04, wr, Pkt Erasure Code 2bit - Bit Erasure Code 2 bit
+--! 0x04, wr, Pkt Erasure Code 2bit - Bit Erasure Code 2bit
+--! 0x08  wr, Ethertype 16bit
 -- Stat Enc/Dec
---! 0x08, wr, Encoded Error 2bit
---! 0x0C, wr, Encoded Frames Counter 32bit
+--! 0x0, r, Number of encoded frames --TBD
+--! 0x0, wr, Encoded Frames Counter 32bit
 -- Decoder Latency Statitcis 
---! 0x28, wr, decoder last latency
---! 0x2C, wr, decoder max latency
---! 0x30, wr, decoder min latency
---! 0x34, wr, decoder latency accumulated
---! 0x38, wr, decoder number of latency measured
+--! 0x, wr, decoder last latency
+--! 0x, wr, decoder max latency
+--! 0x, wr, decoder min latency
+--! 0x, wr, decoder latency accumulated
+--! 0x, wr, decoder number of latency measured
 -- Ctrl Reset Stat Registers
 
 library ieee;
@@ -61,10 +62,9 @@ begin
       if rst_n_i = '0' then
         s_fec_stat  <= c_fec_stat_reg;
         s_fec_ctrl  <= c_fec_ctrl_reg;
-
         wb_slave_o.ack    <= '0';
         wb_slave_o.dat    <= (others => '0');
-
+        s_fec_ctrl.fec_ctrl_refresh <= '1';
       else
         wb_slave_o.stall <= '0';
         wb_slave_o.ack <= wb_slave_i.cyc and wb_slave_i.stb;
@@ -77,16 +77,20 @@ begin
               end if;
               wb_slave_o.dat(0) <= s_fec_ctrl.fec_enc_en;
               wb_slave_o.dat(31 downto 1) <= (others => '0');
-            when "0001"    => -- 
+            when "0001"    => --  Pkt Erasure Code / Bit Erasure Code 0x4
               if wb_slave_i.we = '1' then
                 s_fec_ctrl.fec_pkt_er_code <= wb_slave_i.dat(1 downto 0);
                 s_fec_ctrl.fec_bit_er_code <= wb_slave_i.dat(3 downto 2);
               end if;
-              wb_slave_o.dat(31 downto 1) <= (others => '0');
-            when "0010"    => -- encoded frames 0x8
+              wb_slave_o.dat(1  downto 0) <= s_fec_ctrl.fec_pkt_er_code;
+              wb_slave_o.dat(3  downto 2) <= s_fec_ctrl.fec_bit_er_code;
+              wb_slave_o.dat(31 downto 4) <= (others => '0');
+            when "0010"    => -- Ethertype 0x8
               if wb_slave_i.we = '1' then
+                s_fec_ctrl.fec_ethtype <= wb_slave_i.dat(15 downto 0);
               end if;
-              --wb_slave_o.dat <= s_fec_stat.stat_enc.frame_enc;
+              wb_slave_o.dat(15 downto 0)   <= s_fec_ctrl.fec_ethtype;
+              wb_slave_o.dat(31 downto 16)  <= (others => '0');
             when "0011"    => -- decoded frames 0xC
               if wb_slave_i.we = '1' then
                 --s_fec_stat.stat_dec.err_dec <= wb_slave_i.dat; -- it'd be set to 0
