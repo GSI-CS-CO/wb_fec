@@ -34,7 +34,7 @@ end wb_fec_encoder;
 
 architecture rtl of wb_fec_encoder is
   signal src_cyc          : std_logic;
-  --signal src_cyc_d        : std_logic;
+  signal snk_ack          : std_logic;
   signal fec_stb_d        : std_logic;
   signal enc_err          : std_logic;
   signal pkt_err          : std_logic;
@@ -90,7 +90,6 @@ begin
   fec_payload_stb <=  '1' when s_fec_strm  = SEND_FEC_PAYLOAD else
                       '0';
 
- 
   --g_GOLAY_ENC : if g_en_golay generate
   --  GOLAY_ENC : golay_encoder
   --    port map (
@@ -234,7 +233,7 @@ begin
         pkt_err         <= '0';
       else
         if (ctrl_reg_i.fec_enc_en =  c_ENABLE) then
-          snk_o.ack   <= snk_i.cyc and snk_i.stb;
+          snk_ack <= snk_i.cyc and snk_i.stb;
           if snk_i.cyc = '1' and snk_i.stb = '1' and snk_stall = '0' then
             if snk_i.adr = c_WRF_DATA then
               -- getting the pkt header
@@ -264,18 +263,25 @@ begin
           eth_cnt       <= 0;
           pkt_stb       <= '0';
           pkt_err       <= '0';
-          --src_o         <= snk_i;
-          --snk_o         <= src_i;
         end if;
       end if;
     end if;
   end process;
 
-  snk_stall   <=  src_i.stall when  ctrl_reg_i.fec_enc_en = c_DISABLE else
+  snk_stall   <=  src_i.stall when ctrl_reg_i.fec_enc_en = c_DISABLE else
                   '1'         when snk_i.cyc = '0' and fec_stb = '1'  else
                   '0';
-
   snk_o.stall <= snk_stall;
+
+  snk_o.ack    <=  src_i.ack   when ctrl_reg_i.fec_enc_en = c_DISABLE else
+                   snk_ack     when ctrl_reg_i.fec_enc_en = c_ENABLE  else
+                  '0';
+
+  snk_o.err    <=  src_i.err   when ctrl_reg_i.fec_enc_en = c_DISABLE else
+                   '0'         when ctrl_reg_i.fec_enc_en = c_ENABLE; --FIXME Error Handling
+
+  snk_o.rty    <=  src_i.rty   when ctrl_reg_i.fec_enc_en = c_DISABLE else
+                   '0'         when ctrl_reg_i.fec_enc_en = c_ENABLE;
 
   --Tx to WR Fabric
   --tx_fabric : process(clk_i) is
@@ -398,7 +404,6 @@ begin
     -- homogenize pkt and frame names
     -- IF HALT TOO LONG AND FIFO FULL, ERROR and RESET EVERYTHING
     -- CHECK WHAT HAPPENS IF STALL TOO LONG
-    -- ACK THE CHANGE IN THE CTRL REGISTER
     -- WHEN ENC DISABLE REVIEW
 
 end rtl;
