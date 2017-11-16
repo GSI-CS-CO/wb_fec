@@ -39,7 +39,6 @@ architecture rtl of wb_fec_encoder is
   signal enc_err          : std_logic;
   signal pkt_err          : std_logic;
   signal pkt_stb          : std_logic;
-  signal pkt_enc_stb      : std_logic;
   signal hdr_etherType    : t_eth_type;
   signal ctrl_reg         : t_fec_ctrl_reg;
   signal snk_stall        : std_logic;
@@ -80,12 +79,12 @@ begin
       clk_i         => clk_i,
       rst_n_i       => rst_n_i,
       payload_i     => snk_i.dat,
-      block_len_i   => fec_block_len, -- payload in 16 bit words
-      stb_i         => pkt_stb,
+      payload_stb_i => pkt_stb,
+      fec_stb_i     => fec_stb,
+      fec_enc_stb_i => fec_payload_stb,
+      block_len_i   => fec_block_len,
       enc_err_o     => enc_err,
-      stb_o         => pkt_enc_stb,
-      --enc_payload_o => enc_payload);
-      enc_payload_o => open);
+      enc_payload_o => enc_payload);
   
   fec_payload_stb <=  '1' when s_fec_strm  = SEND_FEC_PAYLOAD else
                       '0';
@@ -403,7 +402,6 @@ begin
     -- TODO
     -- homogenize pkt and frame names
     -- IF HALT TOO LONG AND FIFO FULL, ERROR and RESET EVERYTHING
-    -- CHECK WHAT HAPPENS IF STALL TOO LONG
-    -- WHEN ENC DISABLE REVIEW
+    -- CHECK WHAT HAPPENS IF STALL TOO LONG -- it should work though
 
 end rtl;

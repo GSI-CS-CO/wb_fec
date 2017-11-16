@@ -26,8 +26,8 @@ package fec_pkg is
   constant c_eth_pkt          : integer := c_eth_hdr_len + c_eth_payload;
   constant c_eth_pl_width     : integer := f_ceil_log2(c_eth_payload);
   constant c_block_max_len    : integer := 188; -- 16 bit word
-  constant c_FROM_PKT         : std_logic := '0';
-  constant c_FROM_FIFO        : std_logic := '1';
+  constant c_FROM_STR         : std_logic := '0';
+  constant c_FROM_XOR         : std_logic := '1';
   constant c_FIFO_ON          : std_logic := '1';
   constant c_FIFO_OFF         : std_logic := '1';
   constant c_ENABLE           : std_logic := '1';
@@ -43,7 +43,7 @@ package fec_pkg is
   constant c_WRF_OOB_FEC      : t_wrf_bus := c_WRF_OOB_TYPE_TX & x"aaa";
 
   -- Enc FIFOs
-  constant c_out_fifo_size   : integer := 512;
+  constant c_out_fifo_size      : integer := 512;
   constant c_fec_fifo_size      : integer := 256;
   constant c_out_fifo_cnt_width : integer := f_log2_size(c_out_fifo_size);
   constant c_fec_fifo_cnt_width : integer := f_log2_size(c_fec_fifo_size);
@@ -67,6 +67,7 @@ package fec_pkg is
   subtype t_enc_frame_sub_id is std_logic_vector(2 downto 0);
   subtype t_reserved         is std_logic_vector(2 downto 0);
   subtype t_block_len        is unsigned (c_eth_pl_width - 1 downto 0);
+  subtype t_fec_pkt_len      is unsigned ((2 * c_eth_pl_width) - 1 downto 0);
 
   -- FEC Counters
   constant c_id_width       : integer := 6;
@@ -249,14 +250,15 @@ package fec_pkg is
 
   component fec_encoder is
     generic (g_num_block : integer := 4);
-    port (
+    port (    
       clk_i         : in  std_logic;
       rst_n_i       : in  std_logic;
       payload_i     : in  t_wrf_bus;
+      payload_stb_i : in  std_logic;
+      fec_stb_i     : in  std_logic;
+      fec_enc_stb_i : in  std_logic;
       block_len_i   : in  t_block_len;
-      stb_i         : in  std_logic;
       enc_err_o     : out std_logic;
-      stb_o         : out std_logic;
       enc_payload_o : out t_wrf_bus);
   end component;
 
