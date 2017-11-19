@@ -46,12 +46,15 @@ package fec_pkg is
   -- Enc FIFOs
   constant c_out_fifo_size      : integer := 1024;
   constant c_fec_fifo_size      : integer := 256;
+  constant c_wrf_fifo_size      : integer := 64;
   constant c_out_fifo_cnt_width : integer := f_log2_size(c_out_fifo_size);
   constant c_fec_fifo_cnt_width : integer := f_log2_size(c_fec_fifo_size);
+  constant c_wrf_fifo_cnt_width : integer := f_log2_size(c_wrf_fifo_size);
   subtype t_fec_fifo_cnt_width  is std_logic_vector(c_fec_fifo_cnt_width - 1 downto 0);
   subtype t_out_fifo_cnt_width  is std_logic_vector(c_out_fifo_cnt_width - 1 downto 0);
-  constant c_out_fifo_width     : integer := c_wrf_width + c_wrf_adr_width;
-  subtype t_fifo_out        is std_logic_vector(c_out_fifo_width - 1 downto 0);
+  subtype t_wrf_fifo_cnt_width  is std_logic_vector(c_wrf_fifo_cnt_width - 1 downto 0);
+  constant c_wrf_fifo_width     : integer := c_wrf_width + c_wrf_adr_width;
+  subtype t_wrf_fifo_out        is std_logic_vector(c_wrf_fifo_width - 1 downto 0);
   type t_fifo_cnt_array     is array (natural range <>) of t_fec_fifo_cnt_width;
   subtype t_wrd_adr_width   is std_logic_vector(1 downto 0);
 

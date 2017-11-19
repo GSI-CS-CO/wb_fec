@@ -49,11 +49,11 @@ architecture rtl of wb_fec_encoder is
   signal fec_stb          : std_logic;
   signal fec_hdr_stb      : std_logic;
   signal pkt_id           : std_logic_vector(c_fec_cnt_width - 1 downto 0);
-  signal data_fifo_i      : t_fifo_out;  
   signal OOB_frame_id     : t_wrf_bus;
+  signal data_fifo_i      : t_wrf_fifo_out;  
   alias  fec_pkt_i        : t_wrf_bus is data_fifo_i(15 downto 0);
   alias  wrf_adr_i        : t_wrf_adr is data_fifo_i(17 downto 16);
-  signal data_fifo_o      : t_fifo_out;
+  signal data_fifo_o      : t_wrf_fifo_out;
   alias  fec_pkt_o        : t_wrf_bus is data_fifo_o(15 downto 0);
   alias  wrf_adr_o        : t_wrf_adr is data_fifo_o(17 downto 16);
   signal fec_enc_rd       : std_logic;
@@ -61,7 +61,7 @@ architecture rtl of wb_fec_encoder is
   signal rd_fifo_o        : std_logic;
   signal fifo_empty       : std_logic;
   signal fifo_full        : std_logic;
-  signal fifo_cnt         : t_out_fifo_cnt_width;
+  signal fifo_cnt         : t_wrf_fifo_cnt_width;
   signal fec_block_len    : t_block_len;
   signal hdr_stb          : std_logic;
   type t_enc_refresh is (IDLE, WAIT_TO_APPLY);
@@ -349,8 +349,8 @@ begin
 
   ENC_HDR_PKT_FIFO : generic_sync_fifo
     generic map (
-      g_data_width  => c_out_fifo_width,
-      g_size        => c_out_fifo_size,
+      g_data_width  => c_wrf_fifo_width,
+      g_size        => c_wrf_fifo_size,
       g_with_full   => true,
       g_with_empty  => true,
       g_with_count  => true,
