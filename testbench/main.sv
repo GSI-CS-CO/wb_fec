@@ -24,6 +24,8 @@ module main;
   uint32_t data;
   int lenght = 0;
   int i = 0;
+  int j = 0;
+  int cnt = 0;
 
 	/* WB masters */
   IWishboneMaster WB_fec (clk_sys, rst_n);
@@ -163,7 +165,7 @@ module main;
     //#1500ns;
     
     /* some dummy addresses */
-    lenght = 'h01f4;
+    lenght = 'h0200;
     pkt.dst        = '{'hff, 'hff, 'hff, 'hff, 'hff, 'hff};
     pkt.src        = '{1,2,3,4,5,6};
     pkt.ethertype  = lenght;
@@ -173,13 +175,23 @@ module main;
     pkt.set_size(lenght);
 
     seed = 100;
-  
-    for(i=0; i < lenght; i++)
+
+    cnt = 0;
+    for(j=0; j < 4; j++)
       begin
-      data = $dist_uniform(seed, 0, (1<<31)-1);
-      pkt.payload[i] = data & 'hff;
+      for (i=1; i <= lenght/4; i++)
+        begin
+        //pkt.payload[cnt] = i & 'hff;
+        pkt.payload[cnt] = j & 'hff;
+        cnt = cnt + 1;
+      end
     end
 
+    //for(i=0; i < lenght; i++)
+    //  begin
+    //  data = $dist_uniform(seed, 0, (1<<31)-1);
+    //  pkt.payload[i] = data & 'hff;
+    //end
     
     while(1) begin
       /* send the packet */
