@@ -20,6 +20,7 @@ package fec_pkg is
 
   constant c_eth_hdr_len      : integer := 7;   -- 16 bit word
   constant c_eth_hdr_vlan_len : integer := 9;   -- 16 bit word
+  constant c_eth_hdr_len_width: integer := f_ceil_log2(c_eth_hdr_len);
   constant c_fec_hdr_len      : integer := 8;
   constant c_fec_hdr_vlan_len : integer := 10;
   constant c_eth_payload      : integer := 750; -- 16 bit word
@@ -211,10 +212,10 @@ package fec_pkg is
   component wb_fec is
     generic (
       g_num_block   : integer := 4;
-      g_en_fec_enc    : boolean;
-      g_en_fec_dec    : boolean;
-      g_en_golay      : boolean;
-      g_en_dec_time   : boolean);
+      g_en_fec_enc  : boolean;
+      g_en_fec_dec  : boolean;
+      g_en_golay    : boolean;
+      g_en_dec_time : boolean);
     port ( 
       clk_i           : in  std_logic;
       rst_n_i         : in  std_logic;    
@@ -264,7 +265,7 @@ package fec_pkg is
 
   function f_calc_len_block (pl_len : t_eth_type; div_num_block, num_block : integer) return unsigned;
   function f_parse_eth (x : std_logic_vector) return t_eth_frame_header;
-  function f_extract_eth (idx : integer; x : std_logic_vector) return t_wrf_bus;
+  function f_extract_eth (idx : unsigned ; x : t_eth_hdr) return t_wrf_bus;
 
 end package fec_pkg;
 
@@ -296,10 +297,12 @@ package body fec_pkg is
      return y;
    end function;  
    
-   function f_extract_eth (idx : integer; x : std_logic_vector) return t_wrf_bus is
+   function f_extract_eth (idx : unsigned; x : t_eth_hdr)  return t_wrf_bus is
     variable y : t_wrf_bus;
+    variable idx_i : integer range 0 to c_eth_hdr_len;
     begin
-      y := x((x'left - (idx * y'length)) downto (x'left - ((idx + 1) * y'length) + 1));
+      idx_i := to_integer(idx);
+      y := x((x'left - (idx_i * y'length)) downto (x'left - ((idx_i + 1) * y'length) + 1));
      return y;
    end function;
 
