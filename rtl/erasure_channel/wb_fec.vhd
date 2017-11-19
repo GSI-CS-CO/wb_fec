@@ -45,16 +45,9 @@ architecture rtl of wb_fec is
   signal fec_ctrl_reg : t_fec_ctrl_reg;
   signal fec_stat_reg : t_fec_stat_reg;
 
-  signal fec_dec_sink_in  : t_wrf_sink_in;
-  signal fec_dec_sink_ot  : t_wrf_sink_out;
-  signal fec_dec_src_in   : t_wrf_source_in;
-  signal fec_dec_src_ot   : t_wrf_source_out;
-
 begin 
 
-  fec_dec_src_ot  <= fec_dec_sink_in;
-  fec_dec_sink_ot <= fec_dec_src_in;
-
+  y_WB_FEC_ENC : if g_en_fec_enc generate
   FEC_ENC: wb_fec_encoder
     generic map (
       g_num_block  => 4,
@@ -69,10 +62,21 @@ begin
       src_o       => fec_enc_src_o,
       ctrl_reg_i  => fec_ctrl_reg,
       stat_reg_o  => fec_stat_reg);
+  end generate;
 
-  ----FEC_DEC : wb_fec_decoder is
+  n_WB_FEC_ENC : if not g_en_fec_enc generate
+    fec_enc_sink_o  <= fec_enc_src_i;
+    fec_enc_src_o   <= fec_enc_sink_i;
+  end generate;
 
-  --end wb_fec_decoder;
+  --y_WB_FEC_DEC : if not g_en_fec_enc generate
+  --
+  --end generate;
+
+  n_WB_FEC_DEC : if not g_en_fec_enc generate
+    fec_dec_src_o   <= fec_dec_sink_i;
+    fec_dec_sink_o  <= fec_dec_src_i;
+  end generate;
 
   WB_SLAVE: wb_slave_fec
     port map (
