@@ -29,7 +29,7 @@ package fec_pkg is
   constant c_FROM_STR         : std_logic := '0';
   constant c_FROM_XOR         : std_logic := '1';
   constant c_FIFO_ON          : std_logic := '1';
-  constant c_FIFO_OFF         : std_logic := '1';
+  constant c_FIFO_OFF         : std_logic := '0';
   constant c_ENABLE           : std_logic := '1';
   constant c_DISABLE          : std_logic := '0';
 
@@ -43,7 +43,7 @@ package fec_pkg is
   constant c_WRF_OOB_FEC      : t_wrf_bus := c_WRF_OOB_TYPE_TX & x"aaa";
 
   -- Enc FIFOs
-  constant c_out_fifo_size      : integer := 512;
+  constant c_out_fifo_size      : integer := 1024;
   constant c_fec_fifo_size      : integer := 256;
   constant c_out_fifo_cnt_width : integer := f_log2_size(c_out_fifo_size);
   constant c_fec_fifo_cnt_width : integer := f_log2_size(c_fec_fifo_size);
@@ -67,7 +67,7 @@ package fec_pkg is
   subtype t_enc_frame_sub_id is std_logic_vector(2 downto 0);
   subtype t_reserved         is std_logic_vector(2 downto 0);
   subtype t_block_len        is unsigned (c_eth_pl_width - 1 downto 0);
-  subtype t_fec_pkt_len      is unsigned ((2 * c_eth_pl_width) - 1 downto 0);
+  subtype t_fec_pkt_len      is unsigned ((2 * c_eth_pl_width) downto 0);
 
   -- FEC Counters
   constant c_id_width       : integer := 6;
@@ -256,7 +256,7 @@ package fec_pkg is
       payload_i     : in  t_wrf_bus;
       payload_stb_i : in  std_logic;
       fec_stb_i     : in  std_logic;
-      fec_enc_stb_i : in  std_logic;
+      fec_enc_rd_i  : in  std_logic;
       block_len_i   : in  t_block_len;
       enc_err_o     : out std_logic;
       enc_payload_o : out t_wrf_bus);
