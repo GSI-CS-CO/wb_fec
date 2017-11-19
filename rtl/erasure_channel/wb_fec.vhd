@@ -17,6 +17,7 @@ use work.endpoint_pkg.all;
 
 entity wb_fec is
   generic (
+    g_num_block     : integer := 4;
     g_en_fec_enc    : boolean := true;
     g_en_fec_dec    : boolean := false;
     g_en_golay      : boolean := false;
@@ -51,12 +52,13 @@ architecture rtl of wb_fec is
 
 begin 
 
-  fec_dec_src_ot <= fec_dec_sink_in;
+  fec_dec_src_ot  <= fec_dec_sink_in;
   fec_dec_sink_ot <= fec_dec_src_in;
 
   FEC_ENC: wb_fec_encoder
     generic map (
-      g_en_golay => FALSE
+      g_num_block  => 4,
+      g_en_golay   => FALSE
       )
     port map (
       clk_i       => clk_i,
