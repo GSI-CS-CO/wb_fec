@@ -64,7 +64,7 @@ begin
   end process;
 
 
-  DECODER_HDR : if c_is_encoder generate
+  DECODER_HDR : if c_is_decoder generate
   stream_hdr  : process(clk_i) is
   begin
     if rising_edge(clk_i) then
