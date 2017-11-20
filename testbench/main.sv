@@ -22,7 +22,7 @@ module main;
   
   int seed;
   uint32_t data;
-  int lenght = 0;
+  int length = 0;
   int i = 0;
   int j = 0;
   int cnt = 0;
@@ -163,40 +163,45 @@ module main;
 		//acc_fec.write(`FEC_ENC_EN, 1'h1);
 
     //#1500ns;
-    
-    /* some dummy addresses */
-    lenght = 'h0200;
-    pkt.dst        = '{'hff, 'hff, 'hff, 'hff, 'hff, 'hff};
-    pkt.src        = '{1,2,3,4,5,6};
-    pkt.ethertype  = lenght;
-
-    /* set the payload size to the minimum acceptable value:
-       (46 bytes payload + 14 bytes header + 4 bytes CRC) */
-    pkt.set_size(lenght);
-
-    seed = 100;
-
-    cnt = 0;
-    for(j=0; j < 4; j++)
-      begin
-      for (i=1; i <= lenght/4; i++)
-        begin
-        //pkt.payload[cnt] = i & 'hff;
-        pkt.payload[cnt] = j & 'hff;
-        cnt = cnt + 1;
-      end
-    end
-
-    //for(i=0; i < lenght; i++)
-    //  begin
-    //  data = $dist_uniform(seed, 0, (1<<31)-1);
-    //  pkt.payload[i] = data & 'hff;
-    //end
-    
     while(1) begin
-      /* send the packet */
-      fec_src.send(pkt);
-      #100us;
+      seed = (seed + 1) & 'hffff;
+      length = $dist_uniform(seed, 128, 1500);
+      length = length & 'hffff;
+      length = (length + 3) & ~'h03;
+      
+      $write("----->LENGTH %x \n", length);
+
+      /* some dummy addresses */
+      pkt.dst        = '{'hff, 'hff, 'hff, 'hff, 'hff, 'hff};
+      pkt.src        = '{1,2,3,4,5,6};
+      pkt.ethertype  = length;
+
+      /* set the payload size to the minimum acceptable value:
+         (46 bytes payload + 14 bytes header + 4 bytes CRC) */
+      pkt.set_size(length);
+
+
+      cnt = 0;
+      for(j=0; j < 4; j++)
+        begin
+        for (i=1; i <= length/4; i++)
+          begin
+          //pkt.payload[cnt] = i & 'hff;
+          pkt.payload[cnt] = j & 'hff;
+          cnt = cnt + 1;
+        end
+      end
+
+      //for(i=0; i < lenght; i++)
+      //  begin
+      //  data = $dist_uniform(seed, 0, (1<<31)-1);
+      //  pkt.payload[i] = data & 'hff;
+      //end
+      
+      //while(1) begin
+        /* send the packet */
+        fec_src.send(pkt);
+        #100us;
     end
   end
 
