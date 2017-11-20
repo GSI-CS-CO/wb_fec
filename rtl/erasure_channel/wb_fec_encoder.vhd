@@ -245,9 +245,8 @@ begin
               elsif (eth_cnt = c_eth_hdr_len) then
               -- getting the payload
                 hdr_ethertype <= snk_i.dat;
-                pkt_len       <= to_integer(unsigned(hdr_ethertype));
+                pkt_len       <= to_integer(unsigned(snk_i.dat) srl 2);
                 pkt_stb       <= '1';
-              --elsif (eth_cnt < c_eth_payload - 1) then
               elsif (eth_cnt < pkt_len - 1) then
                 pkt_stb <= '1';
               elsif (eth_cnt >= c_eth_pkt - 1) then
