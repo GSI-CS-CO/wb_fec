@@ -104,7 +104,8 @@ begin
   FEC_HDR_PROC : fec_hdr_gen
     generic map(
       g_id_width    => c_id_width,
-      g_subid_width => c_subid_width)
+      g_subid_width => c_subid_width,
+      g_fec_type    => "encoder")
     port map(
       clk_i         => clk_i,
       rst_n_i       => rst_n_i,
@@ -244,7 +245,7 @@ begin
               elsif (eth_cnt = c_eth_hdr_len) then
               -- getting the payload
                 hdr_ethertype <= snk_i.dat;
-                pkt_len <= to_integer(unsigned(hdr_ethertype));
+                pkt_len       <= to_integer(unsigned(hdr_ethertype));
                 pkt_stb       <= '1';
               --elsif (eth_cnt < c_eth_payload - 1) then
               elsif (eth_cnt < pkt_len - 1) then
@@ -388,4 +389,5 @@ begin
     -- IF HALT TOO LONG AND FIFO FULL, ERROR and RESET EVERYTHING
     -- CHECK WHAT HAPPENS IF STALL TOO LONG -- it should work though
     -- PADDING
+    -- 246: do it in one cycle the ethertype
 end rtl;

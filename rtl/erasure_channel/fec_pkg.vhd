@@ -198,7 +198,8 @@ package fec_pkg is
   component fec_hdr_gen is
     generic (
       g_id_width    : integer;
-      g_subid_width : integer);
+      g_subid_width : integer;
+      g_fec_type    : string);
     port (
       clk_i             : in  std_logic;
       rst_n_i           : in  std_logic;
