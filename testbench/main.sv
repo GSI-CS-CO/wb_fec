@@ -25,7 +25,11 @@ module main;
   int length = 0;
   int i = 0;
   int j = 0;
-  int cnt = 0;
+  int cnt = 0;    
+  
+  integer f;
+  integer sig_low, toggletime;
+
 
 	/* WB masters */
   IWishboneMaster WB_fec (clk_sys, rst_n);
@@ -201,8 +205,21 @@ module main;
       //while(1) begin
         /* send the packet */
         fec_src.send(pkt);
-        #100us;
+        #5ns;
     end
+  end
+
+  initial begin
+    f = $fopen("output.txt","w");
+  end
+
+  always begin
+  @(posedge enc_src.master.cyc) // wait for sig to goto 0
+  sig_low = $realtime ;
+  //@(enable)      // wait for enable to change its value
+  @(negedge enc_snk.slave.cyc)
+  toggletime= $realtime - sig_low ;
+  $fwrite(f, "Delay %d Payload %d \n", toggletime, length);
   end
 
   initial begin
