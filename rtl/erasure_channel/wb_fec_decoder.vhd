@@ -153,6 +153,8 @@ begin
   --TODO 
   --stat_reg_o.fec_enc_err  <= enc_err & pkt_err;
   --stat_reg_o.fec_enc_cnt  <= pkt_id;
+
+
  
   -- Rx from WR Fabric
   rx_fabric : process(clk_i) is
@@ -173,7 +175,8 @@ begin
           snk_ack <= snk_i.cyc and snk_i.stb;
 
             when IDLE =>
-              if snk_i.cyc = '1' and snk_i.stb = '1' and snk_stall = '0' and fec_skip_pkt = '0' then
+              if snk_i.cyc = '1' and snk_i.stb = '1' and snk_stall = '0' and 
+                 fec_skip_pkt = '0' then
                 if (snk_i.adr = c_WRF_STATUS) then
                   if snk_i.data(1) = '1' then
                     --TODO The Frame has a bit error should go to Golay
@@ -211,21 +214,9 @@ begin
                       --TODO No FEC pkt and FEC enable -> error
                       fec_skip_pkt  <= '1'; 
                       s_fec_rx_strm <= IDLE;
-                    end if;
-                  elsif (eth_cnt = c_fec_hdr_len - 1) then
-                  -- TODO move to decoder
-                  -- check FEC header
-                    if (pkt_id /= snk_i.dat()) then
-                    -- new fec pkt, reset the fec_decoder
-                      fec_pkt_id  <= snk_i.dat();
-                      fec_new_id  <= '1';
-                    end if;
-                    fec_pkt_subid <= snk_i.dat()
+                    end if;                    
                     -- start getting FEC payload
                     pkt_stb       <= '1';
-                  elsif (eth_cnt <= c_eth_pkt - 1) then
-                    -- getting FEC payload
-                    fec_new_id  <= '0';
                   elsif (eth_cnt < c_eth_pkt - 1) then
                     pkt_stb <= '0';
                   --TODO jumbo pkt error
@@ -236,7 +227,7 @@ begin
                   pkt_stb <= '0';
                   oob_info.oob_type <= snk_i.dat(15 downto 10);
                   oob_info.valid    <= snk_i.dat(11);
-                  oob_info.port_id   <= snk_i.dat(4 downto 0);
+                  oob_info.port_id  <= snk_i.dat(4 downto 0);
                 end if;
               end if;                
             when RX_OBB =>
@@ -246,7 +237,7 @@ begin
                 if (oob_toggle = '0') then
                   oob_info.ts_f <= snk_i.dat(15 downto 12);
                   oob_info.ts_r(27 downto 16) <= snk_i.dat(11 downto 0);
-                  oob_toggle = '1';
+                  oob_toggle    <= '1';
                 else
                   oob_info.ts_r <= snk_i.dat;
                   s_fec_rx_strm <= IDLE;
