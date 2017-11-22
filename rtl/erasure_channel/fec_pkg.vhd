@@ -27,12 +27,16 @@ package fec_pkg is
   constant c_eth_pkt          : integer := c_eth_hdr_len + c_eth_payload;
   constant c_eth_pl_width     : integer := f_ceil_log2(c_eth_payload);
   constant c_block_max_len    : integer := 188; -- 16 bit word
+  constant c_block_len_width  : integer := f_ceil_log2(c_block_max_len);
   constant c_FROM_STR         : std_logic := '0';
   constant c_FROM_XOR         : std_logic := '1';
   constant c_FIFO_ON          : std_logic := '1';
   constant c_FIFO_OFF         : std_logic := '0';
   constant c_ENABLE           : std_logic := '1';
   constant c_DISABLE          : std_logic := '0';
+
+  -- Decoder
+  type t_next_op  is (IDLE, STORE_FEC_BLOCKS, XOR_0_1, XOR_0_2, XOR_0_3, XOR_1_2, XOR_1_3, XOR_2_3);
 
   -- Fabric
   constant c_wrf_width      : integer := 16;
@@ -184,6 +188,12 @@ package fec_pkg is
       enc_frame_subid => (others => '0'),
       reserved        => (others => '0'));
 
+  type t_fec_id is 
+    record
+    enc_frame_id    : t_enc_frame_id;
+    enc_frame_subid : t_enc_frame_sub_id; 
+  end record;
+
   component wb_slave_fec is
     port (
       clk_i          : in  std_logic;
@@ -267,14 +277,23 @@ package fec_pkg is
       enc_payload_o : out t_wrf_bus);
   end component;
 
+  -- encoder
   function f_calc_len_block (pl_len : t_eth_type; div_num_block, num_block : integer) return unsigned;
   function f_parse_eth (x : std_logic_vector) return t_eth_frame_header;
-  function f_extract_eth (idx : unsigned ; x : t_eth_hdr) return t_wrf_bus;
-
+  function f_extract_eth (idx : unsigned; x : t_eth_hdr) return t_wrf_bus;
+  function f_is_decoded(fec_pkt_rx : std_logic_vector; subid : std_logic_vector) return std_logic;
+  -- decoder
+  function f_next_op(fec_pkt_rx : std_logic_vector; subid : t_enc_frame_sub_id) return t_next_op;
+  function f_is_decoded(fec_pkt_rx : std_logic_vector; subid : t_enc_frame_sub_id) return std_logic;
+  function f_update_pkt_rx( fec_pkt_rx : std_logic_vector; 
+                            subid : t_enc_frame_sub_id;
+                            status_fec_id : std_logic) return std_logic_vector;
+  function f_fifo_id (suid : t_enc_frame_sub_id) return integer;
 end package fec_pkg;
 
 package body fec_pkg is
-
+  
+  -- encoder
   function f_calc_len_block (pl_len  : t_eth_type; div_num_block, num_block : integer) return unsigned is
     variable mod_block : unsigned(t_eth_type'left downto 0) := (others => '0');
     variable len_block : unsigned(t_eth_type'left downto 0) := (others => '0');
@@ -293,21 +312,98 @@ package body fec_pkg is
   end function;
 
   function f_parse_eth (x : std_logic_vector) return t_eth_frame_header is
-    variable y : t_eth_frame_header;
+   variable y : t_eth_frame_header;
+   begin
+     y.eth_src_addr  := x(111 downto 64);
+     y.eth_des_addr  := x( 63 downto 16);
+     y.eth_etherType := x( 15 downto  0);    
+    return y;
+  end function;  
+  
+  function f_extract_eth (idx : unsigned; x : t_eth_hdr)  return t_wrf_bus is
+   variable y : t_wrf_bus;
+   variable idx_i : integer range 0 to c_eth_hdr_len;
+   begin
+     idx_i := to_integer(idx);
+     y := x((x'left - (idx_i * y'length)) downto (x'left - ((idx_i + 1) * y'length) + 1));
+    return y;
+  end function;
+
+   -- decoder
+  function f_fifo_id (suid : t_enc_frame_sub_id) return integer is
+    variable fifo_id  : integer range 0 to g_num_block - 1 := 0;
     begin
-      y.eth_src_addr  := x(111 downto 64);
-      y.eth_des_addr  := x( 63 downto 16);
-      y.eth_etherType := x( 15 downto  0);    
-     return y;
-   end function;  
-   
-   function f_extract_eth (idx : unsigned; x : t_eth_hdr)  return t_wrf_bus is
-    variable y : t_wrf_bus;
-    variable idx_i : integer range 0 to c_eth_hdr_len;
+      fifo_id <= 2  when suid = "0001" else
+                 3  when suid = "0010" else
+                 0  when suid = "0100" else
+                 1  when suid = "1000";
+
+    return fifo_id;
+  end function;
+
+  function f_next_op (fec_pkt_rx : std_logic_vector; subid : t_enc_frame_sub_id) return t_next_op is
+  --TODO make it generic to g_num_pkt
+    variable fec_pkt_update : std_logic_vector := (others => '0');
+    variable int_subid      : integer range 0 to 3 := 0;
+    variable is_decoded     : std_logic;
+    variable next_op        : t_next_op;
     begin
-      idx_i := to_integer(idx);
-      y := x((x'left - (idx_i * y'length)) downto (x'left - ((idx_i + 1) * y'length) + 1));
-     return y;
-   end function;
+    --TODO check if nested functions f_update_pkt_rx
+      fec_pkt_update  := fec_pkt_rx;
+      int_subid       := to_integer(unsigned(subid));
+      fec_pkt_update(int_subid) := '1';
+
+      next_op <=  STORE   when fec_pkt_update = "0001" or
+                               fec_pkt_update = "0010" or
+                               fec_pkt_update = "0100" or
+                               fec_pkt_update = "1000" else  -- it shouldn't happen though
+                  XOR_0_1 when fec_pkt_update = "0011" else
+                  XOR_0_2 when fec_pkt_update = "0101" else
+                  XOR_0_3 when fec_pkt_update = "1001" else
+                  XOR_1_2 when fec_pkt_update = "0110" else
+                  XOR_1_3 when fec_pkt_update = "1010" else
+                  XOR_2_3 when fec_pkt_update = "1100" else
+                  IDLE    when fec_pkt_update = "0000";
+    return next_op;
+  end function;
+
+  function f_is_decoded (fec_pkt_rx : std_logic_vector; subid : t_enc_frame_sub_id) return std_logic is
+  --TODO make it generic to g_num_pkt
+    variable fec_pkt_update : std_logic_vector := (others => '0');
+    variable int_subid      : integer range 0 to 3 := 0;
+    variable is_decoded     : std_logic;
+    begin
+    --TODO check if nested functions f_update_pkt_rx
+      fec_pkt_update  := fec_pkt_rx;
+      int_subid       := to_integer(unsigned(subid));
+      fec_pkt_update(int_subid) := '1';
+
+      is_decoded is '0' when  fec_pkt_update = "0000" or
+                              fec_pkt_update = "0001" or
+                              fec_pkt_update = "0010" or
+                              fec_pkt_update = "0100" or
+                              fec_pkt_update = "1000" or else
+                    '1'; -- rx more than 1 packet
+      end loop;
+    return is_decoded;
+  end function;
+
+  function f_update_pkt_rx (fec_pkt_rx : std_logic_vector;
+                            subid : t_enc_frame_sub_id;
+                            status_fec_id : std_logic) return std_logic_vector is
+
+    variable fec_pkt_update : std_logic_vector := (others => '0');
+    variable int_subid      : integer range 0 to 3 := 0;
+    begin
+      int_subid := to_integer(unsigned(subid));
+
+      if (status_fec_id = '0') then --same FEC ID, get the current value
+        fec_pkt_update  := fec_pkt_rx;
+      end if;        
+      
+      fec_pkt_update(int_subid) := '1';
+ 
+    return fec_pkt_update;
+  end function;
 
 end fec_pkg;

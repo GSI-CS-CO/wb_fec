@@ -83,6 +83,21 @@ architecture rtl of wb_fec_encoder is
   constant c_div_num_block : integer := f_log2_size(g_num_block) + 1; -- in 16bit words
 begin 
 
+  PKT_ERASURE_DEC: fec_decoder
+  generic map (
+    g_num_block <= g_num_block)
+  port map (
+    clk_i              <= clk_i,
+    rst_n_i            <= rst_n_i,
+    fec_payload_i      <= snk_i.dat,
+    fec_stb_i          <= pkt_stb,
+    pkt_payload_o      <= ,
+    pkt_payload_stb_o  <= 
+    halt_streaming_i   <= 
+    streaming_o        <= 
+    fec_id_i           <= 
+    pkt_dec_err_o      <= dec_err);
+
   PKT_ERASURE_ENC : fec_decoder
     port  map(
       clk_i         => clk_i,
@@ -93,7 +108,6 @@ begin
       fec_subid_i   => fec_pkt_subid,
       fec_stb_i     => fec_stb,
       fec_enc_rd_i  => fec_enc_rd,
-      block_len_i   => fec_block_len,
       enc_err_o     => enc_err,
       enc_payload_o => enc_payload);
   
@@ -103,7 +117,8 @@ begin
   FEC_HDR_PROC : fec_hdr_gen
     generic map(
       g_id_width    => c_id_width,
-      g_subid_width => c_subid_width)
+      g_subid_width => c_subid_width,
+      g_fec_type    => "decoder")
     port map(
       clk_i         => clk_i,
       rst_n_i       => rst_n_i,
@@ -153,8 +168,6 @@ begin
   --TODO 
   --stat_reg_o.fec_enc_err  <= enc_err & pkt_err;
   --stat_reg_o.fec_enc_cnt  <= pkt_id;
-
-
  
   -- Rx from WR Fabric
   rx_fabric : process(clk_i) is
