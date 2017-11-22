@@ -68,7 +68,7 @@ architecture rtl of wb_fec_encoder is
   type t_fec_strm is (IDLE, SEND_STATUS, SEND_OOB0, SEND_OOB1, SEND_FEC_HDR, SEND_FEC_PKT, SEND_FEC_PAYLOAD, IDLE_FEC);
   signal s_enc_refresh    : t_enc_refresh;
   signal s_fec_strm       : t_fec_strm;
-  signal eth_cnt          : integer range 0 to c_eth_hdr_len + c_eth_payload;
+  signal eth_cnt          : integer range 0 to c_eth_hdr_len + c_eth_payload + 1;
   signal fec_pkt_cnt      : integer range 0 to g_num_block;
   signal fec_word_cnt     : integer range 0 to c_fec_hdr_len + c_eth_payload;
   signal fec_bytes        : integer;
