@@ -1,7 +1,5 @@
-
-
-FEC HEADER
-----------
+FEC HEADER v0
+-------------
 
 FEC ALGORITHMS [4bits]
 
@@ -20,3 +18,16 @@ ENCODED FRAME ID [6 bits]
 ENCODED FRAME SUB-ID [3 bits]
 
 RESERVED [3 bits]
+
+FEC HEADER v1
+-------------
+
+FEC ALGORITHMS [2bits]
+    Simple Code         -> 0x0
+    Simple Code + Golay -> 0x1
+    LDPC Code           -> 0x2
+    LDPC Code + Golay   -> 0x3
+
+ENCODED FRAME ID [4 bits]
+ENCODED FRAME SUB-ID [2 bits]
+FEC BLOCK LENTH      [8 bits]
