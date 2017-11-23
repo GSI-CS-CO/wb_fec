@@ -24,8 +24,9 @@ package fec_pkg is
   constant c_fec_hdr_len      : integer := 8;
   constant c_fec_hdr_vlan_len : integer := 10;
   constant c_eth_payload      : integer := 750; -- 16 bit word
-  constant c_eth_pkt          : integer := c_eth_hdr_len + c_eth_payload;
   constant c_eth_pl_width     : integer := f_ceil_log2(c_eth_payload);
+  constant c_eth_pkt          : integer := c_eth_hdr_len + c_eth_payload;
+  constant c_eth_pkt_width    : integer := f_ceil_log2(c_eth_pkt);
   constant c_block_max_len    : integer := 188; -- 16 bit word
   constant c_block_len_width  : integer := f_ceil_log2(c_block_max_len);
   constant c_FROM_STR         : std_logic := '0';
@@ -36,7 +37,7 @@ package fec_pkg is
   constant c_DISABLE          : std_logic := '0';
 
   -- Decoder
-  type t_next_op  is (IDLE, STORE_FEC_BLOCKS, XOR_0_1, XOR_0_2, XOR_0_3, XOR_1_2, XOR_1_3, XOR_2_3);
+  type t_next_op  is (IDLE, STORE, XOR_0_1, XOR_0_2, XOR_0_3, XOR_1_2, XOR_1_3, XOR_2_3);
 
   -- Fabric
   constant c_wrf_width      : integer := 16;
@@ -69,13 +70,16 @@ package fec_pkg is
   subtype t_eth_hdr  is std_logic_vector(111 downto 0);
 
   -- FEC Header
-  subtype t_pkt_erasure_code is std_logic_vector(1 downto 0);
-  subtype t_bit_erasure_code is std_logic_vector(1 downto 0);
-  subtype t_enc_frame_id     is std_logic_vector(5 downto 0);
-  subtype t_enc_frame_sub_id is std_logic_vector(2 downto 0);
-  subtype t_reserved         is std_logic_vector(2 downto 0);
-  subtype t_block_len        is unsigned (c_eth_pl_width - 1 downto 0);
-  subtype t_fec_pkt_len      is unsigned ((2 * c_eth_pl_width) downto 0);
+  subtype t_erasure_code     is std_logic_vector(1 downto 0);
+  subtype t_enc_frame_id     is std_logic_vector(3 downto 0);
+  subtype t_enc_frame_sub_id is std_logic_vector(1 downto 0);
+  subtype t_blk_len          is std_logic_vector(c_eth_pl_width - 1 downto 0);
+  subtype t_block_len        is unsigned(c_eth_pl_width - 1 downto 0);
+  subtype t_fec_pkt_len      is unsigned((2 * c_eth_pl_width) downto 0);
+  subtype fec_code_range     is natural range 15 downto 14;
+  subtype fec_id_range       is natural range 13 downto 10;
+  subtype fec_subid_range    is natural range  9 downto  8;
+  subtype fec_blk_len_range  is natural range  7 downto  0; 
 
   -- FEC Counters
   constant c_id_width       : integer := 6;
@@ -109,6 +113,16 @@ package fec_pkg is
     tai         => (others => '0'),
     cycles      => (others => '0'));
 
+  type t_dec_err  is 
+    record
+    jumbo_frame : std_logic;
+    dec_err     : std_logic;
+  end record;
+
+  constant c_dec_err : t_dec_err := (
+    jumbo_frame => '0',
+    dec_err     => '0');
+
   type t_fec_ctrl_reg is record
     fec_ctrl_refresh  : std_logic;
     fec_pkt_er_code   : std_logic_vector(1 downto 0);
@@ -129,64 +143,64 @@ package fec_pkg is
     fec_enc_en        => c_ENABLE);
 
   type t_fec_stat_reg is record
-    fec_enc_err :  std_logic_vector(1 downto 0);
-    fec_enc_cnt :  std_logic_vector(c_fec_cnt_width - 1 downto 0);
+    fec_enc_err : std_logic_vector(1 downto 0);
+    fec_enc_cnt : std_logic_vector(c_fec_cnt_width - 1 downto 0);
+    fec_dec_err : t_dec_err; 
   end record;
 
   constant c_fec_stat_reg : t_fec_stat_reg := (
     fec_enc_err => (others => '0'),
-    fec_enc_cnt => (others => '0'));
+    fec_enc_cnt => (others => '0'),
+    fec_dec_err => c_dec_err);
     
   type t_frame_fsm  is (  
-      INIT_HDR,
-      ETH_HDR,
-      PAY_LOAD,
-      OOB,
-      IDLE);
+    INIT_HDR,
+    ETH_HDR,
+    PAY_LOAD,
+    OOB,
+    IDLE);
 
   type t_frame_enc_fsm is (
-      INIT_HDR,
-      ETH_HDR,
-      FEC_HDR,
-      PAY_LOAD,
-      OOB,
-      IDLE);
+    INIT_HDR,
+    ETH_HDR,
+    FEC_HDR,
+    PAY_LOAD,
+    OOB,
+    IDLE);
 
   type t_eth_frame_header is
-      record
-      eth_src_addr    : t_mac_addr;
-      eth_des_addr    : t_mac_addr;
-      eth_etherType   : t_eth_type;
+    record
+    eth_src_addr    : t_mac_addr;
+    eth_des_addr    : t_mac_addr;
+    eth_etherType   : t_eth_type;
   end record;
    
   type t_eth_vlan_frame_header is
-      record
-      eth_src_addr    : t_mac_addr;
-      eth_des_addr    : t_mac_addr;
-      eth_vlan        : t_eth_vlan;
-      eth_etherType   : t_eth_type;
+    record
+    eth_src_addr    : t_mac_addr;
+    eth_des_addr    : t_mac_addr;
+    eth_vlan        : t_eth_vlan;
+    eth_etherType   : t_eth_type;
   end record;
   
   constant c_eth_frame_header_default : t_eth_frame_header := (
-      eth_src_addr   => x"000000000000",
-      eth_des_addr   => x"000000000000",
-      eth_etherType  => x"0000");
+    eth_src_addr   => x"000000000000",
+    eth_des_addr   => x"000000000000",
+    eth_etherType  => x"0000");
  
   type t_fec_header is
-      record    
-      pkt_er_code     : t_pkt_erasure_code;
-      bit_er_code     : t_bit_erasure_code;
-      enc_frame_id    : t_enc_frame_id;
-      enc_frame_subid : t_enc_frame_sub_id;
-      reserved        : t_reserved;
+    record    
+    fec_code        : t_erasure_code;
+    enc_frame_id    : t_enc_frame_id;
+    enc_frame_subid : t_enc_frame_sub_id;
+    fec_blk_len     : t_blk_len;
   end record;
 
   constant c_fec_header : t_fec_header := (
-      pkt_er_code     => "01",
-      bit_er_code     => "00",
-      enc_frame_id    => (others => '0'),
-      enc_frame_subid => (others => '0'),
-      reserved        => (others => '0'));
+    fec_code        => (others => '0'),
+    enc_frame_id    => (others => '0'),
+    enc_frame_subid => (others => '0'),
+    fec_blk_len     => (others => '0'));
 
   type t_fec_id is 
     record
@@ -248,6 +262,36 @@ package fec_pkg is
       wb_slave_i      : in  t_wishbone_slave_in);
   end component;
 
+  component wb_fec_decoder is
+    generic ( 
+      g_num_block   : integer := 4;
+      g_en_golay    : boolean := FALSE);
+    port (
+      clk_i         : in  std_logic;
+      rst_n_i       : in  std_logic;     
+      snk_i         : in  t_wrf_sink_in;
+      snk_o         : out t_wrf_sink_out;
+      src_i         : in  t_wrf_source_in;
+      src_o         : out t_wrf_source_out;
+      ctrl_reg_i    : in  t_fec_ctrl_reg;
+      stat_reg_o    : out t_fec_stat_reg);
+  end component;
+
+  component fec_decoder is
+    generic (
+      g_num_block : integer := 4);
+    port (
+      clk_i             : in  std_logic;
+      rst_n_i           : in  std_logic;
+      fec_payload_i     : in  t_wrf_bus;
+      fec_payload_stb_i : in  std_logic;
+      fec_stb_o         : out std_logic;
+      pkt_payload_o     : out t_wrf_bus;
+      pkt_payload_stb_o : out std_logic;
+      halt_streaming_i  : in  std_logic;
+      pkt_dec_err_o     : out t_dec_err);
+  end component;
+
   component wb_fec_encoder is
     generic (
       g_num_block   : integer := 4;
@@ -281,14 +325,15 @@ package fec_pkg is
   function f_calc_len_block (pl_len : t_eth_type; div_num_block, num_block : integer) return unsigned;
   function f_parse_eth (x : std_logic_vector) return t_eth_frame_header;
   function f_extract_eth (idx : unsigned; x : t_eth_hdr) return t_wrf_bus;
-  function f_is_decoded(fec_pkt_rx : std_logic_vector; subid : std_logic_vector) return std_logic;
   -- decoder
   function f_next_op(fec_pkt_rx : std_logic_vector; subid : t_enc_frame_sub_id) return t_next_op;
   function f_is_decoded(fec_pkt_rx : std_logic_vector; subid : t_enc_frame_sub_id) return std_logic;
   function f_update_pkt_rx( fec_pkt_rx : std_logic_vector; 
                             subid : t_enc_frame_sub_id;
                             status_fec_id : std_logic) return std_logic_vector;
-  function f_fifo_id (suid : t_enc_frame_sub_id) return integer;
+  function f_fifo_id (subid : t_enc_frame_sub_id) return unsigned;
+  function f_parse_fec_hdr (fec_hdr_bus : t_wrf_bus) return t_fec_header;
+
 end package fec_pkg;
 
 package body fec_pkg is
@@ -330,20 +375,23 @@ package body fec_pkg is
   end function;
 
    -- decoder
-  function f_fifo_id (suid : t_enc_frame_sub_id) return integer is
-    variable fifo_id  : integer range 0 to g_num_block - 1 := 0;
+  function f_fifo_id (subid : t_enc_frame_sub_id) return unsigned is
+  --TODO make it generic to g_num_pkt
+    variable fifo_id  : unsigned (3 downto 0);
     begin
-      fifo_id <= 2  when suid = "0001" else
-                 3  when suid = "0010" else
-                 0  when suid = "0100" else
-                 1  when suid = "1000";
-
+      case subid is 
+        when "00" => fifo_id := "0100";
+        when "01" => fifo_id := "1000";
+        when "10" => fifo_id := "0001";
+        when "11" => fifo_id := "0010";
+        when others => fifo_id := "0000";
+      end case;
     return fifo_id;
   end function;
 
   function f_next_op (fec_pkt_rx : std_logic_vector; subid : t_enc_frame_sub_id) return t_next_op is
   --TODO make it generic to g_num_pkt
-    variable fec_pkt_update : std_logic_vector := (others => '0');
+    variable fec_pkt_update : std_logic_vector (3 downto 0) := (others => '0');
     variable int_subid      : integer range 0 to 3 := 0;
     variable is_decoded     : std_logic;
     variable next_op        : t_next_op;
@@ -353,23 +401,22 @@ package body fec_pkg is
       int_subid       := to_integer(unsigned(subid));
       fec_pkt_update(int_subid) := '1';
 
-      next_op <=  STORE   when fec_pkt_update = "0001" or
-                               fec_pkt_update = "0010" or
-                               fec_pkt_update = "0100" or
-                               fec_pkt_update = "1000" else  -- it shouldn't happen though
-                  XOR_0_1 when fec_pkt_update = "0011" else
-                  XOR_0_2 when fec_pkt_update = "0101" else
-                  XOR_0_3 when fec_pkt_update = "1001" else
-                  XOR_1_2 when fec_pkt_update = "0110" else
-                  XOR_1_3 when fec_pkt_update = "1010" else
-                  XOR_2_3 when fec_pkt_update = "1100" else
-                  IDLE    when fec_pkt_update = "0000";
+      case fec_pkt_update is
+        when "0000" => next_op := IDLE;
+        when "0011" => next_op := XOR_0_1;  
+        when "0101" => next_op := XOR_0_2;
+        when "1001" => next_op := XOR_0_3;
+        when "0110" => next_op := XOR_1_2;
+        when "1010" => next_op := XOR_1_3;
+        when "1100" => next_op := XOR_2_3;
+        when others => next_op := STORE;
+      end case;
     return next_op;
   end function;
 
   function f_is_decoded (fec_pkt_rx : std_logic_vector; subid : t_enc_frame_sub_id) return std_logic is
   --TODO make it generic to g_num_pkt
-    variable fec_pkt_update : std_logic_vector := (others => '0');
+    variable fec_pkt_update : std_logic_vector (3 downto 0) := (others => '0');
     variable int_subid      : integer range 0 to 3 := 0;
     variable is_decoded     : std_logic;
     begin
@@ -378,13 +425,14 @@ package body fec_pkg is
       int_subid       := to_integer(unsigned(subid));
       fec_pkt_update(int_subid) := '1';
 
-      is_decoded is '0' when  fec_pkt_update = "0000" or
-                              fec_pkt_update = "0001" or
-                              fec_pkt_update = "0010" or
-                              fec_pkt_update = "0100" or
-                              fec_pkt_update = "1000" or else
-                    '1'; -- rx more than 1 packet
-      end loop;
+      case fec_pkt_update is 
+        when  "0000"  => is_decoded := '0'; 
+        when  "0001"  => is_decoded := '0';
+        when  "0010"  => is_decoded := '0';
+        when  "0100"  => is_decoded := '0';
+        when  "1000"  => is_decoded := '0';
+        when others   => is_decoded := '1'; -- rx more than 1 packet
+      end case;
     return is_decoded;
   end function;
 
@@ -392,7 +440,7 @@ package body fec_pkg is
                             subid : t_enc_frame_sub_id;
                             status_fec_id : std_logic) return std_logic_vector is
 
-    variable fec_pkt_update : std_logic_vector := (others => '0');
+    variable fec_pkt_update : std_logic_vector (3 downto 0) := (others => '0');
     variable int_subid      : integer range 0 to 3 := 0;
     begin
       int_subid := to_integer(unsigned(subid));
@@ -406,4 +454,13 @@ package body fec_pkg is
     return fec_pkt_update;
   end function;
 
+  function f_parse_fec_hdr (fec_hdr_bus : t_wrf_bus) return t_fec_header is
+      variable fec_hdr : t_fec_header;
+    begin
+      fec_hdr.fec_code        := fec_hdr_bus (fec_code_range);
+      fec_hdr.enc_frame_id    := fec_hdr_bus (fec_id_range);
+      fec_hdr.enc_frame_subid := fec_hdr_bus (fec_subid_range);
+      fec_hdr.fec_blk_len     := fec_hdr_bus (fec_blk_len_range);
+    return fec_hdr;
+  end function;
 end fec_pkg;

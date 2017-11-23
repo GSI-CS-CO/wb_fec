@@ -48,11 +48,10 @@ architecture rtl of wb_fec is
 begin 
 
   y_WB_FEC_ENC : if g_en_fec_enc generate
-  FEC_ENC: wb_fec_encoder
+  FEC_ENC : wb_fec_encoder
     generic map (
       g_num_block  => 4,
-      g_en_golay   => FALSE
-      )
+      g_en_golay   => FALSE)
     port map (
       clk_i       => clk_i,
       rst_n_i     => rst_n_i,
@@ -69,9 +68,21 @@ begin
     fec_enc_src_o   <= fec_enc_sink_i;
   end generate;
 
-  --y_WB_FEC_DEC : if not g_en_fec_enc generate
-  --
-  --end generate;
+  y_WB_FEC_DEC : if not g_en_fec_enc generate
+  FEC_DEC : wb_fec_decoder
+    generic map ( 
+    g_num_block   => 4,
+    g_en_golay    => FALSE)
+    port map (
+      clk_i       => clk_i,
+      rst_n_i     => rst_n_i,
+      snk_i       => fec_dec_sink_i,
+      snk_o       => fec_dec_sink_o,
+      src_i       => fec_dec_src_i,
+      src_o       => fec_dec_src_o,
+      ctrl_reg_i  => fec_ctrl_reg,
+      stat_reg_o  => fec_stat_reg);
+  end generate;
 
   n_WB_FEC_DEC : if not g_en_fec_enc generate
     fec_dec_src_o   <= fec_dec_sink_i;
