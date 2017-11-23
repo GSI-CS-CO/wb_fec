@@ -12,11 +12,11 @@ syn_package = "29"
 
 sim_tool = "modelsim"
 top_module = "main"
-vlog_opt = "+incdir+../../../sim"
-include_dirs = [ "../../../sim", "./" ]
+vlog_opt = "+incdir+../../../../sim"
+include_dirs = [ "../../../../sim", "./" ]
 
 files = [ "main.sv" ]
 
-modules = { "local" : [ "../../../",
-                     "../../../ip_cores/general-cores"
+modules = { "local" : [ "../../../../",
+                     "../../../../ip_cores/general-cores"
                      ]};
