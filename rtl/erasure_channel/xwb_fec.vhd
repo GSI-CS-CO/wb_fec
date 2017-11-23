@@ -112,29 +112,29 @@ begin
 
     -- Decoder
 
---   fec_dec_sink_ack    <= fec_dec_sink_o.ack;
---   fec_dec_sink_stall  <= fec_dec_sink_o.stall;
---
---   fec_dec_sink_i.adr  <= fec_dec_sink_adr; 
---   fec_dec_sink_i.dat  <= fec_dec_sink_dat;
---   fec_dec_sink_i.cyc  <= fec_dec_sink_cyc;
---   fec_dec_sink_i.stb  <= fec_dec_sink_stb;
---   fec_dec_sink_i.we   <= fec_dec_sink_we ;
---   fec_dec_sink_i.sel  <= fec_dec_sink_sel;
---
---   fec_dec_src_i.ack   <= fec_dec_src_ack;
---   fec_dec_src_i.stall <= fec_dec_src_stall;
--- 
---   fec_dec_src_adr   <=  fec_dec_src_o.adr; 
---   fec_dec_src_dat   <=  fec_dec_src_o.dat;
---   fec_dec_src_cyc   <=  fec_dec_src_o.cyc;
---   fec_dec_src_stb   <=  fec_dec_src_o.stb;
---   fec_dec_src_we    <=  fec_dec_src_o.we;
---   fec_dec_src_sel   <=  fec_dec_src_o.sel;
---
---   fec_dec_sink_o   <= c_dummy_src_in;
---   fec_dec_src_o    <= c_dummy_snk_in;
---
+   fec_dec_sink_ack    <= fec_dec_sink_o.ack;
+   fec_dec_sink_stall  <= fec_dec_sink_o.stall;
+
+   fec_dec_sink_i.adr  <= fec_dec_sink_adr; 
+   fec_dec_sink_i.dat  <= fec_dec_sink_dat;
+   fec_dec_sink_i.cyc  <= fec_dec_sink_cyc;
+   fec_dec_sink_i.stb  <= fec_dec_sink_stb;
+   fec_dec_sink_i.we   <= fec_dec_sink_we ;
+   fec_dec_sink_i.sel  <= fec_dec_sink_sel;
+
+   fec_dec_src_i.ack   <= fec_dec_src_ack;
+   fec_dec_src_i.stall <= fec_dec_src_stall;
+ 
+   fec_dec_src_adr   <=  fec_dec_src_o.adr; 
+   fec_dec_src_dat   <=  fec_dec_src_o.dat;
+   fec_dec_src_cyc   <=  fec_dec_src_o.cyc;
+   fec_dec_src_stb   <=  fec_dec_src_o.stb;
+   fec_dec_src_we    <=  fec_dec_src_o.we;
+   fec_dec_src_sel   <=  fec_dec_src_o.sel;
+
+   --fec_dec_sink_o   <= c_dummy_src_in;
+   --fec_dec_src_o    <= c_dummy_snk_in;
+
   -- Encoder
 
    fec_enc_sink_ack    <= fec_enc_sink_o.ack;
@@ -172,7 +172,19 @@ begin
       ctrl_reg_i  => fec_ctrl_reg,
       stat_reg_o  => fec_stat_reg);
 
-  ----FEC_DEC : wb_fec_decoder is
+  FEC_DEC : wb_fec_decoder
+    generic map ( 
+    g_num_block   => 4,
+    g_en_golay    => FALSE)
+    port map (
+      clk_i       => clk_i,
+      rst_n_i     => rst_n_i,
+      snk_i       => fec_dec_sink_i,
+      snk_o       => fec_dec_sink_o,
+      src_i       => fec_dec_src_i,
+      src_o       => fec_dec_src_o,
+      ctrl_reg_i  => fec_ctrl_reg,
+      stat_reg_o  => fec_stat_reg);
 
   --end wb_fec_decoder;
   wb_slave_ack    <= wb_slave_o.ack;
