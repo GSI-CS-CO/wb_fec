@@ -10,6 +10,7 @@
 `include "if_wb_link.svh"
 `include "functions.svh"
 `include "fec_regs.v"
+`include "lbk_regs.v"
 
 `define true 1
 `define false 0
@@ -30,19 +31,35 @@ module main;
   integer f;
   integer sig_low, toggletime;
 
+  // set of wires between ENC and DEC
+  wire enc_src_cyc;
+  wire enc_src_stb;
+  wire [1:0] enc_src_sel;
+  wire [1:0] enc_src_adr;
+  wire [15:0]enc_src_dat;
+  wire enc_src_ack;
+  wire enc_src_stall;
+  wire enc_src_err;
+
+  wire dec_snk_cyc;
+  wire dec_snk_stb;
+  wire [1:0] dec_snk_el;
+  wire [1:0] dec_snk_adr;
+  wire [15:0]dec_snk_dat;
+  wire dec_snk_ack;
+  wire dec_snk_stall;
+  wire dec_snk_err;
 
 	/* WB masters */
   IWishboneMaster WB_fec (clk_sys, rst_n);
+  IWishboneMaster WB_lbk (clk_sys, rst_n);
 
 	/* WB accessors */
-  CWishboneAccessor acc_fec;
+  CWishboneAccessor acc_fec, acc_lbk;
 
 	/* Fabrics */
-  IWishboneMaster #(2,16) dec_src (clk_sys, rst_n);
   IWishboneSlave  #(2,16) dec_snk (clk_sys, rst_n); 
-  
   IWishboneMaster #(2,16) enc_src (clk_sys, rst_n);
-  IWishboneSlave  #(2,16) enc_snk (clk_sys, rst_n);
 
 	/* Fabrics accessors */
   WBPacketSource fec_src;
@@ -60,21 +77,22 @@ module main;
 
   xwb_fec #(
     .g_en_fec_enc(`true),
-    .g_en_fec_dec(`false),
+    .g_en_fec_dec(`true),
     .g_en_golay(`false),
     .g_en_dec_time(`false))
-  XWB_FEC ( 
+  XWB_FEC_ENC ( 
     .clk_i(clk_sys),
     .rst_n_i(rst_n),
-    .fec_dec_sink_cyc(dec_src.master.cyc),
-		.fec_dec_sink_stb(dec_src.master.stb),
-		.fec_dec_sink_we(dec_src.master.we),
-		.fec_dec_sink_sel(dec_src.master.sel),
-		.fec_dec_sink_adr(dec_src.master.adr),
-		.fec_dec_sink_dat(dec_src.master.dat_o),
-		.fec_dec_sink_stall(dec_src.master.stall),
-		.fec_dec_sink_ack(dec_src.master.ack),
-
+   
+    .fec_dec_sink_cyc(dec_snk_cyc),
+		.fec_dec_sink_stb(dec_snk_stb),
+		.fec_dec_sink_we(dec_snk_we),
+		.fec_dec_sink_sel(dec_snk_sel),
+		.fec_dec_sink_adr(dec_snk_adr),
+		.fec_dec_sink_dat(dec_snk_dat),
+		.fec_dec_sink_stall(dec_snk_stall),
+		.fec_dec_sink_ack(dec_snk_ack),
+ 
 		.fec_dec_src_cyc(dec_snk.slave.cyc),
 		.fec_dec_src_stb(dec_snk.slave.stb),
 		.fec_dec_src_we(dec_snk.slave.we),
@@ -85,22 +103,22 @@ module main;
 		.fec_dec_src_ack(dec_snk.slave.ack),
 
     .fec_enc_sink_cyc(enc_src.master.cyc),
-		.fec_enc_sink_stb(enc_src.master.stb),
-		.fec_enc_sink_we(enc_src.master.we),
-		.fec_enc_sink_sel(enc_src.master.sel),
-		.fec_enc_sink_adr(enc_src.master.adr),
-		.fec_enc_sink_dat(enc_src.master.dat_o),
-		.fec_enc_sink_stall(enc_src.master.stall),
-		.fec_enc_sink_ack(enc_src.master.ack),
+    .fec_enc_sink_stb(enc_src.master.stb),
+    .fec_enc_sink_we(enc_src.master.we),
+    .fec_enc_sink_sel(enc_src.master.sel),
+    .fec_enc_sink_adr(enc_src.master.adr),
+    .fec_enc_sink_dat(enc_src.master.dat_o),
+    .fec_enc_sink_stall(enc_src.master.stall),
+    .fec_enc_sink_ack(enc_src.master.ack),
 
-		.fec_enc_src_cyc(enc_snk.slave.cyc),
-		.fec_enc_src_stb(enc_snk.slave.stb),
-		.fec_enc_src_we(enc_snk.slave.we),
-		.fec_enc_src_sel(enc_snk.slave.sel),
-		.fec_enc_src_adr(enc_snk.slave.adr),
-		.fec_enc_src_dat(enc_snk.slave.dat_i),
-		.fec_enc_src_stall(enc_snk.slave.stall),
-		.fec_enc_src_ack(enc_snk.slave.ack),
+		.fec_enc_src_cyc(enc_src_cyc),
+		.fec_enc_src_stb(enc_src_stb),
+		.fec_enc_src_we(enc_src_we),
+		.fec_enc_src_sel(enc_src_sel),
+		.fec_enc_src_adr(enc_src_adr),
+		.fec_enc_src_dat(enc_src_dat),
+		.fec_enc_src_stall(enc_src_stall),
+		.fec_enc_src_ack(enc_src_ack),
 
     .wb_slave_cyc(WB_fec.master.cyc),
 		.wb_slave_stb(WB_fec.master.stb),
@@ -111,6 +129,41 @@ module main;
 		.wb_slave_dat_o(WB_fec.master.dat_i),
 		.wb_slave_ack(WB_fec.master.ack),
 		.wb_slave_stall(WB_fec.master.stall));
+
+
+  wrf_loopback #(
+    .g_interface_mode           (PIPELINED),
+    .g_address_granularity      (BYTE))
+  WRF_LBK (
+    .clk_sys_i                  (clk_sys),
+    .rst_n_i                    (rst_n),
+    .snk_cyc_i                  (enc_src_cyc),
+    .snk_stb_i                  (enc_src_stb),
+    .snk_we_i                   (1'b1),
+    .snk_sel_i                  (enc_src_sel),
+    .snk_adr_i                  (enc_src_adr),
+    .snk_dat_i                  (enc_src_dat),
+    .snk_ack_o                  (enc_src_ack),
+    .snk_stall_o                (enc_src_stall),
+
+    .src_cyc_o                  (dec_snk_cyc),
+    .src_stb_o                  (dec_snk_stb),
+    .src_we_o                   (),
+    .src_sel_o                  (dec_snk_sel),
+    .src_adr_o                  (dec_snk_adr),
+    .src_dat_o                  (dec_snk_dat),
+    .src_ack_i                  (dec_snk_ack),
+    .src_stall_i                (dec_snk_stall),
+
+    .wb_cyc_i                   (WB_lbk.master.cyc),
+    .wb_stb_i                   (WB_lbk.master.stb),
+    .wb_we_i                    (WB_lbk.master.we),
+    .wb_sel_i                   (4'b1111),
+    .wb_adr_i                   (WB_lbk.master.adr),
+    .wb_dat_i                   (WB_lbk.master.dat_o),
+    .wb_dat_o                   (WB_lbk.master.dat_i),
+    .wb_ack_o                   (WB_lbk.master.ack),
+    .wb_stall_o                 (WB_lbk.master.stall));
 
   //initial begin
 
@@ -153,15 +206,17 @@ module main;
 
     #1us;
 
+    acc_lbk = WB_lbk.get_accessor();
+    acc_lbk.set_mode(PIPELINED);
+    WB_lbk.settings.cyc_on_stall = 1;
+    #1us;
+    acc_lbk.write(`ADDR_LBK_MCR, `LBK_MCR_ENA);
+
     acc_fec = WB_fec.get_accessor();
     acc_fec.set_mode(PIPELINED);
     WB_fec.settings.cyc_on_stall = 1;
 
-		//fec_src = new(dec_src.get_accessor());
-		//dec_src.settings.cyc_on_stall = 1;
-
 		fec_src = new(enc_src.get_accessor());
-		dec_src.settings.cyc_on_stall = 1;
 
     //#10us;
 		//acc_fec.write(`FEC_ENC_EN, 1'h1);
@@ -209,28 +264,26 @@ module main;
     end
   end
 
-  initial begin
-    f = $fopen("output.txt","w");
-  end
+  //initial begin
+  //  f = $fopen("output.txt","w");
+  //end
 
-  always begin
-  @(posedge enc_src.master.cyc) // wait for sig to goto 0
-  sig_low = $realtime ;
-  //@(enable)      // wait for enable to change its value
-  @(negedge enc_snk.slave.cyc)
-  toggletime= $realtime - sig_low ;
-  $fwrite(f, "Delay %d Payload %d \n", toggletime, length);
-  end
+  //always begin
+  //@(posedge enc_src.master.cyc) // wait for sig to goto 0
+  //sig_low = $realtime ;
+  ////@(enable)      // wait for enable to change its value
+  ////HAS TO BE CHANGED @(negedge enc_snk.slave.cyc)
+  //toggletime= $realtime - sig_low ;
+  //$fwrite(f, "Delay %d Payload %d \n", toggletime, length);
+  //end
 
   initial begin
     EthPacket pkt;
 		int prev_size=0;
 		uint64_t val64;
 
-    //dec_snk.settings.gen_random_stalls = 1;
-
-    enc_snk.settings.gen_random_stalls = 1;
-    fec_snk = new(enc_snk.get_accessor());
+    fec_snk = new(dec_snk.get_accessor());
+    dec_snk.settings.gen_random_stalls = 1;
 
 	  $warning("--> starting");
 		#5us;
