@@ -43,7 +43,7 @@ module main;
 
   wire dec_snk_cyc;
   wire dec_snk_stb;
-  wire [1:0] dec_snk_el;
+  wire [1:0] dec_snk_sel;
   wire [1:0] dec_snk_adr;
   wire [15:0]dec_snk_dat;
   wire dec_snk_ack;
@@ -139,7 +139,8 @@ module main;
     .rst_n_i                    (rst_n),
     .snk_cyc_i                  (enc_src_cyc),
     .snk_stb_i                  (enc_src_stb),
-    .snk_we_i                   (1'b1),
+    //.snk_we_i                   (1'b1),
+    .snk_we_i                   (enc_src_we),
     .snk_sel_i                  (enc_src_sel),
     .snk_adr_i                  (enc_src_adr),
     .snk_dat_i                  (enc_src_dat),
@@ -148,7 +149,7 @@ module main;
 
     .src_cyc_o                  (dec_snk_cyc),
     .src_stb_o                  (dec_snk_stb),
-    .src_we_o                   (),
+    .src_we_o                   (dec_snk_we),
     .src_sel_o                  (dec_snk_sel),
     .src_adr_o                  (dec_snk_adr),
     .src_dat_o                  (dec_snk_dat),
@@ -205,12 +206,6 @@ module main;
     repeat(3) @(posedge clk_sys);
 
     #1us;
-
-    acc_lbk = WB_lbk.get_accessor();
-    acc_lbk.set_mode(PIPELINED);
-    WB_lbk.settings.cyc_on_stall = 1;
-    #1us;
-    acc_lbk.write(`ADDR_LBK_MCR, `LBK_MCR_ENA);
 
     acc_fec = WB_fec.get_accessor();
     acc_fec.set_mode(PIPELINED);
@@ -281,9 +276,16 @@ module main;
     EthPacket pkt;
 		int prev_size=0;
 		uint64_t val64;
+    int total_cnt=0;
 
     fec_snk = new(dec_snk.get_accessor());
-    dec_snk.settings.gen_random_stalls = 1;
+    dec_snk.settings.gen_random_stalls = 1;    
+    
+    acc_lbk = WB_lbk.get_accessor();
+    acc_lbk.set_mode(PIPELINED);
+    WB_lbk.settings.cyc_on_stall = 1;
+    #1us;
+    acc_lbk.write(`ADDR_LBK_MCR, `LBK_MCR_ENA);
 
 	  $warning("--> starting");
 		#5us;
@@ -320,6 +322,17 @@ module main;
 			//$display("fwd_cnt: %d", val64);
 			//acc_fec.write(`ADDR_LBK_MCR, `LBK_MCR_CLR);
 			//acc_fec.write(`ADDR_LBK_MCR, 0);
+      if(total_cnt % 50 == 0) begin
+        acc_lbk.read(`ADDR_LBK_RCV_CNT, val64);
+        $display("rcv_cnt: %d", val64);
+        acc_lbk.read(`ADDR_LBK_DRP_CNT, val64);
+        $display("drp_cnt: %d", val64);
+        acc_lbk.read(`ADDR_LBK_FWD_CNT, val64);
+        $display("fwd_cnt: %d", val64);
+      end
+      total_cnt++;
+
+
     end
   end
 
