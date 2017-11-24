@@ -42,24 +42,24 @@ add wave -noupdate -group ERASURE /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/enc_cnt
 add wave -noupdate -group ERASURE /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/we_src_sel
 add wave -noupdate -group ERASURE /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/we_mask
 add wave -noupdate -group ERASURE /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/we_loop_back
-add wave -noupdate -group FIFO_0 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLOCK_FIFO(0)/PKT_BLOCK_FIFO/d_i
-add wave -noupdate -group FIFO_0 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLOCK_FIFO(0)/PKT_BLOCK_FIFO/we_i
-add wave -noupdate -group FIFO_0 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLOCK_FIFO(0)/PKT_BLOCK_FIFO/rd_i
-add wave -noupdate -group FIFO_0 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLOCK_FIFO(0)/PKT_BLOCK_FIFO/q_o
-add wave -noupdate -group FIFO_0 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLOCK_FIFO(0)/PKT_BLOCK_FIFO/empty_o
-add wave -noupdate -group FIFO_0 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLOCK_FIFO(0)/PKT_BLOCK_FIFO/full_o
-add wave -noupdate -group FIFO_0 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLOCK_FIFO(0)/PKT_BLOCK_FIFO/almost_empty_o
-add wave -noupdate -group FIFO_0 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLOCK_FIFO(0)/PKT_BLOCK_FIFO/almost_full_o
-add wave -noupdate -group FIFO_0 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLOCK_FIFO(0)/PKT_BLOCK_FIFO/count_o
-add wave -noupdate -group FIFO_1 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLOCK_FIFO(1)/PKT_BLOCK_FIFO/d_i
-add wave -noupdate -group FIFO_1 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLOCK_FIFO(1)/PKT_BLOCK_FIFO/we_i
-add wave -noupdate -group FIFO_1 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLOCK_FIFO(1)/PKT_BLOCK_FIFO/q_o
-add wave -noupdate -group FIFO_1 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLOCK_FIFO(1)/PKT_BLOCK_FIFO/rd_i
-add wave -noupdate -group FIFO_1 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLOCK_FIFO(1)/PKT_BLOCK_FIFO/empty_o
-add wave -noupdate -group FIFO_1 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLOCK_FIFO(1)/PKT_BLOCK_FIFO/full_o
-add wave -noupdate -group FIFO_1 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLOCK_FIFO(1)/PKT_BLOCK_FIFO/almost_empty_o
-add wave -noupdate -group FIFO_1 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLOCK_FIFO(1)/PKT_BLOCK_FIFO/almost_full_o
-add wave -noupdate -group FIFO_1 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLOCK_FIFO(1)/PKT_BLOCK_FIFO/count_o
+add wave -noupdate -expand -group FIFO_0 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLOCK_FIFO(0)/PKT_BLOCK_FIFO/d_i
+add wave -noupdate -expand -group FIFO_0 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLOCK_FIFO(0)/PKT_BLOCK_FIFO/we_i
+add wave -noupdate -expand -group FIFO_0 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLOCK_FIFO(0)/PKT_BLOCK_FIFO/rd_i
+add wave -noupdate -expand -group FIFO_0 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLOCK_FIFO(0)/PKT_BLOCK_FIFO/q_o
+add wave -noupdate -expand -group FIFO_0 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLOCK_FIFO(0)/PKT_BLOCK_FIFO/empty_o
+add wave -noupdate -expand -group FIFO_0 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLOCK_FIFO(0)/PKT_BLOCK_FIFO/full_o
+add wave -noupdate -expand -group FIFO_0 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLOCK_FIFO(0)/PKT_BLOCK_FIFO/almost_empty_o
+add wave -noupdate -expand -group FIFO_0 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLOCK_FIFO(0)/PKT_BLOCK_FIFO/almost_full_o
+add wave -noupdate -expand -group FIFO_0 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLOCK_FIFO(0)/PKT_BLOCK_FIFO/count_o
+add wave -noupdate -expand -group FIFO_1 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLOCK_FIFO(1)/PKT_BLOCK_FIFO/d_i
+add wave -noupdate -expand -group FIFO_1 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLOCK_FIFO(1)/PKT_BLOCK_FIFO/we_i
+add wave -noupdate -expand -group FIFO_1 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLOCK_FIFO(1)/PKT_BLOCK_FIFO/q_o
+add wave -noupdate -expand -group FIFO_1 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLOCK_FIFO(1)/PKT_BLOCK_FIFO/rd_i
+add wave -noupdate -expand -group FIFO_1 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLOCK_FIFO(1)/PKT_BLOCK_FIFO/empty_o
+add wave -noupdate -expand -group FIFO_1 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLOCK_FIFO(1)/PKT_BLOCK_FIFO/full_o
+add wave -noupdate -expand -group FIFO_1 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLOCK_FIFO(1)/PKT_BLOCK_FIFO/almost_empty_o
+add wave -noupdate -expand -group FIFO_1 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLOCK_FIFO(1)/PKT_BLOCK_FIFO/almost_full_o
+add wave -noupdate -expand -group FIFO_1 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLOCK_FIFO(1)/PKT_BLOCK_FIFO/count_o
 add wave -noupdate -group FIFO_2 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLOCK_FIFO(2)/PKT_BLOCK_FIFO/d_i
 add wave -noupdate -group FIFO_2 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLOCK_FIFO(2)/PKT_BLOCK_FIFO/we_i
 add wave -noupdate -group FIFO_2 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/g_PKT_BLOCK_FIFO(2)/PKT_BLOCK_FIFO/q_o
@@ -99,16 +99,17 @@ add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/pkt_len
 add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/ctrl_reg
 add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/snk_stall
 add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/enc_payload
-add wave -noupdate -expand -group WB_FEC_ENC -expand -group fifo /main/XWB_FEC/FEC_ENC/wrf_adr_o
-add wave -noupdate -expand -group WB_FEC_ENC -expand -group fifo /main/XWB_FEC/FEC_ENC/data_fifo_i
-add wave -noupdate -expand -group WB_FEC_ENC -expand -group fifo /main/XWB_FEC/FEC_ENC/wrf_adr_i
-add wave -noupdate -expand -group WB_FEC_ENC -expand -group fifo /main/XWB_FEC/FEC_ENC/fec_pkt_o
-add wave -noupdate -expand -group WB_FEC_ENC -expand -group fifo /main/XWB_FEC/FEC_ENC/fec_pkt_i
-add wave -noupdate -expand -group WB_FEC_ENC -expand -group fifo /main/XWB_FEC/FEC_ENC/rd_fifo_o
-add wave -noupdate -expand -group WB_FEC_ENC -expand -group fifo /main/XWB_FEC/FEC_ENC/wr_fifo_o
-add wave -noupdate -expand -group WB_FEC_ENC -expand -group fifo /main/XWB_FEC/FEC_ENC/fifo_empty
-add wave -noupdate -expand -group WB_FEC_ENC -expand -group fifo /main/XWB_FEC/FEC_ENC/fifo_full
-add wave -noupdate -expand -group WB_FEC_ENC -expand -group fifo /main/XWB_FEC/FEC_ENC/fifo_cnt
+add wave -noupdate -expand -group WB_FEC_ENC -group fifo /main/XWB_FEC/FEC_ENC/wrf_adr_o
+add wave -noupdate -expand -group WB_FEC_ENC -group fifo /main/XWB_FEC/FEC_ENC/data_fifo_i
+add wave -noupdate -expand -group WB_FEC_ENC -group fifo /main/XWB_FEC/FEC_ENC/wrf_adr_i
+add wave -noupdate -expand -group WB_FEC_ENC -group fifo /main/XWB_FEC/FEC_ENC/fec_pkt_o
+add wave -noupdate -expand -group WB_FEC_ENC -group fifo /main/XWB_FEC/FEC_ENC/fec_pkt_i
+add wave -noupdate -expand -group WB_FEC_ENC -group fifo /main/XWB_FEC/FEC_ENC/rd_fifo_o
+add wave -noupdate -expand -group WB_FEC_ENC -group fifo /main/XWB_FEC/FEC_ENC/wr_fifo_o
+add wave -noupdate -expand -group WB_FEC_ENC -group fifo /main/XWB_FEC/FEC_ENC/fifo_empty
+add wave -noupdate -expand -group WB_FEC_ENC -group fifo /main/XWB_FEC/FEC_ENC/fifo_full
+add wave -noupdate -expand -group WB_FEC_ENC -group fifo /main/XWB_FEC/FEC_ENC/fifo_cnt
+add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/start_streaming
 add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/fec_hdr
 add wave -noupdate -expand -group WB_FEC_ENC /main/XWB_FEC/FEC_ENC/fec_block_len
 add wave -noupdate -expand -group WB_FEC_ENC -height 16 /main/XWB_FEC/FEC_ENC/s_enc_refresh
@@ -137,13 +138,13 @@ add wave -noupdate -group HDR_GEN /main/XWB_FEC/FEC_ENC/FEC_HDR_PROC/hdr_reserve
 add wave -noupdate -expand -group ENCODER -expand -group STB /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/payload_stb_i
 add wave -noupdate -expand -group ENCODER -expand -group STB /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/fec_stb_i
 add wave -noupdate -expand -group ENCODER -expand -group STB /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/fec_enc_rd_i
-add wave -noupdate -expand -group ENCODER -expand -group STB /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/fec_enc_stb
 add wave -noupdate -expand -group ENCODER /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/enc_payload_o
 add wave -noupdate -expand -group ENCODER /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/enc_payload
-add wave -noupdate -expand -group ENCODER /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/xor_code
-add wave -noupdate -expand -group ENCODER /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/payload_i
 add wave -noupdate -expand -group ENCODER -expand /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/block2enc
 add wave -noupdate -expand -group ENCODER -expand /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/pl_block
+add wave -noupdate -expand -group ENCODER /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/payload_i
+add wave -noupdate -expand -group ENCODER /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/block2enc(0)
+add wave -noupdate -expand -group ENCODER /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/xor_code
 add wave -noupdate -expand -group ENCODER -expand -group FIFO /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/ENC_PKT_FIFO/d_i
 add wave -noupdate -expand -group ENCODER -expand -group FIFO /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/ENC_PKT_FIFO/we_i
 add wave -noupdate -expand -group ENCODER -expand -group FIFO /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/ENC_PKT_FIFO/q_o
@@ -154,6 +155,8 @@ add wave -noupdate -expand -group ENCODER -expand -group FIFO /main/XWB_FEC/FEC_
 add wave -noupdate -expand -group ENCODER -expand -group FIFO /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/ENC_PKT_FIFO/almost_full_o
 add wave -noupdate -expand -group ENCODER -expand -group FIFO /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/ENC_PKT_FIFO/count_o
 add wave -noupdate -expand -group ENCODER /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/block_len_i
+add wave -noupdate -expand -group ENCODER /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/block_cnt
+add wave -noupdate -expand -group ENCODER /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/fec_pl_len
 add wave -noupdate -expand -group ENCODER /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/enc_cnt
 add wave -noupdate -expand -group ENCODER -height 16 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/s_ENC
 add wave -noupdate -expand -group ENCODER -height 16 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/S_ENC_CNT
@@ -161,18 +164,15 @@ add wave -noupdate -expand -group ENCODER /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/
 add wave -noupdate -expand -group ENCODER /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/rst_n
 add wave -noupdate -expand -group ENCODER /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/empty
 add wave -noupdate -expand -group ENCODER /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/full
-add wave -noupdate -expand -group ENCODER /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/block_cnt
 add wave -noupdate -expand -group ENCODER -expand /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/cnt
 add wave -noupdate -expand -group ENCODER /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/code_src_sel
 add wave -noupdate -expand -group ENCODER /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/read_block
-add wave -noupdate -expand -group ENCODER /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/fec_enc_stb
-add wave -noupdate -expand -group ENCODER /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/fec_pl_len
 add wave -noupdate -expand -group ENCODER /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/we_src_sel
 add wave -noupdate -expand -group ENCODER /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/we_mask
 add wave -noupdate -expand -group ENCODER /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/we_loop_back
 add wave -noupdate -expand -group ENCODER -height 16 /main/XWB_FEC/FEC_ENC/PKT_ERASURE_ENC/s_ENC
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {73993652000 fs} 0}
+WaveRestoreCursors {{Cursor 1} {2779073570 fs} 0} {{Cursor 2} {1764000000 fs} 0}
 configure wave -namecolwidth 194
 configure wave -valuecolwidth 150
 configure wave -justifyvalue left
@@ -187,4 +187,4 @@ configure wave -griddelta 10
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {0 fs} {722526248960 fs}
+WaveRestoreZoom {2270214740 fs} {2865761620 fs}

@@ -32,17 +32,17 @@ module main;
 
 
 	/* WB masters */
-  IWishboneMaster WB_fec (clk_sys, rst_n);
+  IWishboneMaster WB_fec (clk_ref, rst_n);
 
 	/* WB accessors */
   CWishboneAccessor acc_fec;
 
 	/* Fabrics */
-  IWishboneMaster #(2,16) dec_src (clk_sys, rst_n);
-  IWishboneSlave  #(2,16) dec_snk (clk_sys, rst_n); 
+  IWishboneMaster #(2,16) dec_src (clk_ref, rst_n);
+  IWishboneSlave  #(2,16) dec_snk (clk_ref, rst_n); 
   
-  IWishboneMaster #(2,16) enc_src (clk_sys, rst_n);
-  IWishboneSlave  #(2,16) enc_snk (clk_sys, rst_n);
+  IWishboneMaster #(2,16) enc_src (clk_ref, rst_n);
+  IWishboneSlave  #(2,16) enc_snk (clk_ref, rst_n);
 
 	/* Fabrics accessors */
   WBPacketSource fec_src;
@@ -64,7 +64,7 @@ module main;
     .g_en_golay(`false),
     .g_en_dec_time(`false))
   XWB_FEC ( 
-    .clk_i(clk_sys),
+    .clk_i(clk_ref),
     .rst_n_i(rst_n),
     .fec_dec_sink_cyc(dec_src.master.cyc),
 		.fec_dec_sink_stb(dec_src.master.stb),
@@ -149,7 +149,7 @@ module main;
 
 
     @(posedge rst_n);
-    repeat(3) @(posedge clk_sys);
+    repeat(3) @(posedge clk_ref);
 
     #1us;
 
@@ -171,7 +171,8 @@ module main;
       seed = (seed + 1) & 'hffff;
       length = $dist_uniform(seed, 128, 1500);
       length = length & 'hffff;
-      length = (length + 3) & ~'h03;
+      length = (length + 7) & ~'h07;
+      length = 512;
       
       $write("----->LENGTH %x \n", length);
 
@@ -190,8 +191,8 @@ module main;
         begin
         for (i=1; i <= length/4; i++)
           begin
-          //pkt.payload[cnt] = i & 'hff;
-          pkt.payload[cnt] = j & 'hff;
+          pkt.payload[cnt] = i & 'hff;
+          //pkt.payload[cnt] = (j + 1)  & 'hff;
           cnt = cnt + 1;
         end
       end
