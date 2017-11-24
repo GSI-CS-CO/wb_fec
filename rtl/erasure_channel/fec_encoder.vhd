@@ -24,6 +24,7 @@ entity fec_encoder is
     fec_stb_i     : in  std_logic;
     fec_enc_rd_i  : in  std_logic;
     block_len_i   : in  t_block_len;
+    streaming_o   : out std_logic;
     enc_err_o     : out std_logic;
     enc_payload_o : out t_wrf_bus);
 end fec_encoder;
@@ -44,9 +45,10 @@ architecture rtl of fec_encoder is
   signal read_block   : std_logic_vector (g_num_block - 1 downto 0);
   signal block_cnt    : unsigned (c_eth_pl_width - 1 downto 0);
   signal payload_cnt  : unsigned (c_eth_pl_width - 1 downto 0);
-  signal enc_cnt      : integer range 0 to 10000;
-  signal fec_enc_stb  : std_logic;
-  signal fec_pl_len   : integer;
+  --signal enc_cnt      : integer range 0 to 10000;
+  signal enc_cnt      : t_block_len;
+  signal fec_pl_len   : t_block_len;
+  --signal fec_pl_len   : integer;
   signal we_src_sel   : unsigned (g_num_block - 1 downto 0);
   signal we_mask      : unsigned (g_num_block - 1 downto 0);
   signal we_loop_back : std_logic_vector (g_num_block - 1 downto 0);
@@ -61,17 +63,19 @@ architecture rtl of fec_encoder is
 
 begin
   -- FEC payload length 
-  fec_pl_len  <= to_integer(2 * block_len_i);
+  fec_pl_len  <=  (block_len_i sll 1) - 1;
   
-  enc_payload   <= payload_i  when  code_src_sel = c_FROM_STR else
-                   xor_code   when  code_src_sel = c_FROM_XOR;
+  --enc_payload   <= payload_i  when  code_src_sel = c_FROM_STR else
+  --                 xor_code   when  code_src_sel = c_FROM_XOR;
+  enc_payload   <= xor_code;
 
   coding_streaming_fsm : process(clk_i) is
   begin
     if rising_edge(clk_i) then
       if rst_n_i = '0' then
-        s_enc         <= IDLE;
-        enc_cnt       <= 0;
+        s_ENC         <= IDLE;
+        s_next_ENC    <= IDLE;
+        enc_cnt       <= (others => '0');
         xor_code      <= (others => '0');
         read_block    <= (others => '0');
         code_src_sel  <= c_FROM_XOR;
@@ -82,25 +86,26 @@ begin
         case s_ENC_CNT is
           when IDLE =>
             -- the first block[0] received, we can start encoding
-            if (payload_stb_i = '1' and block_cnt > block_len_i - 3) then
-              s_ENC_CNT <= ENCODING;
-              s_ENC     <= s_next_ENC;
+            if (payload_stb_i = '1' and block_cnt > block_len_i - 2) then
+              s_ENC_CNT   <= ENCODING;
+              s_ENC       <= s_next_ENC;
+              read_block(0) <= c_FIFO_ON;
             else
-             s_ENC     <= IDLE;
+              s_ENC     <= IDLE;
               s_ENC_CNT <= IDLE;
             end if;
           when ENCODING =>
-            if (fec_stb_i = '1') then
-              if (enc_cnt < fec_pl_len - 1 and halt_cnt = '0')  then
+            if (s_ENC /= IDLE) then
+              if (enc_cnt /= fec_pl_len and halt_cnt = '0')  then
                 enc_cnt <= enc_cnt + 1;
               elsif (halt_cnt = '1') then
                 enc_cnt <= enc_cnt;
               else
                 s_ENC <= s_next_ENC;
-                enc_cnt <= 0;
+                enc_cnt <= (others => '0');
               end if;
-            else
-             s_ENC_CNT <= IDLE;
+            --else
+            -- s_ENC_CNT <= IDLE;
             end if;
           when others =>
         end case;
@@ -108,26 +113,35 @@ begin
         case s_ENC  is
           when IDLE =>
             s_next_ENC  <= ENC_PKT_0;
-            read_block  <= (others => '0');
+            --read_block  <= (others => '0');
             xor_code    <= (others => '0');
             code_src_sel<= c_FROM_XOR;
-            enc_cnt     <= 0;
+            enc_cnt     <= (others => '0');
             fifo_wr     <= '0';
+            streaming_o <= '0';
           when ENC_PKT_0 =>        
-            if (enc_cnt =  1) then
-              fifo_wr     <= '1';
-            end if;
+            streaming_o <= '1';
+            fifo_wr     <= '1';
             if (enc_cnt <= block_len_i - 1) then
             -- block(0)[fifo] xor block(1)[payload]            
               read_block(0) <= c_FIFO_ON; --[0]
               code_src_sel  <= c_FROM_XOR;
-              xor_code      <= block2enc(0) xor payload_i;            
+              xor_code      <= block2enc(0) xor payload_i;
             else
             -- block(2)[payload]
-              read_block(0) <= c_FIFO_OFF; --[0]
-              code_src_sel  <= c_FROM_STR; --[2]
-              xor_code      <= (others => '0');
+              code_src_sel  <= c_FROM_XOR; --[2]
+              xor_code      <= payload_i;
             end if;
+
+            if (enc_cnt = block_len_i - 1) then
+              read_block(0) <= c_FIFO_OFF; --[0]
+            end if;
+
+            if (enc_cnt = fec_pl_len) then
+              read_block(1) <= c_FIFO_ON; --[1]
+              read_block(2) <= c_FIFO_ON; --[2]
+            end if;
+
             s_next_ENC  <= ENC_PKT_1;
           when ENC_PKT_1 =>
             if (enc_cnt <= block_len_i - 1) then
@@ -143,13 +157,16 @@ begin
               xor_code      <= block2enc(3);
             end if;
 
-            -- resynchronize all the streams halting 1 clock the cnt
-            -- and enabling all the fifos to stream a waterfall
-            if (enc_cnt = block_len_i) then
-              fifo_wr       <= '0';
-              halt_cnt      <= '1';
-              read_block(0) <= c_FIFO_ON; --[0]
+            if (enc_cnt = block_len_i - 1) then
+              read_block(1) <= c_FIFO_OFF; --[1]
+              read_block(2) <= c_FIFO_OFF; --[2]
               read_block(3) <= c_FIFO_ON; --[3]
+            end if;
+
+            if (enc_cnt = fec_pl_len) then
+              read_block(0) <= c_FIFO_ON; --[1]
+              read_block(1) <= c_FIFO_ON; --[1]
+              read_block(2) <= c_FIFO_ON; --[2]
             end if;
 
             s_next_ENC <= ENC_PKT_2;

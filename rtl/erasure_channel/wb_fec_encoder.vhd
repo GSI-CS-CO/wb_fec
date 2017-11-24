@@ -72,6 +72,7 @@ architecture rtl of wb_fec_encoder is
   signal fec_pkt_cnt      : integer range 0 to g_num_block;
   signal fec_word_cnt     : integer range 0 to c_fec_hdr_len + c_eth_payload;
   signal fec_bytes        : integer;
+  signal start_streaming  : std_logic;
 
   constant c_div_num_block : integer := f_log2_size(g_num_block) + 1; -- in 16bit words
 begin 
@@ -85,11 +86,12 @@ begin
       fec_stb_i     => fec_stb,
       fec_enc_rd_i  => fec_enc_rd,
       block_len_i   => fec_block_len,
+      streaming_o   => start_streaming,
       enc_err_o     => enc_err,
       enc_payload_o => enc_payload);
   
   fec_enc_rd <=  '1' when s_fec_strm  = SEND_FEC_PAYLOAD else
-                      '0';
+                 '0';
 
   --g_GOLAY_ENC : if g_en_golay generate
   --  GOLAY_ENC : golay_encoder
@@ -173,7 +175,8 @@ begin
         fec_hdr_payload_len := c_fec_hdr_len + (2 * to_integer(fec_block_len));
         case s_fec_strm is
           when IDLE =>
-            if (eth_cnt >= fec_block_len - 3 and pkt_stb = '1') then
+            --if (eth_cnt >= fec_block_len + 2 and pkt_stb = '1') then
+            if (start_streaming = '1') then
               s_fec_strm  <= SEND_STATUS;
               fec_stb     <= '1';
             else
@@ -243,19 +246,20 @@ begin
               if (eth_cnt < c_eth_hdr_len - 1) then
                 pkt_stb <= '0';
               elsif (eth_cnt = c_eth_hdr_len) then
-              -- getting the payload
                 hdr_ethertype <= snk_i.dat;
                 pkt_len       <= to_integer(unsigned(snk_i.dat) srl 2);
+                -- start getting payload
                 pkt_stb       <= '1';
               elsif (eth_cnt < pkt_len - 1) then
+              -- getting the payload
                 pkt_stb <= '1';
               elsif (eth_cnt >= c_eth_pkt - 1) then
                 -- jumbo pkt error
                 pkt_stb   <= '0';
                 pkt_err   <= '1';
               end if;        
-           end if;              
-           eth_cnt <= eth_cnt + 1;
+            end if;              
+            eth_cnt <= eth_cnt + 1;
           else
             eth_cnt       <= 0;
             pkt_stb       <= '0';

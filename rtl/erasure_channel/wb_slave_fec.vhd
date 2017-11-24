@@ -79,12 +79,10 @@ begin
               wb_slave_o.dat(31 downto 1) <= (others => '0');
             when "0001"    => --  Pkt Erasure Code / Bit Erasure Code 0x4
               if wb_slave_i.we = '1' then
-                s_fec_ctrl.fec_pkt_er_code <= wb_slave_i.dat(1 downto 0);
-                s_fec_ctrl.fec_bit_er_code <= wb_slave_i.dat(3 downto 2);
+                s_fec_ctrl.fec_code <= wb_slave_i.dat(1 downto 0);
               end if;
-              wb_slave_o.dat(1  downto 0) <= s_fec_ctrl.fec_pkt_er_code;
-              wb_slave_o.dat(3  downto 2) <= s_fec_ctrl.fec_bit_er_code;
-              wb_slave_o.dat(31 downto 4) <= (others => '0');
+              wb_slave_o.dat(1  downto 0) <= s_fec_ctrl.fec_code;
+              wb_slave_o.dat(31 downto 2) <= (others => '0');
             when "0010"    => -- Ethertype 0x8
               if wb_slave_i.we = '1' then
                 s_fec_ctrl.fec_ethtype <= wb_slave_i.dat(15 downto 0);

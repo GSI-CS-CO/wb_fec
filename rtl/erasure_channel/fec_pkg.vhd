@@ -28,7 +28,8 @@ package fec_pkg is
   constant c_eth_pkt          : integer := c_eth_hdr_len + c_eth_payload;
   constant c_eth_pkt_width    : integer := f_ceil_log2(c_eth_pkt);
   constant c_block_max_len    : integer := 188; -- 16 bit word
-  constant c_block_len_width  : integer := f_ceil_log2(c_block_max_len);
+  --constant c_block_len_width  : integer := f_ceil_log2(c_block_max_len);
+  constant c_block_len_width  : integer := 8;
   constant c_FROM_STR         : std_logic := '0';
   constant c_FROM_XOR         : std_logic := '1';
   constant c_FIFO_ON          : std_logic := '1';
@@ -69,22 +70,23 @@ package fec_pkg is
   subtype t_eth_type is std_logic_vector(15 downto 0);
   subtype t_eth_hdr  is std_logic_vector(111 downto 0);
 
+  -- FEC Counters
+  constant c_id_width       : integer := 4;
+  constant c_subid_width    : integer := 2;
+  constant c_fec_cnt_width  : integer := 32;
+  constant c_erasure_code   : integer := 2;
+
   -- FEC Header
-  subtype t_erasure_code     is std_logic_vector(1 downto 0);
-  subtype t_enc_frame_id     is std_logic_vector(3 downto 0);
-  subtype t_enc_frame_sub_id is std_logic_vector(1 downto 0);
-  subtype t_blk_len          is std_logic_vector(c_eth_pl_width - 1 downto 0);
-  subtype t_block_len        is unsigned(c_eth_pl_width - 1 downto 0);
+  subtype t_erasure_code     is std_logic_vector(c_erasure_code - 1 downto 0);
+  subtype t_enc_frame_id     is std_logic_vector(c_id_width - 1 downto 0);
+  subtype t_enc_frame_sub_id is std_logic_vector(c_subid_width - 1 downto 0);
+  subtype t_blk_len          is std_logic_vector(c_block_len_width - 1 downto 0);
+  subtype t_block_len        is unsigned(c_block_len_width - 1 downto 0);
   subtype t_fec_pkt_len      is unsigned((2 * c_eth_pl_width) downto 0);
   subtype fec_code_range     is natural range 15 downto 14;
   subtype fec_id_range       is natural range 13 downto 10;
   subtype fec_subid_range    is natural range  9 downto  8;
   subtype fec_blk_len_range  is natural range  7 downto  0; 
-
-  -- FEC Counters
-  constant c_id_width       : integer := 6;
-  constant c_subid_width    : integer := 3;
-  constant c_fec_cnt_width  : integer := 32;
 
   constant c_fec_sdb : t_sdb_device := (
     abi_class       => x"0000", -- undocumented device
@@ -125,21 +127,17 @@ package fec_pkg is
 
   type t_fec_ctrl_reg is record
     fec_ctrl_refresh  : std_logic;
-    fec_pkt_er_code   : std_logic_vector(1 downto 0);
-    fec_bit_er_code   : std_logic_vector(1 downto 0);
+    fec_code          : t_erasure_code;
     --time_code         : t_time_code;
     fec_ethtype       : t_eth_type;
-    fec_enc_en_golay  : std_logic;
-    fec_enc_en        : std_logic;
+    fec_enc_en       : std_logic;
   end record;
 
   constant c_fec_ctrl_reg : t_fec_ctrl_reg := (
     fec_ctrl_refresh  => '0',
-    fec_pkt_er_code   => "01", -- Simple Code
-    fec_bit_er_code   => "00", -- No Code
+    fec_code          => "00", -- Simple Code
     --time_code         => c_time_code
     fec_ethtype       => x"cafe",
-    fec_enc_en_golay  => c_DISABLE,
     fec_enc_en        => c_ENABLE);
 
   type t_fec_stat_reg is record
@@ -317,6 +315,7 @@ package fec_pkg is
       fec_stb_i     : in  std_logic;
       fec_enc_rd_i  : in  std_logic;
       block_len_i   : in  t_block_len;
+      streaming_o   : out std_logic;
       enc_err_o     : out std_logic;
       enc_payload_o : out t_wrf_bus);
   end component;
@@ -353,7 +352,7 @@ package body fec_pkg is
       len_block := len_block + 1;
     end if;
 
-    return len_block(c_eth_pl_width - 1 downto 0);
+    return len_block(c_block_len_width - 1 downto 0);
   end function;
 
   function f_parse_eth (x : std_logic_vector) return t_eth_frame_header is
@@ -377,7 +376,7 @@ package body fec_pkg is
    -- decoder
   function f_fifo_id (subid : t_enc_frame_sub_id) return unsigned is
   --TODO make it generic to g_num_pkt
-    variable fifo_id  : unsigned (3 downto 0);
+    variable fifo_id  : unsigned (c_id_width - 1 downto 0);
     begin
       case subid is 
         when "00" => fifo_id := "0100";

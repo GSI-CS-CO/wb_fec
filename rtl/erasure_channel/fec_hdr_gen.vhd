@@ -21,7 +21,7 @@ entity fec_hdr_gen is
       rst_n_i       : in  std_logic;
       hdr_i         : in  t_wrf_bus;
       hdr_stb_i     : in  std_logic;
-      block_len_i   : in  unsigned (c_eth_pl_width - 1 downto 0);
+      block_len_i   : in  unsigned (c_block_len_width - 1 downto 0);
       fec_stb_i     : in  std_logic;
       fec_hdr_stb_i : in  std_logic;
       fec_hdr_o     : out t_wrf_bus;
@@ -112,7 +112,6 @@ begin
         if (fec_hdr_len <=  c_fec_hdr_len - 4) then
           fec_hdr_o <= f_extract_eth(fec_hdr_len, eth_hdr_reg);
         elsif (fec_hdr_len <=  c_fec_hdr_len - 3) then
-          --fec_hdr_o <= std_logic_vector(resize(block_len_i, 16));
           fec_hdr_o <= ctrl_reg_i.fec_ethtype;
         elsif (fec_hdr_len <=  c_fec_hdr_len - 2) then
           fec_hdr_o <= fec_hdr;
@@ -127,11 +126,10 @@ begin
       if rst_n_i = '0' then
         fec_hdr <=  (others => '0');
       else
-        fec_hdr <=  ctrl_reg_i.fec_pkt_er_code &
-                    ctrl_reg_i.fec_bit_er_code &
+        fec_hdr <=  ctrl_reg_i.fec_code &
                     std_logic_vector(id_cnt(g_id_width -1 downto 0)) &
-                    std_logic_vector(subid_cnt) & 
-                    hdr_reserved;
+                    std_logic_vector(subid_cnt) &
+                    std_logic_vector(block_len_i);
       end if;
     end if;
   end process;
