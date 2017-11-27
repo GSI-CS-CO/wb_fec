@@ -30,13 +30,23 @@ package fec_pkg is
   constant c_block_max_len    : integer := 188; -- 16 bit word
   --constant c_block_len_width  : integer := f_ceil_log2(c_block_max_len);
   constant c_block_len_width  : integer := 8;
-  constant c_FROM_STR         : std_logic := '0';
-  constant c_FROM_XOR         : std_logic := '1';
+  --constant c_FROM_STR         : std_logic := '0';
+  --constant c_FROM_XOR         : std_logic := '1';
   constant c_FIFO_ON          : std_logic := '1';
   constant c_FIFO_OFF         : std_logic := '0';
   constant c_ENABLE           : std_logic := '1';
   constant c_DISABLE          : std_logic := '0';
-
+  subtype t_fec_pkt_cnt is unsigned (3 downto 0);
+  constant c_IDLE             : t_fec_pkt_cnt  := "0000";
+  constant c_PKT_0_1          : t_fec_pkt_cnt  := "0001";
+  constant c_PKT_0_2          : t_fec_pkt_cnt  := "0010";
+  constant c_PKT_1_1          : t_fec_pkt_cnt  := "0011";
+  constant c_PKT_1_2          : t_fec_pkt_cnt  := "0100";
+  constant c_PKT_2_1          : t_fec_pkt_cnt  := "0101";
+  constant c_PKT_2_2          : t_fec_pkt_cnt  := "0110";
+  constant c_PKT_3_1          : t_fec_pkt_cnt  := "0111";
+  constant c_PKT_3_2          : t_fec_pkt_cnt  := "1000";
+  
   -- Decoder
   type t_next_op  is (IDLE, STORE, XOR_0_1, XOR_0_2, XOR_0_3, XOR_1_2, XOR_1_3, XOR_2_3);
 
@@ -48,6 +58,13 @@ package fec_pkg is
   type t_wrf_bus_array is array (natural range <>) of t_wrf_bus;
   constant c_WRF_STATUS_FEC   : t_wrf_bus := x"0005"; -- vCRC = 0, vSMAC = 1, err = 1, isHP = 1
   constant c_WRF_OOB_FEC      : t_wrf_bus := c_WRF_OOB_TYPE_TX & x"aaa";
+
+  -- FIFOs
+  subtype t_read_block is std_logic_vector(3 downto 0);
+  constant c_FIFO_0_1         : t_read_block := "0001";
+  constant c_FIFO_Z           : t_read_block := "0000";
+  constant c_FIFO_1_2         : t_read_block := "0110";
+  constant c_FIFO_ALL         : t_read_block := "1111";
 
   -- Enc FIFOs
   constant c_out_fifo_size      : integer := 1024;
