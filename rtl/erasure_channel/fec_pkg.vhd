@@ -23,7 +23,7 @@ package fec_pkg is
   constant c_eth_hdr_len_width: integer := f_ceil_log2(c_eth_hdr_len);
   constant c_fec_hdr_len      : integer := 8;
   constant c_fec_hdr_vlan_len : integer := 10;
-  constant c_eth_payload      : integer := 750; -- 16 bit word
+  constant c_eth_payload      : integer := 752; -- 16 bit word
   constant c_eth_pl_width     : integer := f_ceil_log2(c_eth_payload);
   constant c_eth_pkt          : integer := c_eth_hdr_len + c_eth_payload;
   constant c_eth_pkt_width    : integer := f_ceil_log2(c_eth_pkt);
