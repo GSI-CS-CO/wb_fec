@@ -21,10 +21,11 @@ entity fec_hdr_gen is
       rst_n_i       : in  std_logic;
       hdr_i         : in  t_wrf_bus;
       hdr_stb_i     : in  std_logic;
-      block_len_i   : in  unsigned (c_block_len_width - 1 downto 0);
       fec_stb_i     : in  std_logic;
       fec_hdr_stb_i : in  std_logic;
-      fec_hdr_o     : out t_wrf_bus;
+      fec_hdr_o     : out t_wrf_bus;     
+      pkt_len_i     : in  t_eth_type;
+      padding_i     : in  t_padding;
       enc_cnt_o     : out std_logic_vector(c_fec_cnt_width - 1 downto 0);
       ctrl_reg_i    : in  t_fec_ctrl_reg);
 end fec_hdr_gen;
@@ -34,14 +35,13 @@ architecture rtl of fec_hdr_gen is
   signal subid_cnt      : unsigned(g_subid_width - 1 downto 0);
   signal fec_hdr_stb_d  : std_logic;
   signal fec_stb_d      : std_logic;
-  signal fec_hdr        : t_wrf_bus;
-  signal tmp            : t_wrf_bus;
+  signal fec_hdr        : t_fec_header;
   signal fec_hdr_len    : unsigned(c_eth_hdr_len_width - 1 downto 0);
   signal eth_hdr_len    : unsigned(c_eth_hdr_len_width - 1 downto 0);
   signal eth_hdr_reg    : t_eth_hdr;
   signal eth_hdr_shift  : t_eth_hdr;
   signal eth_hdr        : t_eth_frame_header;
-  constant hdr_reserved : std_logic_vector(2 downto 0) := "000";
+  signal pkt_len        : t_eth_type;
   constant c_is_decoder : boolean := g_fec_type = "decoder";
   constant c_is_encoder : boolean := g_fec_type = "encoder";
 begin
@@ -109,30 +109,41 @@ begin
           fec_hdr_len <= (others => '0');
         end if;
 
-        if (fec_hdr_len <=  c_fec_hdr_len - 4) then
+        if (fec_hdr_len <=  c_fec_hdr_len - 5) then
           fec_hdr_o <= f_extract_eth(fec_hdr_len, eth_hdr_reg);
-        elsif (fec_hdr_len <=  c_fec_hdr_len - 3) then
+        elsif (fec_hdr_len <=  c_fec_hdr_len - 4) then
           fec_hdr_o <= ctrl_reg_i.fec_ethtype;
-        elsif (fec_hdr_len <=  c_fec_hdr_len - 2) then
-          fec_hdr_o <= fec_hdr;
+        elsif (fec_hdr_len <=  c_fec_hdr_len - 3) then
+          fec_hdr_o <= fec_hdr.fec_code &
+                       fec_hdr.enc_frame_id &
+                       fec_hdr.enc_frame_subid &
+                       fec_hdr.reserved;
+        elsif (fec_hdr_len <=  c_fec_hdr_len - 2) then          
+          fec_hdr_o <= fec_hdr.eth_pkt_len &
+                       fec_hdr.fec_padding_crc;
         end if;
       end if;
     end if;
   end process;
 
+
   fec_hdr_pack  : process(clk_i) is
   begin
     if rising_edge(clk_i) then
       if rst_n_i = '0' then
-        fec_hdr <=  (others => '0');
+        fec_hdr <=  c_fec_header;
       else
-        fec_hdr <=  ctrl_reg_i.fec_code &
-                    std_logic_vector(id_cnt(g_id_width -1 downto 0)) &
-                    std_logic_vector(subid_cnt) &
-                    std_logic_vector(block_len_i);
+        fec_hdr.fec_code        <= ctrl_reg_i.fec_code;
+        fec_hdr.enc_frame_id    <= std_logic_vector(id_cnt(g_id_width - 1 downto 0));
+        fec_hdr.enc_frame_subid <= std_logic_vector(subid_cnt);
+        fec_hdr.reserved        <= (others => '0');
+        fec_hdr.eth_pkt_len     <= pkt_len(c_fec_hdr_pkt_len - 1 downto 0);
+        fec_hdr.fec_padding_crc <= std_logic_vector(padding_i.pad_block xor
+                                   padding_i.pad_pkt);
       end if;
     end if;
   end process;
+  pkt_len <= std_logic_vector(unsigned(pkt_len_i) srl 1);
 
   id_fec_hdr  : process(clk_i) is
   begin

@@ -65,33 +65,48 @@ architecture rtl of wb_fec_encoder is
   signal fec_block_len    : t_block_len;
   signal hdr_stb          : std_logic;
   type t_enc_refresh is (IDLE, WAIT_TO_APPLY);
-  type t_fec_strm is (IDLE, SEND_STATUS, SEND_OOB0, SEND_OOB1, SEND_FEC_HDR, SEND_FEC_PKT, SEND_FEC_PAYLOAD, IDLE_FEC);
+  type t_fec_strm is (IDLE, SEND_STATUS, SEND_OOB0, SEND_OOB1, SEND_FEC_HDR, SEND_FEC_PKT, SEND_FEC_PAYLOAD, SEND_FEC_PADDING, IDLE_FEC);
   signal s_enc_refresh    : t_enc_refresh;
   signal s_fec_strm       : t_fec_strm;
   signal eth_cnt          : integer range 0 to c_eth_hdr_len + c_eth_payload + 1;
+  signal pad_cnt          : integer range 0 to c_pad_cnt;
   signal fec_pkt_cnt      : integer range 0 to g_num_block;
   signal fec_word_cnt     : integer range 0 to c_fec_hdr_len + c_eth_payload;
+  signal pad_word_cnt     : integer range 0 to c_pad_cnt;
   signal fec_bytes        : integer;
   signal start_streaming  : std_logic;
+  signal padding          : t_padding;
+  signal data_stb         : std_logic;
+  signal pad_stb          : std_logic;
+  signal padded           : std_logic;
+  signal pkt_data         : t_wrf_bus;
 
   constant c_div_num_block : integer := f_log2_size(g_num_block) + 1; -- in 16bit words
 begin 
 
   PKT_ERASURE_ENC : fec_encoder
-    port  map(
+    generic map(
+    g_num_block     => g_num_block)
+    port map(
       clk_i         => clk_i,
       rst_n_i       => rst_n_i,
-      payload_i     => snk_i.dat,
-      payload_stb_i => pkt_stb,
+      payload_i     => pkt_data,
+      payload_stb_i => data_stb,
       fec_stb_i     => fec_stb,
       fec_enc_rd_i  => fec_enc_rd,
       block_len_i   => fec_block_len,
       streaming_o   => start_streaming,
       enc_err_o     => enc_err,
       enc_payload_o => enc_payload);
+
+  data_stb    <= pkt_stb or pad_stb;
+
+  pkt_data    <= snk_i.dat        when pkt_stb = '1' else
+                 (others => '1')  when pad_stb = '1' else
+                 (others => '0');
   
-  fec_enc_rd <=  '1' when s_fec_strm  = SEND_FEC_PAYLOAD else
-                 '0';
+  fec_enc_rd  <=  '1' when s_fec_strm  = SEND_FEC_PAYLOAD else
+                  '0';
 
   --g_GOLAY_ENC : if g_en_golay generate
   --  GOLAY_ENC : golay_encoder
@@ -103,6 +118,16 @@ begin
   --      code_word_o => );
   --end generate;
 
+  FEC_CALC_LEN_PAD : fec_len_pad
+    generic map(
+      g_num_block     => g_num_block)
+    port map(
+      clk_i           => clk_i,
+      rst_n_i         => rst_n_i,
+      pkt_len_i       => hdr_ethertype,
+      fec_block_len_o => fec_block_len,
+      padding_o       => padding);
+
   FEC_HDR_PROC : fec_hdr_gen
     generic map(
       g_id_width    => c_id_width,
@@ -113,7 +138,8 @@ begin
       rst_n_i       => rst_n_i,
       hdr_i         => snk_i.dat,
       hdr_stb_i     => hdr_stb,
-      block_len_i   => fec_block_len,
+      pkt_len_i     => hdr_ethertype,
+      padding_i     => padding,
       fec_stb_i     => fec_stb,
       fec_hdr_stb_i => fec_hdr_stb,
       fec_hdr_o     => fec_hdr,
@@ -127,7 +153,7 @@ begin
                  '0';
 
   -- Encoded pkt payload length
-  fec_block_len <= f_calc_len_block(hdr_ethertype, c_div_num_block, g_num_block);
+  --fec_block_len <= f_calc_len_block(hdr_ethertype, c_div_num_block, g_num_block);
 
   -- Refresh the ctrl setting after pkt encoded
   ctrl_config_refresh : process(clk_i) is
@@ -180,9 +206,10 @@ begin
               s_fec_strm  <= SEND_STATUS;
               fec_stb     <= '1';
             else
-              s_fec_strm  <= IDLE;            
+              s_fec_strm  <= IDLE;
               fec_stb         <= '0';
               fec_word_cnt    <= 0;
+              pad_word_cnt    <= 0;
               fec_pkt_cnt     <= 0;
             end if;
           when SEND_STATUS  =>
@@ -192,11 +219,15 @@ begin
               s_fec_strm  <= SEND_FEC_HDR;
             else
               s_fec_strm  <= SEND_FEC_PAYLOAD;
-            end if;    
-            fec_word_cnt <= fec_word_cnt + 1;          
+            end if;
+            fec_word_cnt <= fec_word_cnt + 1;
           when SEND_FEC_PAYLOAD =>
             if (fec_word_cnt <= fec_hdr_payload_len - 1) then
               s_fec_strm  <= SEND_FEC_PAYLOAD;
+              if (fec_word_cnt = fec_hdr_payload_len - 1 and
+                  (padding.pad_block /= (padding.pad_block'range => '0'))) then
+                s_fec_strm  <= SEND_FEC_PADDING;
+              end if;
             elsif(fec_pkt_cnt <= g_num_block - 1) then
               s_fec_strm      <= IDLE_FEC;
               fec_pkt_cnt <= fec_pkt_cnt + 1;
@@ -205,10 +236,21 @@ begin
               s_fec_strm  <= IDLE_FEC;
             end if;
             fec_word_cnt <= fec_word_cnt + 1;
+          when SEND_FEC_PADDING =>
+            if (pad_word_cnt < unsigned(padding.pad_block) - 1) then
+              s_fec_strm  <= SEND_FEC_PADDING;
+            elsif(fec_pkt_cnt <= g_num_block - 1) then
+              s_fec_strm  <= IDLE_FEC;
+              fec_pkt_cnt <= fec_pkt_cnt + 1;
+            else
+              fec_stb     <= '0';
+              s_fec_strm  <= IDLE_FEC;
+            end if;
+            pad_word_cnt <= pad_word_cnt + 1;
           when SEND_OOB0 => 
-              s_fec_strm  <= SEND_OOB1; -- not used, reduce latency
+              s_fec_strm  <= SEND_OOB1; -- not used in tx
           when SEND_OOB1=>
-              s_fec_strm  <= IDLE_FEC;  -- not used, reduce latency
+              s_fec_strm  <= IDLE_FEC;  -- not used in tx
           when IDLE_FEC =>
             if (fifo_empty = '1') then
               if (fec_pkt_cnt <= g_num_block - 1) then
@@ -218,6 +260,7 @@ begin
                 s_fec_strm  <= IDLE;
               end if;
               fec_word_cnt  <= 0;
+              pad_word_cnt  <= 0;
             else
               s_fec_strm  <= IDLE_FEC;
             end if;
@@ -229,15 +272,21 @@ begin
 
   -- Rx from WR Fabric
   rx_fabric : process(clk_i) is
+    variable pad : integer range 0 to c_pad_cnt;
   begin
     if rising_edge(clk_i) then
       if rst_n_i = '0' then
         hdr_ethertype   <= (others => '0');
         eth_cnt         <= 0;
-        pkt_stb         <= '0';
-        pkt_err         <= '0';
+        pad_cnt         <= 0;
         pkt_len         <= 0;
+        pkt_stb         <= '0';
+        pad_stb         <= '0';
+        pkt_err         <= '0';
+        padded          <= '1';
       else
+        pad := to_integer(unsigned(padding.pad_pkt));
+
         if (ctrl_reg_i.fec_enc_en =  c_ENABLE) then
           snk_ack <= snk_i.cyc and snk_i.stb;
           if snk_i.cyc = '1' and snk_i.stb = '1' and snk_stall = '0' then
@@ -249,10 +298,10 @@ begin
                 hdr_ethertype <= snk_i.dat;
                 pkt_len       <= to_integer(unsigned(snk_i.dat) srl 2);
                 -- start getting payload
-                pkt_stb       <= '1';
+                pkt_stb   <= '1';
               elsif (eth_cnt < pkt_len - 1) then
               -- getting the payload
-                pkt_stb <= '1';
+                pkt_stb   <= '1';
               elsif (eth_cnt >= c_eth_pkt - 1) then
                 -- jumbo pkt error
                 pkt_stb   <= '0';
@@ -260,13 +309,23 @@ begin
               end if;        
             end if;              
             eth_cnt <= eth_cnt + 1;
+            padded  <= '0';
+          elsif (pad_cnt < pad - 1 and padded = '0') then
+            pad_stb <= '1';
+            pkt_stb <= '0';
+            pad_cnt <= pad_cnt + 1;
           else
+            padded        <= '1';
+            pad_cnt       <= 0;
             eth_cnt       <= 0;
+            pad_stb       <= '0';
             pkt_stb       <= '0';
             pkt_err       <= '0';
           end if;
-        else -- c_DISABLE            
+        else -- c_DISABLE     
           eth_cnt       <= 0;
+          pad_cnt       <= 0;
+          pad_stb       <= '0';
           pkt_stb       <= '0';
           pkt_err       <= '0';
         end if;
@@ -291,7 +350,8 @@ begin
 
   -- Tx to WR Farbric
   src_cyc <=  '1'  when (s_fec_strm = SEND_FEC_HDR or
-                        s_fec_strm = SEND_FEC_PAYLOAD or  
+                        s_fec_strm = SEND_FEC_PAYLOAD or
+                        s_fec_strm = SEND_FEC_PADDING or
                         s_fec_strm = SEND_STATUS or  
                         (fifo_empty = '0' and  s_fec_strm = IDLE_FEC)) and
                         fifo_empty = '0' else
@@ -313,10 +373,11 @@ begin
                 '1';
   
   wrf_adr_i <= c_WRF_STATUS     when s_fec_strm = SEND_STATUS       else
-               c_WRF_DATA       when s_fec_strm = SEND_FEC_HDR or
-                                     s_fec_strm = SEND_FEC_PAYLOAD  else  
-               c_WRF_OOB        when s_fec_strm = SEND_OOB0   or
-                                     s_fec_strm = SEND_OOB1        else
+               c_WRF_DATA       when s_fec_strm = SEND_FEC_HDR      or
+                                     s_fec_strm = SEND_FEC_PAYLOAD  or  
+                                     s_fec_strm = SEND_FEC_PADDING  else  
+               c_WRF_OOB        when s_fec_strm = SEND_OOB0         or
+                                     s_fec_strm = SEND_OOB1         else
                (others => '0');
   
   src_o.adr <=  snk_i.adr   when ctrl_reg_i.fec_enc_en = c_DISABLE else
@@ -325,6 +386,7 @@ begin
   fec_pkt_i <= c_WRF_STATUS_FEC when s_fec_strm = SEND_STATUS       else
                fec_hdr          when s_fec_strm = SEND_FEC_HDR      else
                enc_payload      when s_fec_strm = SEND_FEC_PAYLOAD  else
+               (others => '1')  when s_fec_strm = SEND_FEC_PADDING  else
                c_WRF_OOB_FEC    when s_fec_strm = SEND_OOB0         else
                OOB_frame_id     when s_fec_strm = SEND_OOB1         else
                (others => '0');
@@ -333,15 +395,17 @@ begin
                fec_pkt_o        when ctrl_reg_i.fec_enc_en = c_ENABLE   else
                (others => '0');
   
-  wr_fifo_o <=  '1'  when s_fec_strm = SEND_STATUS or
-                          s_fec_strm = SEND_FEC_HDR or 
+  wr_fifo_o <=  '1'  when s_fec_strm = SEND_STATUS      or
+                          s_fec_strm = SEND_FEC_HDR     or 
                           s_fec_strm = SEND_FEC_PAYLOAD or
-                          s_fec_strm = SEND_OOB0 or
+                          s_fec_strm = SEND_FEC_PADDING or
+                          s_fec_strm = SEND_OOB0        or
                           s_fec_strm = SEND_OOB1   else
                 '0';
 
   rd_fifo_o <=  '1'  when  (s_fec_strm = SEND_STATUS or
                             s_fec_strm = SEND_FEC_PAYLOAD  or
+                            s_fec_strm = SEND_FEC_PADDING  or
                             s_fec_strm = SEND_FEC_HDR or
                             s_fec_strm = IDLE_FEC or
                             s_fec_strm = SEND_OOB0 or 
@@ -390,7 +454,4 @@ begin
     -- TODO
     -- homogenize pkt and frame names
     -- IF HALT TOO LONG AND FIFO FULL, ERROR and RESET EVERYTHING
-    -- CHECK WHAT HAPPENS IF STALL TOO LONG -- it should work though
-    -- PADDING
-    -- 246: do it in one cycle the ethertype
 end rtl;
