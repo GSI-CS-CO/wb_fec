@@ -20,9 +20,9 @@ entity xwb_fec is
         g_en_fec_dec    : boolean := false;
         g_en_golay      : boolean := false;
         g_en_dec_time   : boolean := false);
-    port ( 
+    port (
         clk_i           : in  std_logic;
-        rst_n_i         : in  std_logic;    
+        rst_n_i         : in  std_logic;
         fec_timestamps_i: in  t_txtsu_timestamp;
         fec_tm_tai_i    : in  std_logic_vector(39 downto 0);
         fec_tm_cycle_i  : in  std_logic_vector(27 downto 0);
@@ -96,7 +96,7 @@ architecture rtl of xwb_fec is
   signal wb_slave_o      :  t_wishbone_slave_out;
   signal wb_slave_i      :  t_wishbone_slave_in;
 
-begin 
+begin
 
   -- bypass
 
@@ -115,7 +115,7 @@ begin
    fec_dec_sink_ack    <= fec_dec_sink_o.ack;
    fec_dec_sink_stall  <= fec_dec_sink_o.stall;
 
-   fec_dec_sink_i.adr  <= fec_dec_sink_adr; 
+   fec_dec_sink_i.adr  <= fec_dec_sink_adr;
    fec_dec_sink_i.dat  <= fec_dec_sink_dat;
    fec_dec_sink_i.cyc  <= fec_dec_sink_cyc;
    fec_dec_sink_i.stb  <= fec_dec_sink_stb;
@@ -124,8 +124,8 @@ begin
 
    fec_dec_src_i.ack   <= fec_dec_src_ack;
    fec_dec_src_i.stall <= fec_dec_src_stall;
- 
-   fec_dec_src_adr   <=  fec_dec_src_o.adr; 
+
+   fec_dec_src_adr   <=  fec_dec_src_o.adr;
    fec_dec_src_dat   <=  fec_dec_src_o.dat;
    fec_dec_src_cyc   <=  fec_dec_src_o.cyc;
    fec_dec_src_stb   <=  fec_dec_src_o.stb;
@@ -140,7 +140,7 @@ begin
    fec_enc_sink_ack    <= fec_enc_sink_o.ack;
    fec_enc_sink_stall  <= fec_enc_sink_o.stall;
 
-   fec_enc_sink_i.adr  <= fec_enc_sink_adr; 
+   fec_enc_sink_i.adr  <= fec_enc_sink_adr;
    fec_enc_sink_i.dat  <= fec_enc_sink_dat;
    fec_enc_sink_i.cyc  <= fec_enc_sink_cyc;
    fec_enc_sink_i.stb  <= fec_enc_sink_stb;
@@ -150,8 +150,8 @@ begin
 
    fec_enc_src_i.ack   <= fec_enc_src_ack;
    fec_enc_src_i.stall <= fec_enc_src_stall;
- 
-   fec_enc_src_adr   <=  fec_enc_src_o.adr; 
+
+   fec_enc_src_adr   <=  fec_enc_src_o.adr;
    fec_enc_src_dat   <=  fec_enc_src_o.dat;
    fec_enc_src_cyc   <=  fec_enc_src_o.cyc;
    fec_enc_src_stb   <=  fec_enc_src_o.stb;
@@ -173,7 +173,7 @@ begin
       stat_reg_o  => fec_stat_reg);
 
   FEC_DEC : wb_fec_decoder
-    generic map ( 
+    generic map (
     g_num_block   => 4,
     g_en_golay    => FALSE)
     port map (
@@ -185,7 +185,7 @@ begin
       src_o       => fec_dec_src_o,
       ctrl_reg_i  => fec_ctrl_reg,
       stat_reg_o  => fec_stat_reg);
-
+  
   --end wb_fec_decoder;
   wb_slave_ack    <= wb_slave_o.ack;
   wb_slave_err    <= wb_slave_o.err;
@@ -194,12 +194,12 @@ begin
   wb_slave_int    <= wb_slave_o.int;
   wb_slave_dat_o  <= wb_slave_o.dat;
 
-  wb_slave_i.cyc  <= wb_slave_cyc;   
-  wb_slave_i.stb  <= wb_slave_stb;   
-  wb_slave_i.adr  <= wb_slave_adr;   
-  wb_slave_i.sel  <= wb_slave_sel;   
-  wb_slave_i.we   <= wb_slave_we;   
-  wb_slave_i.dat  <= wb_slave_dat_i;   
+  wb_slave_i.cyc  <= wb_slave_cyc;
+  wb_slave_i.stb  <= wb_slave_stb;
+  wb_slave_i.adr  <= wb_slave_adr;
+  wb_slave_i.sel  <= wb_slave_sel;
+  wb_slave_i.we   <= wb_slave_we;
+  wb_slave_i.dat  <= wb_slave_dat_i;
 
 
   WB_SLAVE: wb_slave_fec

@@ -1,5 +1,5 @@
 --! @file wb_fec.vhd
---! @brief  FEC 
+--! @brief  FEC
 --! @author C.Prados <cprados@mailfence.com>
 --!
 --! See the file "LICENSE" for the full license governing this code.
@@ -12,7 +12,7 @@
 -- Stat Enc/Dec
 --! 0x0, r, Number of encoded frames --TBD
 --! 0x0, wr, Encoded Frames Counter 32bit
--- Decoder Latency Statitcis 
+-- Decoder Latency Statitcis
 --! 0x, wr, decoder last latency
 --! 0x, wr, decoder max latency
 --! 0x, wr, decoder min latency
@@ -96,7 +96,7 @@ begin
               --wb_slave_o.dat <= s_fec_stat.stat_dec.err_dec;
             when others =>
           end case;
-          
+
           -- progates the changes in the reg
           if (wb_slave_i.we = '1') then
             s_fec_ctrl.fec_ctrl_refresh <= '1';

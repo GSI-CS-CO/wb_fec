@@ -52,7 +52,7 @@ architecture rtl of fec_decoder is
   signal we_loop_bacg   : std_logic_vector (g_num_block - 1 downto 0);
   signal pkt_block      : t_wrf_bus_array (0 to g_num_block - 1);
   signal payload_block  : t_wrf_bus_array (0 to g_num_block - 1);
-  signal cnt            : t_fifo_cnt_array (0 to g_num_block - 1);  
+  signal cnt            : t_fifo_cnt_array (0 to g_num_block - 1);
   signal empty          : std_logic_vector (g_num_block - 1 downto 0);
   signal full           : std_logic_vector (g_num_block - 1 downto 0);
   signal stream_out     : std_logic;
@@ -60,7 +60,7 @@ architecture rtl of fec_decoder is
   signal s_fec_hdr      : t_fec_header;
   signal fec_payload_stb_d  : std_logic;
   signal fec_payload_cnt    : unsigned(c_eth_pl_width - 1 downto 0);
-  
+
   begin
 
   -- Ctrl deFEC sequences
@@ -100,7 +100,7 @@ architecture rtl of fec_decoder is
           --fec_id      := fec_payload_i
           --fec_subid   := fec_hdr.enc_frame_subid;
           --block_len   <= fec_hdr.block_len;
-          
+
           if (fec_id /= decoding_id) then
             -- new fec id
             new_fec_id  := '1';
@@ -126,7 +126,7 @@ architecture rtl of fec_decoder is
               s_DEC     <= IDLE;
             end if;
           when DECODING =>
-            if (new_pkt = '1') then 
+            if (new_pkt = '1') then
               if (new_fec_id = '0' and fec_decoded = '1') then
                 s_DEC       <= DECODED;
               elsif(new_fec_id = '1') then
@@ -136,7 +136,7 @@ architecture rtl of fec_decoder is
                 s_DEC       <= DECODING;
                 s_NEXT_OP   <= f_next_op(fec_pkt_rx, fec_subid);
               else
-              -- keep decoding 
+              -- keep decoding
                 pkt_dec_err.dec_err <= '0';
                 s_NEXT_OP <= f_next_op(fec_pkt_rx, fec_subid);
               end if;
@@ -148,7 +148,7 @@ architecture rtl of fec_decoder is
             else
               s_DEC <= DECODED;
             end if;
-          when STREAMING => 
+          when STREAMING =>
             if (halt_streaming_i = '0') then
               if (payload_cnt <= block_len - 1) then
                 payload_cnt   <= payload_cnt + 1;
@@ -194,7 +194,7 @@ architecture rtl of fec_decoder is
           fec_payload_cnt <= (others => '0');
         end if;
         case s_NEXT_OP is
-          when IDLE => 
+          when IDLE =>
             stream_out  <= '0';
           when STORE =>
             if (fec_payload_cnt <= block_len - 1) then
@@ -209,12 +209,12 @@ architecture rtl of fec_decoder is
             end if;
           when XOR_0_1 =>
             if (fec_payload_cnt <= block_len - 1) then
-              read_block(2) <= c_FIFO_ON; 
+              read_block(2) <= c_FIFO_ON;
               pkt_block(1)  <= pkt_block(2) xor fec_payload_i; -- [2] xor [1 xor 2] = [1]
               we_src_sel(1) <= c_FIFO_ON;
             elsif (fec_payload_cnt <= (2 * block_len) - 1) then
               we_src_sel(1) <= c_FIFO_OFF;
-              read_block(1) <= c_FIFO_ON; 
+              read_block(1) <= c_FIFO_ON;
               xor_rd        <= c_FIFO_ON;
               pkt_block(0)  <= pkt_block(1) xor xor_payload; -- [1] xor [0 xor 1] = [0]
               --we can start the streaming
@@ -226,7 +226,7 @@ architecture rtl of fec_decoder is
             else
               stream_out  <= '0';
             end if;
-          when XOR_0_2 => 
+          when XOR_0_2 =>
           when XOR_0_3 =>
           when XOR_1_2 =>
           when XOR_1_3 =>

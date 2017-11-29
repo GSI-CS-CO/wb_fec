@@ -1,5 +1,5 @@
 --! @file wb_fec.vhd
---! @brief  FEC 
+--! @brief  FEC
 --! @author C.Prados <cprados@mailfence.com>
 --!
 --! See the file "LICENSE" for the full license governing this code.
@@ -22,12 +22,12 @@ entity wb_fec is
     g_en_fec_dec    : boolean := false;
     g_en_golay      : boolean := false;
     g_en_dec_time   : boolean := false);
-  port ( 
+  port (
     clk_i           : in  std_logic;
-    rst_n_i         : in  std_logic;    
+    rst_n_i         : in  std_logic;
     fec_timestamps_i: in  t_txtsu_timestamp;
     fec_tm_tai_i    : in  std_logic_vector(39 downto 0);
-    fec_tm_cycle_i  : in  std_logic_vector(27 downto 0);        
+    fec_tm_cycle_i  : in  std_logic_vector(27 downto 0);
     fec_dec_sink_i  : in  t_wrf_sink_in;
     fec_dec_sink_o  : out t_wrf_sink_out;
     fec_dec_src_i   : in  t_wrf_source_in;
@@ -45,7 +45,7 @@ architecture rtl of wb_fec is
   signal fec_ctrl_reg : t_fec_ctrl_reg;
   signal fec_stat_reg : t_fec_stat_reg;
 
-begin 
+begin
 
   y_WB_FEC_ENC : if g_en_fec_enc generate
   FEC_ENC : wb_fec_encoder
@@ -70,7 +70,7 @@ begin
 
   y_WB_FEC_DEC : if not g_en_fec_enc generate
   FEC_DEC : wb_fec_decoder
-    generic map ( 
+    generic map (
     g_num_block   => 4,
     g_en_golay    => FALSE)
     port map (

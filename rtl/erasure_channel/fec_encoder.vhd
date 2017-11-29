@@ -51,7 +51,7 @@ architecture rtl of fec_encoder is
   signal s_ENC_CNT    : t_dec_cnt;
   signal enc_payload  : t_wrf_bus;
   signal cnt          : t_fifo_cnt_array (0 to g_num_block - 1);
-  constant c_fec_blocks   : integer := 2 * g_num_block; 
+  constant c_fec_blocks   : integer := 2 * g_num_block;
 begin
 
   -- FIFO block read ctrl
@@ -64,7 +64,7 @@ begin
                                   fec_pkt_cnt = c_PKT_3_2 else
                   c_FIFO_Z   when fec_pkt_cnt = c_IDLE;
 
-  -- The simple encoding 
+  -- The simple encoding
   enc_payload   <= xor_code;
   xor_code <= block2enc(0) xor payload_i    when fec_pkt_cnt = c_PKT_0_1 else
               payload_i                     when fec_pkt_cnt = c_PKT_0_2 else
@@ -87,7 +87,7 @@ begin
         streaming_o   <= '0';
       else
         case s_ENC_CNT is
-          when IDLE => 
+          when IDLE =>
             -- start enconding, storing in output FIFO and streaming as soon as enough data is received
             if (we_src_sel = 1 and block_cnt > block_len_i - 2) then
               s_ENC_CNT   <= ENCODING;
@@ -101,7 +101,7 @@ begin
             elsif (fec_pkt_cnt < c_fec_blocks) then
               enc_cnt     <= (others => '0');
               fec_pkt_cnt <= fec_pkt_cnt + 1;
-            else              
+            else
               s_ENC_CNT   <= IDLE;
               enc_cnt     <= (others => '0');
               fec_pkt_cnt <= c_IDLE;
@@ -111,8 +111,8 @@ begin
         end case;
       end if;
     end if;
-  end process;  
-  
+  end process;
+
   -- Encoded output FIFO
   ENC_PKT_FIFO : generic_sync_fifo
     generic map (
@@ -129,7 +129,7 @@ begin
       we_i    => fifo_wr,
       empty_o => fifo_empty,
       full_o  => fifo_full,
-      count_o => fifo_cnt, 
+      count_o => fifo_cnt,
       q_o     => enc_payload_o,
       rd_i    => fec_enc_rd_i);
 
@@ -155,15 +155,15 @@ begin
         count_o => cnt(i));
 
   we_mask(i) <= (payload_stb_i and we_src_sel(i)) or we_loop_back(i);
-  
+
   -- the fifo gets the data from the pkt or fifo lopping back the output
   pl_block(i) <=  payload_i     when we_src_sel(i) = '1' else
                   block2enc(i)  when we_src_sel(i) = '0';
-  end generate g_PKT_BLOCK_FIFO; 
-  
+  end generate g_PKT_BLOCK_FIFO;
+
   we_loop_back  <= read_block;
   rst_n <= rst_n_i and (payload_stb_i or fec_stb_i);
-  
+
   -- steers incoming data to the FIFO blocks
   fifo_wr_mux : process(clk_i) is
   begin

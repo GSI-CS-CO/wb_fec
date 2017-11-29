@@ -23,7 +23,7 @@ entity fec_hdr_gen is
       hdr_stb_i     : in  std_logic;
       fec_stb_i     : in  std_logic;
       fec_hdr_stb_i : in  std_logic;
-      fec_hdr_o     : out t_wrf_bus;     
+      fec_hdr_o     : out t_wrf_bus;
       pkt_len_i     : in  t_eth_type;
       padding_i     : in  t_padding;
       enc_cnt_o     : out std_logic_vector(c_fec_cnt_width - 1 downto 0);
@@ -51,7 +51,7 @@ begin
   eth_hdr_pack  : process(clk_i) is
   begin
     if rising_edge(clk_i) then
-      if rst_n_i = '0' then       
+      if rst_n_i = '0' then
         eth_hdr_shift   <= (others => '0');
         eth_hdr         <= c_eth_frame_header_default;
       else
@@ -118,7 +118,7 @@ begin
                        fec_hdr.enc_frame_id &
                        fec_hdr.enc_frame_subid &
                        fec_hdr.reserved;
-        elsif (fec_hdr_len <=  c_fec_hdr_len - 2) then          
+        elsif (fec_hdr_len <=  c_fec_hdr_len - 2) then
           fec_hdr_o <= fec_hdr.eth_pkt_len &
                        fec_hdr.fec_padding_crc;
         end if;

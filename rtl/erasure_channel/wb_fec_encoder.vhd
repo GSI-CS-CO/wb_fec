@@ -18,12 +18,12 @@ use work.wr_fabric_pkg.all;
 use work.endpoint_pkg.all;
 
 entity wb_fec_encoder is
-  generic ( 
+  generic (
     g_num_block   : integer := 4;
     g_en_golay    : boolean := FALSE);
     port (
       clk_i         : in  std_logic;
-      rst_n_i       : in  std_logic;     
+      rst_n_i       : in  std_logic;
       snk_i         : in  t_wrf_sink_in;
       snk_o         : out t_wrf_sink_out;
       src_i         : in  t_wrf_source_in;
@@ -50,7 +50,7 @@ architecture rtl of wb_fec_encoder is
   signal fec_hdr_stb      : std_logic;
   signal pkt_id           : std_logic_vector(c_fec_cnt_width - 1 downto 0);
   signal OOB_frame_id     : t_wrf_bus;
-  signal data_fifo_i      : t_wrf_fifo_out;  
+  signal data_fifo_i      : t_wrf_fifo_out;
   alias  fec_pkt_i        : t_wrf_bus is data_fifo_i(15 downto 0);
   alias  wrf_adr_i        : t_wrf_adr is data_fifo_i(17 downto 16);
   signal data_fifo_o      : t_wrf_fifo_out;
@@ -82,7 +82,7 @@ architecture rtl of wb_fec_encoder is
   signal pkt_data         : t_wrf_bus;
 
   constant c_div_num_block : integer := f_log2_size(g_num_block) + 1; -- in 16bit words
-begin 
+begin
 
   PKT_ERASURE_ENC : fec_encoder
     generic map(
@@ -104,7 +104,7 @@ begin
   pkt_data    <= snk_i.dat        when pkt_stb = '1' else
                  (others => '1')  when pad_stb = '1' else
                  (others => '0');
-  
+
   fec_enc_rd  <=  '1' when s_fec_strm  = SEND_FEC_PAYLOAD else
                   '0';
 
@@ -113,7 +113,7 @@ begin
   --    port map (
   --      clk_i       => clk_i,
   --      rst_n_i     => rst_n_i,
-  --      stb_i       => 
+  --      stb_i       =>
   --      payload_i   =>
   --      code_word_o => );
   --end generate;
@@ -145,9 +145,9 @@ begin
       fec_hdr_o     => fec_hdr,
       enc_cnt_o     => pkt_id,
       ctrl_reg_i    => ctrl_reg);
-  
+
   hdr_stb <= '1' when (snk_i.cyc = '1' and snk_i.stb = '1' and pkt_stb = '0' and
-                       snk_stall = '0' and snk_i.adr = c_WRF_DATA) else 
+                       snk_stall = '0' and snk_i.adr = c_WRF_DATA) else
              '0';
   fec_hdr_stb <= '1' when s_fec_strm  = SEND_FEC_HDR else
                  '0';
@@ -247,7 +247,7 @@ begin
               s_fec_strm  <= IDLE_FEC;
             end if;
             pad_word_cnt <= pad_word_cnt + 1;
-          when SEND_OOB0 => 
+          when SEND_OOB0 =>
               s_fec_strm  <= SEND_OOB1; -- not used in tx
           when SEND_OOB1=>
               s_fec_strm  <= IDLE_FEC;  -- not used in tx
@@ -306,8 +306,8 @@ begin
                 -- jumbo pkt error
                 pkt_stb   <= '0';
                 pkt_err   <= '1';
-              end if;        
-            end if;              
+              end if;
+            end if;
             eth_cnt <= eth_cnt + 1;
             padded  <= '0';
           elsif (pad_cnt < pad - 1 and padded = '0') then
@@ -322,7 +322,7 @@ begin
             pkt_stb       <= '0';
             pkt_err       <= '0';
           end if;
-        else -- c_DISABLE     
+        else -- c_DISABLE
           eth_cnt       <= 0;
           pad_cnt       <= 0;
           pad_stb       <= '0';
@@ -352,7 +352,7 @@ begin
   src_cyc <=  '1'  when (s_fec_strm = SEND_FEC_HDR or
                         s_fec_strm = SEND_FEC_PAYLOAD or
                         s_fec_strm = SEND_FEC_PADDING or
-                        s_fec_strm = SEND_STATUS or  
+                        s_fec_strm = SEND_STATUS or
                         (fifo_empty = '0' and  s_fec_strm = IDLE_FEC)) and
                         fifo_empty = '0' else
               '0';
@@ -371,15 +371,15 @@ begin
 
   src_o.we  <=  snk_i.we when  ctrl_reg_i.fec_enc_en = c_DISABLE else
                 '1';
-  
+
   wrf_adr_i <= c_WRF_STATUS     when s_fec_strm = SEND_STATUS       else
                c_WRF_DATA       when s_fec_strm = SEND_FEC_HDR      or
-                                     s_fec_strm = SEND_FEC_PAYLOAD  or  
-                                     s_fec_strm = SEND_FEC_PADDING  else  
+                                     s_fec_strm = SEND_FEC_PAYLOAD  or
+                                     s_fec_strm = SEND_FEC_PADDING  else
                c_WRF_OOB        when s_fec_strm = SEND_OOB0         or
                                      s_fec_strm = SEND_OOB1         else
                (others => '0');
-  
+
   src_o.adr <=  snk_i.adr   when ctrl_reg_i.fec_enc_en = c_DISABLE else
                 wrf_adr_o   when ctrl_reg_i.fec_enc_en = c_ENABLE;
 
@@ -394,9 +394,9 @@ begin
   src_o.dat <= snk_i.dat        when ctrl_reg_i.fec_enc_en = c_DISABLE  else
                fec_pkt_o        when ctrl_reg_i.fec_enc_en = c_ENABLE   else
                (others => '0');
-  
+
   wr_fifo_o <=  '1'  when s_fec_strm = SEND_STATUS      or
-                          s_fec_strm = SEND_FEC_HDR     or 
+                          s_fec_strm = SEND_FEC_HDR     or
                           s_fec_strm = SEND_FEC_PAYLOAD or
                           s_fec_strm = SEND_FEC_PADDING or
                           s_fec_strm = SEND_OOB0        or
@@ -408,9 +408,9 @@ begin
                             s_fec_strm = SEND_FEC_PADDING  or
                             s_fec_strm = SEND_FEC_HDR or
                             s_fec_strm = IDLE_FEC or
-                            s_fec_strm = SEND_OOB0 or 
+                            s_fec_strm = SEND_OOB0 or
                             s_fec_strm = SEND_OOB1) and
-                            src_i.stall = '0' and 
+                            src_i.stall = '0' and
                             fifo_empty = '0'else
                 '0';
 
@@ -430,7 +430,7 @@ begin
       we_i    => wr_fifo_o,
       empty_o => fifo_empty,
       full_o  => fifo_full,
-      count_o => fifo_cnt, 
+      count_o => fifo_cnt,
       q_o     => data_fifo_o,
       rd_i    => rd_fifo_o);
 
@@ -438,7 +438,7 @@ begin
     begin
       if rising_edge(clk_i) then
         if (rst_n_i = '0') then
-          fec_bytes <= 0; 
+          fec_bytes <= 0;
         else
           if (src_cyc = '1' and src_i.stall = '0') then
             fec_bytes <= fec_bytes + 1;

@@ -3,7 +3,7 @@
 --! @author C.Prados <cprados@mailfence.com>
 --!
 --! package for the fec project
---! 
+--!
 --! See the file "LICENSE" for the full license governing this code.
 --!-------------------------------------------------------------------------------
 library ieee;
@@ -25,9 +25,9 @@ package xfec_pkg is
         g_en_fec_dec    : boolean := false;
         g_en_golay      : boolean := false;
         g_en_dec_time   : boolean := false);
-    port ( 
+    port (
         clk_i           : in  std_logic;
-        rst_n_i         : in  std_logic;    
+        rst_n_i         : in  std_logic;
         fec_timestamps_i: in  t_txtsu_timestamp;
         fec_tm_tai_i    : in  std_logic_vector(39 downto 0);
         fec_tm_cycle_i  : in  std_logic_vector(27 downto 0);

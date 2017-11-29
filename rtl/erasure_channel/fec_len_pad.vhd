@@ -14,7 +14,7 @@ library work;
 use work.fec_pkg.all;
 
 entity fec_len_pad is
-    generic ( 
+    generic (
       g_num_block : integer := 4);
     port (
       clk_i           : in  std_logic;
@@ -28,7 +28,7 @@ architecture rtl of fec_len_pad is
   signal padding  : t_padding;
   signal pkt_len  : t_eth_pkt_len;
   constant c_mult     : t_eth_pkt_len := x"007";
-  constant c_not_mult : t_eth_pkt_len := not c_mult; 
+  constant c_not_mult : t_eth_pkt_len := not c_mult;
   constant c_min_pkt_len    : integer := 128;
   constant c_fec_min_block  : integer := 32; -- 16bit words = 64bytes
 begin
@@ -56,18 +56,18 @@ begin
         fec_block_len_o <= fec_block_len(c_block_len_width - 1 downto 0);
 
         -- min lenght of pkt to enconde 128 bytes
-        if (pkt_len < c_min_pkt_len) then          
+        if (pkt_len < c_min_pkt_len) then
           pad_pkt   := (pkt_len_mult - pkt_len) srl 1; -- 16bit word
           --pad_block := (c_fec_min_block - pkt_len_mult) srl 2; -- 16bit word
           pad_block := (c_min_pkt_len - pkt_len_mult) srl 2; -- 16bit word
-        else          
+        else
           pad_pkt   := (pkt_len_mult - pkt_len) srl 1;
           pad_block := (others => '0');
-        end if;  
+        end if;
         padding.pad_pkt   <= pad_pkt(c_fec_padding - 1 downto 0);
         padding.pad_block <= pad_block(c_fec_padding - 1 downto 0);
       end if;
     end if;
   end process;
 end rtl;
- 
+

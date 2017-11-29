@@ -18,12 +18,12 @@ use work.wr_fabric_pkg.all;
 use work.endpoint_pkg.all;
 
 entity wb_fec_decoder is
-  generic ( 
+  generic (
     g_num_block   : integer := 4;
     g_en_golay    : boolean := FALSE);
     port (
       clk_i         : in  std_logic;
-      rst_n_i       : in  std_logic;     
+      rst_n_i       : in  std_logic;
       snk_i         : in  t_wrf_sink_in;
       snk_o         : out t_wrf_sink_out;
       src_i         : in  t_wrf_source_in;
@@ -33,7 +33,7 @@ entity wb_fec_decoder is
 end wb_fec_decoder;
 
 architecture rtl of wb_fec_decoder is
-  signal oob_info         : t_wrf_oob;  
+  signal oob_info         : t_wrf_oob;
   signal oob_toggle       : std_logic;
   signal fec_nex_id       : std_logic;
   signal fec_skip_pkt     : std_logic;
@@ -58,7 +58,7 @@ architecture rtl of wb_fec_decoder is
   signal s_enc_refresh    : t_enc_refresh;
 
   constant c_div_num_block : integer := f_log2_size(g_num_block) + 1; -- in 16bit words
-begin 
+begin
 
   PKT_ERASURE_DEC: fec_decoder
   generic map (
@@ -93,7 +93,7 @@ begin
       ctrl_reg_i    => ctrl_reg);
 
   hdr_stb <= '1' when (snk_i.cyc = '1' and snk_i.stb = '1' and pkt_stb = '0' and
-                       snk_stall = '0' and snk_i.adr = c_WRF_DATA) else 
+                       snk_stall = '0' and snk_i.adr = c_WRF_DATA) else
              '0';
 
   -- Refresh the ctrl setting after pkt encoded
@@ -124,7 +124,7 @@ begin
       end if;
     end if;
   end process;
-  --TODO 
+  --TODO
   --stat_reg_o.fec_enc_err  <= enc_err & pkt_err;
   --stat_reg_o.fec_enc_cnt  <= pkt_id;
 
@@ -133,7 +133,7 @@ begin
   begin
     if rising_edge(clk_i) then
       if rst_n_i = '0' then
-        oob_toggle    <= '0';                
+        oob_toggle    <= '0';
         fec_skip_pkt  <= '0';
         eth_cnt       <= (others => '0');
         s_fec_rx_strm <= IDLE;
@@ -144,7 +144,7 @@ begin
           snk_ack <= snk_i.cyc and snk_i.stb;
           case s_fec_rx_strm is
             when IDLE =>
-              if snk_i.cyc = '1' and snk_i.stb = '1' and snk_stall = '0' and 
+              if snk_i.cyc = '1' and snk_i.stb = '1' and snk_stall = '0' and
                  fec_skip_pkt = '0' then
                 if (snk_i.adr = c_WRF_STATUS) then
                   if (snk_i.dat(1) = '1') then
@@ -178,9 +178,9 @@ begin
                   -- check FEC ethertype
                     if (ctrl_reg.fec_ethtype /= snk_i.dat) then
                       --TODO No FEC pkt and FEC enable -> error
-                      fec_skip_pkt  <= '1'; 
+                      fec_skip_pkt  <= '1';
                       s_fec_rx_strm <= IDLE;
-                    end if;                    
+                    end if;
                     -- start getting FEC payload
                     pkt_stb       <= '1';
                   elsif (eth_cnt < c_eth_pkt - 1) then
@@ -196,7 +196,7 @@ begin
                   oob_info.port_id  <= snk_i.dat(5 downto 0);
                   s_fec_rx_strm <= RX_OOB;
                 end if;
-              end if;                
+              end if;
             when RX_OOB =>
               if snk_i.cyc = '1' and snk_i.stb = '1' and snk_stall = '0' and
                 snk_i.adr = c_WRF_OOB then
