@@ -84,13 +84,14 @@ begin
       rst_n_i       => rst_n_i,
       hdr_i         => snk_i.dat,
       hdr_stb_i     => hdr_stb,
-      block_len_i   => (others => '0'),
+      pkt_len_i     => (others => '0'),
+      padding_i     => c_padding,
       fec_stb_i     => fec_stb,
       fec_hdr_stb_i => eth_hdr_stb,
       fec_hdr_o     => eth_hdr,
       enc_cnt_o     => open,
       ctrl_reg_i    => ctrl_reg);
-  
+
   hdr_stb <= '1' when (snk_i.cyc = '1' and snk_i.stb = '1' and pkt_stb = '0' and
                        snk_stall = '0' and snk_i.adr = c_WRF_DATA) else 
              '0';
