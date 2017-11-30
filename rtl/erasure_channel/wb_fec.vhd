@@ -68,7 +68,7 @@ begin
     fec_enc_src_o   <= fec_enc_sink_i;
   end generate;
 
-  y_WB_FEC_DEC : if not g_en_fec_enc generate
+  y_WB_FEC_DEC : if g_en_fec_enc generate
   FEC_DEC : wb_fec_decoder
     generic map (
     g_num_block   => 4,
