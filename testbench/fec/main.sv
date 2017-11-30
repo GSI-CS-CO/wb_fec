@@ -51,15 +51,15 @@ module main;
   wire dec_snk_err;
 
 	/* WB masters */
-  IWishboneMaster WB_fec (clk_sys, rst_n);
-  IWishboneMaster WB_lbk (clk_sys, rst_n);
+  IWishboneMaster WB_fec (clk_ref, rst_n);
+  IWishboneMaster WB_lbk (clk_ref, rst_n);
 
 	/* WB accessors */
   CWishboneAccessor acc_fec, acc_lbk;
 
 	/* Fabrics */
-  IWishboneSlave  #(2,16) dec_snk (clk_sys, rst_n); 
-  IWishboneMaster #(2,16) enc_src (clk_sys, rst_n);
+  IWishboneSlave  #(2,16) dec_snk (clk_ref, rst_n); 
+  IWishboneMaster #(2,16) enc_src (clk_ref, rst_n);
 
 	/* Fabrics accessors */
   WBPacketSource fec_src;
@@ -75,107 +75,107 @@ module main;
     .rst_n_o(rst_n)
   );
 
-  //xwb_fec #(
-  //  .g_en_fec_enc(`true),
-  //  .g_en_fec_dec(`true),
-  //  .g_en_golay(`false),
-  //  .g_en_dec_time(`false))
-  //XWB_FEC_ENC ( 
-  //  .clk_i(clk_sys),
-  //  .rst_n_i(rst_n),
-  // 
-  //  .fec_dec_sink_cyc(dec_snk_cyc),
-	//	.fec_dec_sink_stb(dec_snk_stb),
-	//	.fec_dec_sink_we(dec_snk_we),
-	//	.fec_dec_sink_sel(dec_snk_sel),
-	//	.fec_dec_sink_adr(dec_snk_adr),
-	//	.fec_dec_sink_dat(dec_snk_dat),
-	//	.fec_dec_sink_stall(dec_snk_stall),
-	//	.fec_dec_sink_ack(dec_snk_ack),
+  xwb_fec #(
+    .g_en_fec_enc(`true),
+    .g_en_fec_dec(`true),
+    .g_en_golay(`false),
+    .g_en_dec_time(`false))
+  XWB_FEC_ENC ( 
+    .clk_i(clk_ref),
+    .rst_n_i(rst_n),
+   
+    .fec_dec_sink_cyc(dec_snk_cyc),
+		.fec_dec_sink_stb(dec_snk_stb),
+		.fec_dec_sink_we(dec_snk_we),
+		.fec_dec_sink_sel(dec_snk_sel),
+		.fec_dec_sink_adr(dec_snk_adr),
+		.fec_dec_sink_dat(dec_snk_dat),
+		.fec_dec_sink_stall(dec_snk_stall),
+		.fec_dec_sink_ack(dec_snk_ack),
  
-	//	.fec_dec_src_cyc(dec_snk.slave.cyc),
-	//	.fec_dec_src_stb(dec_snk.slave.stb),
-	//	.fec_dec_src_we(dec_snk.slave.we),
-	//	.fec_dec_src_sel(dec_snk.slave.sel),
-	//	.fec_dec_src_adr(dec_snk.slave.adr),
-	//	.fec_dec_src_dat(dec_snk.slave.dat_i),
-	//	.fec_dec_src_stall(dec_snk.slave.stall),
-	//	.fec_dec_src_ack(dec_snk.slave.ack),
+		.fec_dec_src_cyc(dec_snk.slave.cyc),
+		.fec_dec_src_stb(dec_snk.slave.stb),
+		.fec_dec_src_we(dec_snk.slave.we),
+		.fec_dec_src_sel(dec_snk.slave.sel),
+		.fec_dec_src_adr(dec_snk.slave.adr),
+		.fec_dec_src_dat(dec_snk.slave.dat_i),
+		.fec_dec_src_stall(dec_snk.slave.stall),
+		.fec_dec_src_ack(dec_snk.slave.ack),
 
-  //  .fec_enc_sink_cyc(enc_src.master.cyc),
-  //  .fec_enc_sink_stb(enc_src.master.stb),
-  //  .fec_enc_sink_we(enc_src.master.we),
-  //  .fec_enc_sink_sel(enc_src.master.sel),
-  //  .fec_enc_sink_adr(enc_src.master.adr),
-  //  .fec_enc_sink_dat(enc_src.master.dat_o),
-  //  .fec_enc_sink_stall(enc_src.master.stall),
-  //  .fec_enc_sink_ack(enc_src.master.ack),
+    .fec_enc_sink_cyc(enc_src.master.cyc),
+    .fec_enc_sink_stb(enc_src.master.stb),
+    .fec_enc_sink_we(enc_src.master.we),
+    .fec_enc_sink_sel(enc_src.master.sel),
+    .fec_enc_sink_adr(enc_src.master.adr),
+    .fec_enc_sink_dat(enc_src.master.dat_o),
+    .fec_enc_sink_stall(enc_src.master.stall),
+    .fec_enc_sink_ack(enc_src.master.ack),
 
-	//	.fec_enc_src_cyc(enc_src_cyc),
-	//	.fec_enc_src_stb(enc_src_stb),
-	//	.fec_enc_src_we(enc_src_we),
-	//	.fec_enc_src_sel(enc_src_sel),
-	//	.fec_enc_src_adr(enc_src_adr),
-	//	.fec_enc_src_dat(enc_src_dat),
-	//	.fec_enc_src_stall(enc_src_stall),
-	//	.fec_enc_src_ack(enc_src_ack),
+		.fec_enc_src_cyc(enc_src_cyc),
+		.fec_enc_src_stb(enc_src_stb),
+		.fec_enc_src_we(enc_src_we),
+		.fec_enc_src_sel(enc_src_sel),
+		.fec_enc_src_adr(enc_src_adr),
+		.fec_enc_src_dat(enc_src_dat),
+		.fec_enc_src_stall(enc_src_stall),
+		.fec_enc_src_ack(enc_src_ack),
 
-  //  .wb_slave_cyc(WB_fec.master.cyc),
-	//	.wb_slave_stb(WB_fec.master.stb),
-	//	.wb_slave_we(WB_fec.master.we),
-	//	.wb_slave_sel(4'b1111),
-	//	.wb_slave_adr(WB_fec.master.adr),
-	//	.wb_slave_dat_i(WB_fec.master.dat_o),
-	//	.wb_slave_dat_o(WB_fec.master.dat_i),
-	//	.wb_slave_ack(WB_fec.master.ack),
-	//	.wb_slave_stall(WB_fec.master.stall));
+    .wb_slave_cyc(WB_fec.master.cyc),
+		.wb_slave_stb(WB_fec.master.stb),
+		.wb_slave_we(WB_fec.master.we),
+		.wb_slave_sel(4'b1111),
+		.wb_slave_adr(WB_fec.master.adr),
+		.wb_slave_dat_i(WB_fec.master.dat_o),
+		.wb_slave_dat_o(WB_fec.master.dat_i),
+		.wb_slave_ack(WB_fec.master.ack),
+		.wb_slave_stall(WB_fec.master.stall));
 
 
   wrf_loopback #(
     .g_interface_mode           (PIPELINED),
     .g_address_granularity      (BYTE))
   WRF_LBK (
-    //.clk_sys_i                  (clk_sys),
-    //.rst_n_i                    (rst_n),
-    //.snk_cyc_i                  (enc_src_cyc),
-    //.snk_stb_i                  (enc_src_stb),
-    ////.snk_we_i                   (1'b1),
-    //.snk_we_i                   (enc_src_we),
-    //.snk_sel_i                  (enc_src_sel),
-    //.snk_adr_i                  (enc_src_adr),
-    //.snk_dat_i                  (enc_src_dat),
-    //.snk_ack_o                  (enc_src_ack),
-    //.snk_stall_o                (enc_src_stall),
-
-    .clk_sys_i                  (clk_sys),
+    .clk_sys_i                  (clk_ref),
     .rst_n_i                    (rst_n),
+    .snk_cyc_i                  (enc_src_cyc),
+    .snk_stb_i                  (enc_src_stb),
+    //.snk_we_i                   (1'b1),
+    .snk_we_i                   (enc_src_we),
+    .snk_sel_i                  (enc_src_sel),
+    .snk_adr_i                  (enc_src_adr),
+    .snk_dat_i                  (enc_src_dat),
+    .snk_ack_o                  (enc_src_ack),
+    .snk_stall_o                (enc_src_stall),
 
-    .snk_cyc_i                  (enc_src.master.cyc),
-    .snk_stb_i                  (enc_src.master.stb),
-    .snk_we_i                   (enc_src.master.we),
-    .snk_sel_i                  (enc_src.master.sel),
-    .snk_adr_i                  (enc_src.master.adr),
-    .snk_dat_i                  (enc_src.master.dat_o),
-    .snk_ack_o                  (enc_src.master.stall),
-    .snk_stall_o                (enc_src.master.ack),
+    //.clk_sys_i                  (clk_ref),
+    //.rst_n_i                    (rst_n),
 
-    .src_cyc_o                  (dec_snk.slave.cyc),
-    .src_stb_o                  (dec_snk.slave.stb),
-    .src_we_o                   (dec_snk.slave.we),
-    .src_sel_o                  (dec_snk.slave.sel),
-    .src_adr_o                  (dec_snk.slave.adr),
-    .src_dat_o                  (dec_snk.slave.dat_i),
-    .src_ack_i                  (dec_snk.slave.stall),
-    .src_stall_i                (dec_snk.slave.ack)
+    //.snk_cyc_i                  (enc_src.master.cyc),
+    //.snk_stb_i                  (enc_src.master.stb),
+    //.snk_we_i                   (enc_src.master.we),
+    //.snk_sel_i                  (enc_src.master.sel),
+    //.snk_adr_i                  (enc_src.master.adr),
+    //.snk_dat_i                  (enc_src.master.dat_o),
+    //.snk_ack_o                  (enc_src.master.stall),
+    //.snk_stall_o                (enc_src.master.ack),
 
-    //.src_cyc_o                  (dec_snk_cyc),
-    //.src_stb_o                  (dec_snk_stb),
-    //.src_we_o                   (dec_snk_we),
-    //.src_sel_o                  (dec_snk_sel),
-    //.src_adr_o                  (dec_snk_adr),
-    //.src_dat_o                  (dec_snk_dat),
-    //.src_ack_i                  (dec_snk_ack),
-    //.src_stall_i                (dec_snk_stall),
+    //.src_cyc_o                  (dec_snk.slave.cyc),
+    //.src_stb_o                  (dec_snk.slave.stb),
+    //.src_we_o                   (dec_snk.slave.we),
+    //.src_sel_o                  (dec_snk.slave.sel),
+    //.src_adr_o                  (dec_snk.slave.adr),
+    //.src_dat_o                  (dec_snk.slave.dat_i),
+    //.src_ack_i                  (dec_snk.slave.stall),
+    //.src_stall_i                (dec_snk.slave.ack),
+
+    .src_cyc_o                  (dec_snk_cyc),
+    .src_stb_o                  (dec_snk_stb),
+    .src_we_o                   (dec_snk_we),
+    .src_sel_o                  (dec_snk_sel),
+    .src_adr_o                  (dec_snk_adr),
+    .src_dat_o                  (dec_snk_dat),
+    .src_ack_i                  (dec_snk_ack),
+    .src_stall_i                (dec_snk_stall),
 
     .wb_cyc_i                   (WB_lbk.master.cyc),
     .wb_stb_i                   (WB_lbk.master.stb),
@@ -224,25 +224,43 @@ module main;
 
 
     @(posedge rst_n);
-    repeat(3) @(posedge clk_sys);
+    repeat(3) @(posedge clk_ref);
 
     #1us;
 
-    acc_fec = WB_fec.get_accessor();
-    acc_fec.set_mode(PIPELINED);
-    WB_fec.settings.cyc_on_stall = 1;
+    //acc_fec = WB_fec.get_accessor();
+    //acc_fec.set_mode(PIPELINED);
+    //WB_fec.settings.cyc_on_stall = 1;
 
-		fec_src = new(enc_src.get_accessor());
+    acc_lbk = WB_lbk.get_accessor();
+    acc_lbk.set_mode(PIPELINED);
+    WB_lbk.settings.cyc_on_stall = 1;		
+    
+    fec_src = new(enc_src.get_accessor());
+    enc_src.settings.cyc_on_stall = 1;
+
+
+    #1us;
+    acc_lbk.write(`ADDR_LBK_DMAC_H, 32'hFFFFFFFF);
+    #1us;
+    acc_lbk.write(`ADDR_LBK_DMAC_L, 32'hFFFFFFFF);
+    #1us;
+    acc_lbk.write(`ADDR_LBK_MCR, `LBK_MCR_ENA | `LBK_MCR_FDMAC);
+    //acc_lbk.write(`ADDR_LBK_MCR, `LBK_MCR_ENA);
+
+    //#1us;
+    //acc_lbk.write(`ADDR_LBK_MCR, `LBK_MCR_ENA);
 
     //#10us;
 		//acc_fec.write(`FEC_ENC_EN, 1'h1);
 
-    //#1500ns;
+    #1500ns;
     while(1) begin
       seed = (seed + 1) & 'hffff;
-      length = $dist_uniform(seed, 128, 1500);
+      //length = $dist_uniform(seed, 128, 1500);
+      length = $dist_uniform(seed, 500, 1500);
       length = length & 'hffff;
-      length = (length + 3) & ~'h03;
+      length = (length + 7) & ~'h07;
       
       $write("----->LENGTH %x \n", length);
 
@@ -255,14 +273,13 @@ module main;
          (46 bytes payload + 14 bytes header + 4 bytes CRC) */
       pkt.set_size(length);
 
-
       cnt = 0;
       for(j=0; j < 4; j++)
         begin
         for (i=1; i <= length/4; i++)
           begin
-          //pkt.payload[cnt] = i & 'hff;
-          pkt.payload[cnt] = j & 'hff;
+          pkt.payload[cnt] = i & 'hff;
+          //pkt.payload[cnt] = j & 'hff;
           cnt = cnt + 1;
         end
       end
@@ -276,7 +293,7 @@ module main;
       //while(1) begin
         /* send the packet */
         fec_src.send(pkt);
-        #5ns;
+        #5000ns;
     end
   end
 
@@ -299,15 +316,9 @@ module main;
 		uint64_t val64;
     int total_cnt=0;
 
-    fec_snk = new(dec_snk.get_accessor());
     dec_snk.settings.gen_random_stalls = 1;    
+    fec_snk = new(dec_snk.get_accessor());
     
-    acc_lbk = WB_lbk.get_accessor();
-    acc_lbk.set_mode(PIPELINED);
-    WB_lbk.settings.cyc_on_stall = 1;
-    #1us;
-    acc_lbk.write(`ADDR_LBK_MCR, `LBK_MCR_ENA);
-
 	  $warning("--> starting");
 		#5us;
     while(1) begin

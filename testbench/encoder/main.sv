@@ -169,7 +169,8 @@ module main;
     //#1500ns;
     while(1) begin
       seed = (seed + 1) & 'hffff;
-      length = $dist_uniform(seed, 128, 1500);
+      //length = $dist_uniform(seed, 500, 1500);
+      //length = $dist_uniform(seed, 64, 127);
       length = length & 'hffff;
       length = (length + 7) & ~'h07;
       length = 512;
@@ -191,8 +192,8 @@ module main;
         begin
         for (i=1; i <= length/4; i++)
           begin
-          pkt.payload[cnt] = i & 'hff;
-          //pkt.payload[cnt] = (j + 1)  & 'hff;
+          //pkt.payload[cnt] = i & 'hff;
+          pkt.payload[cnt] = (j + 1)  & 'hff;
           cnt = cnt + 1;
         end
       end
@@ -220,7 +221,7 @@ module main;
   //@(enable)      // wait for enable to change its value
   @(negedge enc_snk.slave.cyc)
   toggletime= $realtime - sig_low ;
-  $fwrite(f, "Delay %d Payload %d \n", toggletime, length);
+  $fwrite(f, "Delay\t%d\tPayload\t%d\n", toggletime, length);
   end
 
   initial begin
