@@ -34,6 +34,7 @@ end wb_fec_encoder;
 
 architecture rtl of wb_fec_encoder is
   signal src_cyc          : std_logic;
+  signal src_stb          : std_logic;
   signal snk_ack          : std_logic;
   signal fec_stb_d        : std_logic;
   signal enc_err          : std_logic;
@@ -45,7 +46,6 @@ architecture rtl of wb_fec_encoder is
   signal snk_stall        : std_logic;
   signal enc_payload      : t_wrf_bus;
   signal fec_hdr          : t_wrf_bus;
-  signal data_payload     : unsigned(15 downto 0);
   signal fec_stb          : std_logic;
   signal fec_hdr_stb      : std_logic;
   signal pkt_id           : std_logic_vector(c_fec_cnt_width - 1 downto 0);
@@ -198,7 +198,7 @@ begin
         fec_stb         <= '0';
         s_fec_strm      <= IDLE;
       else
-        fec_hdr_payload_len := c_fec_hdr_len + (2 * to_integer(fec_block_len));
+        fec_hdr_payload_len := c_fec_hdr_len + (2 * to_integer(fec_block_len - 1));
         case s_fec_strm is
           when IDLE =>
             --if (eth_cnt >= fec_block_len + 2 and pkt_stb = '1') then
@@ -224,7 +224,7 @@ begin
           when SEND_FEC_PAYLOAD =>
             if (fec_word_cnt <= fec_hdr_payload_len - 1) then
               s_fec_strm  <= SEND_FEC_PAYLOAD;
-              if (fec_word_cnt = fec_hdr_payload_len - 1 and
+              if (fec_word_cnt <= fec_hdr_payload_len - 1 and
                   (padding.pad_block /= (padding.pad_block'range => '0'))) then
                 s_fec_strm  <= SEND_FEC_PADDING;
               end if;
@@ -294,8 +294,10 @@ begin
               -- getting the pkt header
               if (eth_cnt < c_eth_hdr_len - 1) then
                 pkt_stb <= '0';
-              elsif (eth_cnt = c_eth_hdr_len) then
+              elsif (eth_cnt = c_eth_hdr_len - 1) then
+                --hdr_ethertype <= snk_i.dat;
                 hdr_ethertype <= snk_i.dat;
+                --pkt_len       <= to_integer(unsigned(snk_i.dat) srl 2);
                 pkt_len       <= to_integer(unsigned(snk_i.dat) srl 2);
                 -- start getting payload
                 pkt_stb   <= '1';
@@ -307,8 +309,8 @@ begin
                 pkt_stb   <= '0';
                 pkt_err   <= '1';
               end if;
-            end if;
             eth_cnt <= eth_cnt + 1;
+            end if;
             padded  <= '0';
           elsif (pad_cnt < pad - 1 and padded = '0') then
             pad_stb <= '1';
@@ -349,7 +351,7 @@ begin
                    '0'         when ctrl_reg_i.fec_enc_en = c_ENABLE;
 
   -- Tx to WR Farbric
-  src_cyc <=  '1'  when (s_fec_strm = SEND_FEC_HDR or
+  src_stb <=  '1'  when (s_fec_strm = SEND_FEC_HDR or
                         s_fec_strm = SEND_FEC_PAYLOAD or
                         s_fec_strm = SEND_FEC_PADDING or
                         s_fec_strm = SEND_STATUS or
@@ -357,13 +359,15 @@ begin
                         fifo_empty = '0' else
               '0';
 
-  src_o.cyc <=  snk_i.cyc when ctrl_reg_i.fec_enc_en = c_DISABLE  else
-                src_cyc   when ctrl_reg_i.fec_enc_en = c_ENABLE   else
-                '0';
-
   --FIXME it works but it is not 100% compliant with the WRF spec
   src_o.stb <=  snk_i.stb when ctrl_reg_i.fec_enc_en = c_DISABLE else
-                src_cyc   when ctrl_reg_i.fec_enc_en = c_ENABLE else
+                src_stb   when ctrl_reg_i.fec_enc_en = c_ENABLE else
+                '0';  
+                
+  src_cyc   <=  src_stb or src_i.ack;
+
+  src_o.cyc <=  snk_i.cyc when ctrl_reg_i.fec_enc_en = c_DISABLE  else
+                src_cyc   when ctrl_reg_i.fec_enc_en = c_ENABLE   else
                 '0';
 
   src_o.sel <=  snk_i.sel when  ctrl_reg_i.fec_enc_en = c_DISABLE else
@@ -440,11 +444,11 @@ begin
         if (rst_n_i = '0') then
           fec_bytes <= 0;
         else
-          if (src_cyc = '1' and src_i.stall = '0') then
+          if (src_stb = '1' and src_i.stall = '0') then
             fec_bytes <= fec_bytes + 1;
-          elsif (src_cyc = '1' and src_i.stall = '1') then
+          elsif (src_stb = '1' and src_i.stall = '1') then
             fec_bytes <= fec_bytes;
-          elsif (src_cyc = '0') then
+          elsif (src_stb = '0') then
             fec_bytes <= 0;
           end if;
         end if;
