@@ -21,6 +21,12 @@ RESERVED [3 bits]
 
 FEC HEADER v1
 -------------
+ETH FRAME LENGTH      [10 bits]
+16bit word
+
+FEC PADDING
+  Padding CRC         [6 bits]
+  padding_block xor padding_pkt
 
 FEC ALGORITHMS        [3bits]
     Simple Code         -> 0x0
@@ -34,9 +40,4 @@ ENCODED FRAME SUB-ID  [3 bits]
 
 RESERVED              [4 bits]
 
-ETH FRAME LENGTH      [10 bits]
-16bit word
 
-FEC PADDING
-  Padding CRC         [6 bits]
-  padding_block xor padding_pkt
