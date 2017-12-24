@@ -35,17 +35,16 @@ end wb_fec_decoder;
 architecture rtl of wb_fec_decoder is
   signal oob_info         : t_wrf_oob;
   signal oob_toggle       : std_logic;
-  signal fec_nex_id       : std_logic;
   signal fec_skip_pkt     : std_logic;
   signal eth_cnt          : unsigned (c_eth_pkt_width - 1 downto 0);
-  type t_fec_rx_strm  is (IDLE, RX_FEC_PKT, RX_OOB);
-  signal s_fec_rx_strm    : t_fec_rx_strm;
+  signal wrf_oob_cnt      : unsigned (1 downto 0);
   signal pkt_stb          : std_logic;
   signal pkt_err          : std_logic;
   signal hdr_stb          : std_logic;
   signal fec_stb          : std_logic;
   signal fec_stb_d        : std_logic;
   signal eth_payload_stb  : std_logic;
+  signal fec_pad_stb      : std_logic;
   signal src_halt         : std_logic;
   signal dec_err          : t_dec_err;
   signal eth_payload      : t_wrf_bus;
@@ -53,7 +52,6 @@ architecture rtl of wb_fec_decoder is
   signal eth_hdr_stb      : std_logic;
   signal ctrl_reg         : t_fec_ctrl_reg;
   signal snk_stall        : std_logic;
-  signal snk_ack          : std_logic;
   type t_enc_refresh is (IDLE, WAIT_TO_APPLY);
   signal s_enc_refresh    : t_enc_refresh;
 
@@ -68,6 +66,7 @@ begin
     rst_n_i           => rst_n_i,
     fec_payload_i     => snk_i.dat,
     fec_payload_stb_i => pkt_stb,
+    fec_pad_stb_i     => fec_pad_stb,
     fec_stb_o         => fec_stb,
     pkt_payload_o     => eth_payload,
     pkt_payload_stb_o => eth_payload_stb,
@@ -136,88 +135,75 @@ begin
         oob_toggle    <= '0';
         fec_skip_pkt  <= '0';
         eth_cnt       <= (others => '0');
-        s_fec_rx_strm <= IDLE;
         pkt_stb       <= '0';
         pkt_err       <= '0';
+        fec_pad_stb   <= '0';
       else
         if (ctrl_reg_i.fec_enc_en =  c_ENABLE) then
-          snk_ack <= snk_i.cyc and snk_i.stb;
-          case s_fec_rx_strm is
-            when IDLE =>
-              if snk_i.cyc = '1' and snk_i.stb = '1' and snk_stall = '0' and
-                 fec_skip_pkt = '0' then
-                if (snk_i.adr = c_WRF_STATUS) then
-                  if (snk_i.dat(1) = '1') then
-                    --TODO The Frame has a bit error should go to Golay
-                    fec_skip_pkt  <= '1';
-                    s_fec_rx_strm <= IDLE;
-                  else
-                    s_fec_rx_strm <= RX_FEC_PKT;
-                  end if;
-                elsif (snk_i.adr = c_WRF_DATA) then
-                    -- it shouldn't happen but just in case
-                    s_fec_rx_strm   <= RX_FEC_PKT;
-                    eth_cnt <= eth_cnt + 1;
+          snk_o.ack <= snk_i.cyc or snk_i.stb;
+          if snk_i.cyc = '1' and snk_i.stb = '1' and snk_stall = '0' and
+             fec_skip_pkt = '0' then
+            eth_cnt <= eth_cnt + 1;
+            if (snk_i.adr = c_WRF_STATUS) then
+              if (snk_i.dat(1) = '1') then
+                fec_skip_pkt  <= '1';
+              end if;
+            elsif (snk_i.adr = c_WRF_DATA) then
+              if (eth_cnt < c_fec_hdr_len - 3) then
+              -- getting the pkt header
+                pkt_stb <= '0';
+              elsif (eth_cnt = c_fec_hdr_len - 3) then
+              -- check FEC ethertype
+                if (ctrl_reg.fec_ethtype /= snk_i.dat) then
+                  --TODO No FEC pkt and FEC enable -> error
+                  fec_skip_pkt  <= '1';
                 else
-                  --TODO Error no correct info in the WR Fabric
+                  fec_pad_stb   <= '1';
                 end if;
-              elsif snk_i.cyc = '0' and snk_i.stb = '0' then
-                fec_skip_pkt  <= '0';
-                eth_cnt       <= (others => '0');
-                s_fec_rx_strm <= IDLE;
-                pkt_stb       <= '0';
-                pkt_err       <= '0';
-              end if;
-            when RX_FEC_PKT =>
-              if snk_i.cyc = '1' and snk_i.stb = '1' and snk_stall = '0' then
-                if (snk_i.adr = c_WRF_DATA) then
-                  if (eth_cnt < c_fec_hdr_len - 2) then
-                  -- getting the pkt header
-                    pkt_stb <= '0';
-                  elsif (eth_cnt = c_fec_hdr_len - 2) then
-                  -- check FEC ethertype
-                    if (ctrl_reg.fec_ethtype /= snk_i.dat) then
-                      --TODO No FEC pkt and FEC enable -> error
-                      fec_skip_pkt  <= '1';
-                      s_fec_rx_strm <= IDLE;
-                    end if;
-                    -- start getting FEC payload
-                    pkt_stb       <= '1';
-                  elsif (eth_cnt < c_eth_pkt - 1) then
-                    pkt_stb <= '0';
-                  --TODO jumbo pkt error
-                    --pkt_err   <= '1';
-                  end if;
-                  eth_cnt <= eth_cnt + 1;
-                elsif (snk_i.adr = c_WRF_OOB) then
-                  pkt_stb <= '0';
-                  oob_info.oob_type <= snk_i.dat(15 downto 12);
-                  oob_info.valid    <= snk_i.dat(11);
-                  oob_info.port_id  <= snk_i.dat(5 downto 0);
-                  s_fec_rx_strm <= RX_OOB;
-                end if;
-              end if;
-            when RX_OOB =>
-              if snk_i.cyc = '1' and snk_i.stb = '1' and snk_stall = '0' and
-                snk_i.adr = c_WRF_OOB then
+              elsif (eth_cnt = c_fec_hdr_len - 2) then
+                -- 1st 16 bits FEC Header Eth Frame Length and Padding
+               fec_pad_stb   <= '0';
+                -- start getting FEC 2nd header and payload
+                pkt_stb <= '1';
+              elsif (eth_cnt < c_eth_pkt - 1) then
+                pkt_stb <= '1';
               else
-                if (oob_toggle = '0') then
-                  oob_info.ts_f <= snk_i.dat(15 downto 12);
-                  oob_info.ts_r(27 downto 16) <= snk_i.dat(11 downto 0);
-                  oob_toggle    <= '1';
-                else
-                  oob_info.ts_r(15 downto 0) <= snk_i.dat;
-                  s_fec_rx_strm <= IDLE;
-                end if;
+              --TODO jumbo pkt error
+                --pkt_err   <= '1';
               end if;
-            when others =>
-            end case;
+              eth_cnt <= eth_cnt + 1;
+            elsif (snk_i.adr = c_WRF_OOB) then
+              if (wrf_oob_cnt = 0) then
+                pkt_stb           <= '0';
+                oob_info.oob_type <= snk_i.dat(15 downto 12);
+                oob_info.valid    <= snk_i.dat(11);
+                oob_info.port_id  <= snk_i.dat(5 downto 0);
+              elsif (wrf_oob_cnt = 1) then
+                oob_info.ts_f <= snk_i.dat(15 downto 12);
+                oob_info.ts_r(27 downto 16) <= snk_i.dat(11 downto 0);
+              elsif (wrf_oob_cnt = 2) then
+                oob_info.ts_r(15 downto 0) <= snk_i.dat;
+              end if;
+            end if;
+          else
+            eth_cnt     <= (others => '0');
+            wrf_oob_cnt <= (others => '0');
+            pkt_err     <= '0';
+            fec_skip_pkt<= '0';
+            pkt_stb     <= '0';
+          end if;
         else -- c_DISABLE
-          pkt_stb       <= '0';
           pkt_err       <= '0';
+          fec_skip_pkt  <= '0';
+          pkt_stb       <= '0';
         end if;
       end if;
     end if;
   end process;
 
+  snk_stall   <= src_i.stall  when ctrl_reg_i.fec_enc_en = c_DISABLE else
+                '1'           when snk_i.cyc = '0'                   else
+                '0';
+
+  snk_o.stall <= snk_stall;
 end rtl;

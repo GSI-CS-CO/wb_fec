@@ -21,6 +21,7 @@ entity fec_decoder is
     rst_n_i           : in  std_logic;
     fec_payload_i     : in  t_wrf_bus;
     fec_payload_stb_i : in  std_logic;
+    fec_pad_stb_i     : in  std_logic;
     fec_stb_o         : out std_logic;
     pkt_payload_o     : out t_wrf_bus;
     pkt_payload_stb_o : out std_logic;
@@ -46,10 +47,10 @@ architecture rtl of fec_decoder is
   signal pkt_dec_err    : t_dec_err;
   signal payload_cnt    : unsigned (c_block_len_width - 1 downto 0);
   signal read_block     : std_logic_vector (g_num_block - 1 downto 0);
-  signal we_loop_back   : std_logic_vector (g_num_block - 1 downto 0);
+  signal read_payload   : std_logic_vector (g_num_block - 1 downto 0);
+  signal read_fec_block : std_logic_vector (g_num_block - 1 downto 0);
   signal we_src_sel     : unsigned (g_num_block - 1 downto 0);
   signal we_mask        : unsigned (g_num_block - 1 downto 0);
-  signal we_loop_bacg   : std_logic_vector (g_num_block - 1 downto 0);
   signal pkt_block      : t_wrf_bus_array (0 to g_num_block - 1);
   signal payload_block  : t_wrf_bus_array (0 to g_num_block - 1);
   signal cnt            : t_fifo_cnt_array (0 to g_num_block - 1);
@@ -60,8 +61,29 @@ architecture rtl of fec_decoder is
   signal s_fec_hdr      : t_fec_header;
   signal fec_payload_stb_d  : std_logic;
   signal fec_payload_cnt    : unsigned(c_eth_pl_width - 1 downto 0);
-
+  signal fec_pad_err      : std_logic;
+  signal padding_crc      : t_fec_padding;
+  signal pkt_len          : t_fec_hdr_pkt_len;
+  signal padding          : t_padding;
+  signal fec_payload      : t_wrf_bus;
+  signal fec_stb          : std_logic;
   begin
+
+  PADDING_MOD: fec_len_rx_pad
+    port map (
+      clk_i           => clk_i,
+      rst_n_i         => rst_n_i,
+      fec_pad_stb_i   => fec_pad_stb_i,
+      padding_crc_i   => padding_crc,
+      pkt_len_i       => pkt_len,
+      fec_block_len_o => block_len,
+      padding_o       => padding,
+      pad_crc_err_o   => fec_pad_err);
+
+  pkt_len     <= fec_payload_i(15 downto 6);
+  padding_crc <= fec_payload_i(5 downto 0);
+
+  fec_stb_o   <= fec_stb;
 
   -- Ctrl deFEC sequences
   CTRL_deFEC :  process(clk_i) is
@@ -79,16 +101,17 @@ architecture rtl of fec_decoder is
         s_NEXT_OP     <= IDLE;
         pkt_dec_err   <= c_dec_err;
         fec_pkt_rx    <= (others => '0');
-        decoding_id   <= (others => '0');
+        decoding_id   <= (others => '1');
         fec_decoded   := '0';
         new_pkt       := '0';
-        fec_stb_o     <= '0';
+        fec_stb       <= '0';
         block_stream  <= 0;
         payload_cnt   <= (others => '0');
         pkt_payload_o <= (others => '0');
         fec_hdr       := (others => '0');
-        block_len     <= (others => '0');
         s_fec_hdr     <= c_fec_header;
+        new_fec_id    := '0';
+        read_payload  <= (others => '0');
         fec_payload_stb_d <= '0';
       else
         fec_payload_stb_d <= fec_payload_stb_i;
@@ -97,9 +120,6 @@ architecture rtl of fec_decoder is
         if (new_pkt = '1') then
           fec_hdr   := fec_payload_i;
           s_fec_hdr <= f_parse_fec_hdr(fec_payload_i);
-          --fec_id      := fec_payload_i
-          --fec_subid   := fec_hdr.enc_frame_subid;
-          --block_len   <= fec_hdr.block_len;
 
           if (fec_id /= decoding_id) then
             -- new fec id
@@ -120,19 +140,20 @@ architecture rtl of fec_decoder is
             -- new fec_id, start decoding
               s_DEC     <= DECODING;
               s_NEXT_OP <= f_next_op(fec_pkt_rx, fec_subid);
-              fec_stb_o <= '1';
+              fec_stb   <= '1';
             elsif (new_fec_id = '0')  then
             -- this fec_id has been already decoded, do nothing
               s_DEC     <= IDLE;
             end if;
           when DECODING =>
+            pkt_payload_stb_o <= '0';
             if (new_pkt = '1') then
               if (new_fec_id = '0' and fec_decoded = '1') then
                 s_DEC       <= DECODED;
               elsif(new_fec_id = '1') then
               -- new fec_id and the pkt was not decoded yet --> error and start dec
                 pkt_dec_err.dec_err <= '1';
-                fec_stb_o   <= '1';
+                fec_stb     <= '1';
                 s_DEC       <= DECODING;
                 s_NEXT_OP   <= f_next_op(fec_pkt_rx, fec_subid);
               else
@@ -152,17 +173,17 @@ architecture rtl of fec_decoder is
             if (halt_streaming_i = '0') then
               if (payload_cnt <= block_len - 1) then
                 payload_cnt   <= payload_cnt + 1;
-                read_block(block_stream) <= '1';
+                read_payload(block_stream) <= '1';
               elsif (block_stream <= g_num_block - 1) then
                 payload_cnt   <= (others => '0');
                 block_stream  <= block_stream + 1;
-                read_block(block_stream)    <= '0';
-                read_block(block_stream + 1)<= '1';
+                read_payload(block_stream)    <= '0';
+                read_payload(block_stream + 1)<= '1';
               else
                 pkt_payload_stb_o <= '0';
-                read_block        <= (others => '0');
+                read_payload      <= (others => '0');
                 s_DEC             <= IDLE;
-                fec_stb_o         <= '0';
+                fec_stb           <= '0';
               end if;
             end if;
             pkt_payload_o <=  payload_block(block_stream);
@@ -175,6 +196,7 @@ architecture rtl of fec_decoder is
   -- Decoding
   CTRL_DEC :  process(clk_i) is
     variable subid    : t_enc_frame_sub_id;
+    variable new_pkt  : std_logic;
     begin
     if rising_edge(clk_i) then
       if (rst_n_i =  '0') then
@@ -184,25 +206,29 @@ architecture rtl of fec_decoder is
         we_src_sel      <= (others => '0');
         read_block      <= (others => '0');
         fec_payload_cnt <= (others => '0');
+        fec_payload     <= (others => '0');
         subid           := (others => '0');
+        new_pkt         := '0';
       else
         subid := s_fec_hdr.enc_frame_subid;
 
-        if (fec_payload_stb_i = '1') then
+        new_pkt   := (not fec_payload_stb_d) and fec_payload_stb_i;
+        if (fec_payload_stb_d = '1' and new_pkt = '0') then
           fec_payload_cnt <= fec_payload_cnt + 1;
-        else
+        elsif (new_pkt = '1') then
           fec_payload_cnt <= (others => '0');
         end if;
+
+        fec_payload <= fec_payload_i;
+
         case s_NEXT_OP is
           when IDLE =>
             stream_out  <= '0';
           when STORE =>
             if (fec_payload_cnt <= block_len - 1) then
               xor_we <= c_FIFO_ON;  -- [0 xor 1] / [1 xor 2] / [2 xor 3] / [3 xor 0]
-            elsif (payload_cnt <= (2 * block_len) - 1) then
+            elsif (fec_payload_cnt <= (2 * block_len) - 1) then
               xor_we <= c_FIFO_OFF;
-              --fifo_id := f_fifo_id(subid);
-              --we_src_sel <= fifo_id; -- [0] / [1] / [2] / [3]
               we_src_sel <= f_fifo_id(subid); -- [0] / [1] / [2] / [3]
             else
               we_src_sel <= (others => '0');
@@ -275,14 +301,14 @@ architecture rtl of fec_decoder is
         empty_o => empty(i),
         full_o  => full(i),
         q_o     => pkt_block(i),
-        rd_i    => read_block(i),
+        rd_i    => read_fec_block(i),
         count_o => cnt(i));
 
-    we_mask(i) <= (fec_payload_stb_i and we_src_sel(i)) or we_loop_back(i);
+    we_mask(i) <= (fec_payload_stb_i and we_src_sel(i)) or read_fec_block(i);
 
     -- the fifo gets the data from the pkt or fifo lopping back the output
-    payload_block(i)  <=  fec_payload_i when we_src_sel(i) = '1' else
+    payload_block(i)  <=  fec_payload   when we_src_sel(i) = '1' else
                           pkt_block(i)  when we_src_sel(i) = '0';
   end generate;
-  we_loop_back  <= read_block;
+  read_fec_block <= read_block or read_payload;
 end rtl;

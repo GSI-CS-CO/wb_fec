@@ -13,7 +13,7 @@ use ieee.numeric_std.all;
 library work;
 use work.fec_pkg.all;
 
-entity fec_len_pad is
+entity fec_len_tx_pad is
     generic (
       g_num_block : integer := 4);
     port (
@@ -22,11 +22,11 @@ entity fec_len_pad is
       pkt_len_i       : in  t_eth_type;
       fec_block_len_o : out t_block_len;
       padding_o       : out t_padding);
-end fec_len_pad;
+end fec_len_tx_pad;
 
-architecture rtl of fec_len_pad is
-  signal padding  : t_padding;
-  signal pkt_len  : t_eth_pkt_len;
+architecture rtl of fec_len_tx_pad is
+  signal padding      : t_padding;
+  signal pkt_len      : t_eth_pkt_len;
   constant c_mult     : t_eth_pkt_len := x"007";
   constant c_not_mult : t_eth_pkt_len := not c_mult;
   constant c_min_pkt_len    : integer := 128;

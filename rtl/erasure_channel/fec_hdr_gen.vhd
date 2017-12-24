@@ -63,7 +63,6 @@ begin
     end if;
   end process;
 
-
   DECODER_HDR : if c_is_decoder generate
   stream_hdr  : process(clk_i) is
   begin
@@ -114,13 +113,13 @@ begin
         elsif (fec_hdr_len <=  c_fec_hdr_len - 4) then
           fec_hdr_o <= ctrl_reg_i.fec_ethtype;
         elsif (fec_hdr_len <=  c_fec_hdr_len - 3) then
+          fec_hdr_o <= fec_hdr.eth_pkt_len &
+                       fec_hdr.fec_padding_crc;
+        elsif (fec_hdr_len <=  c_fec_hdr_len - 2) then
           fec_hdr_o <= fec_hdr.fec_code &
                        fec_hdr.enc_frame_id &
                        fec_hdr.enc_frame_subid &
                        fec_hdr.reserved;
-        elsif (fec_hdr_len <=  c_fec_hdr_len - 2) then
-          fec_hdr_o <= fec_hdr.eth_pkt_len &
-                       fec_hdr.fec_padding_crc;
         end if;
       end if;
     end if;

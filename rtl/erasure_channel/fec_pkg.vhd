@@ -258,7 +258,7 @@ package fec_pkg is
       time_code_i    : in  t_time_code);
   end component;
 
-  component fec_len_pad is
+  component fec_len_tx_pad is
     generic (
       g_num_block : integer := 4);
     port (
@@ -336,6 +336,7 @@ package fec_pkg is
       rst_n_i           : in  std_logic;
       fec_payload_i     : in  t_wrf_bus;
       fec_payload_stb_i : in  std_logic;
+      fec_pad_stb_i     : in  std_logic;
       fec_stb_o         : out std_logic;
       pkt_payload_o     : out t_wrf_bus;
       pkt_payload_stb_o : out std_logic;
@@ -373,11 +374,26 @@ package fec_pkg is
       enc_payload_o : out t_wrf_bus);
   end component;
 
+  component fec_len_rx_pad is
+    generic (
+      g_num_block : integer := 4);
+    port (
+      clk_i           : in  std_logic;
+      rst_n_i         : in  std_logic;
+      fec_pad_stb_i   : in  std_logic;
+      padding_crc_i   : in  t_fec_padding;
+      pkt_len_i       : in  t_fec_hdr_pkt_len;
+      fec_block_len_o : out t_block_len;
+      padding_o       : out t_padding;
+      pad_crc_err_o   : out std_logic);
+  end component;
+
   -- encoder
   function f_calc_len_block (pl_len : t_eth_type; div_num_block, num_block : integer) return unsigned;
   function f_parse_eth (x : std_logic_vector) return t_eth_frame_header;
   function f_extract_eth (idx : unsigned; x : t_eth_hdr) return t_wrf_bus;
   -- decoder
+  function f_pkt_len_conv (len_16bit_word : t_fec_hdr_pkt_len) return t_eth_pkt_len;
   function f_next_op(fec_pkt_rx : std_logic_vector; subid : t_enc_frame_sub_id) return t_next_op;
   function f_is_decoded(fec_pkt_rx : std_logic_vector; subid : t_enc_frame_sub_id) return std_logic;
   function f_update_pkt_rx( fec_pkt_rx : std_logic_vector;
@@ -427,16 +443,25 @@ package body fec_pkg is
   end function;
 
    -- decoder
+  function f_pkt_len_conv (len_16bit_word : t_fec_hdr_pkt_len) return t_eth_pkt_len is
+    variable pkt_len  : t_eth_pkt_len;
+    variable tmp      : t_fec_hdr_pkt_len;
+    begin
+      pkt_len := "00" & unsigned(len_16bit_word);
+      pkt_len := pkt_len sll 1;
+    return pkt_len;
+  end function;
+
   function f_fifo_id (subid : t_enc_frame_sub_id) return unsigned is
   --TODO make it generic to g_num_pkt
-    variable fifo_id  : unsigned (c_id_width - 1 downto 0);
+    variable fifo_id  : unsigned (3 downto 0);
     begin
       case subid is
-        when "000" => fifo_id := "000100";
-        when "001" => fifo_id := "001000";
-        when "010" => fifo_id := "000001";
-        when "011" => fifo_id := "000010";
-        when others => fifo_id := "000000";
+        when "000" => fifo_id := "0100";
+        when "001" => fifo_id := "1000";
+        when "010" => fifo_id := "0001";
+        when "011" => fifo_id := "0010";
+        when others => fifo_id := "0000";
       end case;
     return fifo_id;
   end function;
