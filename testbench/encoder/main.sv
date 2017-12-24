@@ -157,9 +157,6 @@ module main;
     acc_fec.set_mode(PIPELINED);
     WB_fec.settings.cyc_on_stall = 1;
 
-		//fec_src = new(dec_src.get_accessor());
-		//dec_src.settings.cyc_on_stall = 1;
-
 		fec_src = new(enc_src.get_accessor());
 		dec_src.settings.cyc_on_stall = 1;
 
@@ -169,15 +166,18 @@ module main;
     //#1500ns;
     while(1) begin
       seed = (seed + 1) & 'hffff;
-      //length = $dist_uniform(seed, 500, 1500);
-      //length = $dist_uniform(seed, 64, 127);
+      length = $dist_uniform(seed, 64, 1500);
+      if (length < 64)
+        begin
+        $stop;
+      end 
       length = length & 'hffff;
       length = (length + 7) & ~'h07;
-      length = 512;
+      length = 74;
       
-      $write("----->LENGTH %x \n", length);
+      $write("----->LENGTH %d \n", length);
 
-      /* some dummy addresses */
+      /* somdummy addresses */
       pkt.dst        = '{'hff, 'hff, 'hff, 'hff, 'hff, 'hff};
       pkt.src        = '{1,2,3,4,5,6};
       pkt.ethertype  = length;
@@ -185,7 +185,6 @@ module main;
       /* set the payload size to the minimum acceptable value:
          (46 bytes payload + 14 bytes header + 4 bytes CRC) */
       pkt.set_size(length);
-
 
       cnt = 0;
       for(j=0; j < 4; j++)
@@ -207,7 +206,7 @@ module main;
       //while(1) begin
         /* send the packet */
         fec_src.send(pkt);
-        #5ns;
+        #50ns;
     end
   end
 
@@ -229,22 +228,14 @@ module main;
 		int prev_size=0;
 		uint64_t val64;
 
-    //dec_snk.settings.gen_random_stalls = 1;
-
-    enc_snk.settings.gen_random_stalls = 1;
+    enc_snk.settings.gen_random_stalls = 0;
     fec_snk = new(enc_snk.get_accessor());
 
-	  $warning("--> starting");
+	  $warning("--> starting \n");
 		#5us;
     while(1) begin
 			#1us;
 			fec_snk.recv(pkt);
-			//if(pkt.size-prev_size!=1)
-			//	$warning("--> recv: size=%4d, %4d", pkt.size, pkt.size-prev_size);
-			//if(pkt.dst[0]!=8'h11 || pkt.dst[1]!=8'h22 || pkt.dst[2]!=8'h33 || 
-			//	 pkt.dst[3]!=8'h44 || pkt.dst[4]!=8'h55 || pkt.dst[5]!=8'h66)
-			//if(pkt.dst[0]!=8'h16 || pkt.dst[1]!=8'h21 || pkt.dst[2]!=8'h2c || 
-			//	 pkt.dst[3]!=8'h2c || pkt.dst[4]!=8'h37 || pkt.dst[5]!=8'h42)
 			begin
 				$write("%02X:", pkt.dst[0]);
 				$write("%02X:", pkt.dst[1]);
@@ -258,17 +249,9 @@ module main;
 				$write("%02X:", pkt.src[3]);
 				$write("%02X:", pkt.src[4]);
 				$write("%02X",  pkt.src[5]);
-				$info("--> recv: size=%4d, %4d", pkt.size, pkt.size-prev_size);
+				$write("--> recv: size=%4d \n", pkt.size - 14);
 			end;
 			prev_size = pkt.size;
-			//acc_fec.read(`ADDR_LBK_RCV_CNT, val64);
-			//$display("rcv_cnt: %d", val64);
-			//acc_fec.read(`ADDR_LBK_DRP_CNT, val64);
-			//$display("drp_cnt: %d", val64);
-			//acc_fec.read(`ADDR_LBK_FWD_CNT, val64);
-			//$display("fwd_cnt: %d", val64);
-			//acc_fec.write(`ADDR_LBK_MCR, `LBK_MCR_CLR);
-			//acc_fec.write(`ADDR_LBK_MCR, 0);
     end
   end
 

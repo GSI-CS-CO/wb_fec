@@ -130,7 +130,6 @@ module main;
 		.wb_slave_ack(WB_fec.master.ack),
 		.wb_slave_stall(WB_fec.master.stall));
 
-
   wrf_loopback #(
     .g_interface_mode           (PIPELINED),
     .g_address_granularity      (BYTE))
@@ -139,34 +138,12 @@ module main;
     .rst_n_i                    (rst_n),
     .snk_cyc_i                  (enc_src_cyc),
     .snk_stb_i                  (enc_src_stb),
-    //.snk_we_i                   (1'b1),
     .snk_we_i                   (enc_src_we),
     .snk_sel_i                  (enc_src_sel),
     .snk_adr_i                  (enc_src_adr),
     .snk_dat_i                  (enc_src_dat),
     .snk_ack_o                  (enc_src_ack),
     .snk_stall_o                (enc_src_stall),
-
-    //.clk_sys_i                  (clk_ref),
-    //.rst_n_i                    (rst_n),
-
-    //.snk_cyc_i                  (enc_src.master.cyc),
-    //.snk_stb_i                  (enc_src.master.stb),
-    //.snk_we_i                   (enc_src.master.we),
-    //.snk_sel_i                  (enc_src.master.sel),
-    //.snk_adr_i                  (enc_src.master.adr),
-    //.snk_dat_i                  (enc_src.master.dat_o),
-    //.snk_ack_o                  (enc_src.master.stall),
-    //.snk_stall_o                (enc_src.master.ack),
-
-    //.src_cyc_o                  (dec_snk.slave.cyc),
-    //.src_stb_o                  (dec_snk.slave.stb),
-    //.src_we_o                   (dec_snk.slave.we),
-    //.src_sel_o                  (dec_snk.slave.sel),
-    //.src_adr_o                  (dec_snk.slave.adr),
-    //.src_dat_o                  (dec_snk.slave.dat_i),
-    //.src_ack_i                  (dec_snk.slave.stall),
-    //.src_stall_i                (dec_snk.slave.ack),
 
     .src_cyc_o                  (dec_snk_cyc),
     .src_stb_o                  (dec_snk_stb),
@@ -187,84 +164,42 @@ module main;
     .wb_ack_o                   (WB_lbk.master.ack),
     .wb_stall_o                 (WB_lbk.master.stall));
 
-  //initial begin
-
-  //  @(posedge rst_n);
-  //  repeat(3) @(posedge clk_sys);
-
-  //  #1us;
-
-  //  acc_fec = WB_fec.get_accessor();
-  //  acc_fec.set_mode(PIPELINED);
-  //  WB_fec.settings.cyc_on_stall = 1;
-
-	//	//fec_src = new(dec_src.get_accessor());
-	//	//dec_src.settings.cyc_on_stall = 1;
-
-	//	fec_src = new(enc_src.get_accessor());
-	//	dec_src.settings.cyc_on_stall = 1;
-
-  //  #1us;
-	//	acc_fec.write(`FEC_ENC_EN, 1'h0);
-	//	//#1us;
-	//	//acc_fec.write(`ADDR_LBK_DMAC_L, 32'h33445566);
-	//	//#1us;
-	//	//acc_fec.write(`ADDR_LBK_MCR, `LBK_MCR_ENA | `LBK_MCR_FDMAC);
-	//	//acc_fec.write(`ADDR_LBK_MCR, `LBK_MCR_ENA);
-
-  //  //#1500ns;
-  //  tx_sizes = {};
-  //  //NOW LET'S SEND SOME FRAMES
-  //  send_frames(fec_src, 1500);
-  //end
-
   initial begin
     EthPacket pkt;
     pkt = new; 
-
 
     @(posedge rst_n);
     repeat(3) @(posedge clk_ref);
 
     #1us;
 
-    //acc_fec = WB_fec.get_accessor();
-    //acc_fec.set_mode(PIPELINED);
-    //WB_fec.settings.cyc_on_stall = 1;
-
     acc_lbk = WB_lbk.get_accessor();
     acc_lbk.set_mode(PIPELINED);
-    WB_lbk.settings.cyc_on_stall = 1;		
-    
-    fec_src = new(enc_src.get_accessor());
-    enc_src.settings.cyc_on_stall = 1;
+    WB_lbk.settings.cyc_on_stall = 1;
 
+		acc_lbk.write(`ADDR_LBK_MCR, `LBK_MCR_ENA);
 
-    #1us;
-    acc_lbk.write(`ADDR_LBK_DMAC_H, 32'hFFFFFFFF);
-    #1us;
-    acc_lbk.write(`ADDR_LBK_DMAC_L, 32'hFFFFFFFF);
-    #1us;
-    acc_lbk.write(`ADDR_LBK_MCR, `LBK_MCR_ENA | `LBK_MCR_FDMAC);
-    //acc_lbk.write(`ADDR_LBK_MCR, `LBK_MCR_ENA);
+    acc_fec = WB_fec.get_accessor();
+    acc_fec.set_mode(PIPELINED);
+    WB_fec.settings.cyc_on_stall = 1;
 
-    //#1us;
-    //acc_lbk.write(`ADDR_LBK_MCR, `LBK_MCR_ENA);
+		fec_src = new(enc_src.get_accessor());
+		//dec_snk.settings.cyc_on_stall = 1;
 
-    //#10us;
-		//acc_fec.write(`FEC_ENC_EN, 1'h1);
-
-    #1500ns;
     while(1) begin
       seed = (seed + 1) & 'hffff;
-      //length = $dist_uniform(seed, 128, 1500);
-      length = $dist_uniform(seed, 500, 1500);
+      length = $dist_uniform(seed, 64, 1500);
+      if (length < 64)
+        begin
+        $stop;
+      end 
       length = length & 'hffff;
       length = (length + 7) & ~'h07;
+      //length = 512;
       
-      $write("----->LENGTH %x \n", length);
+      $write("----->LENGTH %d \n", length);
 
-      /* some dummy addresses */
+      /* somdummy addresses */
       pkt.dst        = '{'hff, 'hff, 'hff, 'hff, 'hff, 'hff};
       pkt.src        = '{1,2,3,4,5,6};
       pkt.ethertype  = length;
@@ -278,58 +213,45 @@ module main;
         begin
         for (i=1; i <= length/4; i++)
           begin
-          pkt.payload[cnt] = i & 'hff;
-          //pkt.payload[cnt] = j & 'hff;
+          //pkt.payload[cnt] = i & 'hff;
+          pkt.payload[cnt] = (j + 1)  & 'hff;
           cnt = cnt + 1;
         end
       end
 
-      //for(i=0; i < lenght; i++)
-      //  begin
-      //  data = $dist_uniform(seed, 0, (1<<31)-1);
-      //  pkt.payload[i] = data & 'hff;
-      //end
-      
-      //while(1) begin
-        /* send the packet */
-        fec_src.send(pkt);
-        #5000ns;
+      fec_src.send(pkt);
+      #5ns;
     end
   end
 
-  //initial begin
-  //  f = $fopen("output.txt","w");
-  //end
+  initial begin
+    f = $fopen("output.txt","w");
+  end
 
-  //always begin
-  //@(posedge enc_src.master.cyc) // wait for sig to goto 0
-  //sig_low = $realtime ;
-  ////@(enable)      // wait for enable to change its value
-  ////HAS TO BE CHANGED @(negedge enc_snk.slave.cyc)
-  //toggletime= $realtime - sig_low ;
-  //$fwrite(f, "Delay %d Payload %d \n", toggletime, length);
-  //end
+  always begin
+  @(posedge enc_src.master.cyc) // wait for sig to goto 0
+  sig_low = $realtime ;
+  //@(enable)      // wait for enable to change its value
+  @(negedge dec_snk.slave.cyc)
+  toggletime= $realtime - sig_low ;
+  $fwrite(f, "Delay\t%d\tPayload\t%d\n", toggletime, length);
+  end
 
   initial begin
     EthPacket pkt;
 		int prev_size=0;
 		uint64_t val64;
-    int total_cnt=0;
 
-    dec_snk.settings.gen_random_stalls = 1;    
+    //dec_snk.settings.gen_random_stalls = 1;
+
+    dec_snk.settings.gen_random_stalls = 1;
     fec_snk = new(dec_snk.get_accessor());
-    
+
 	  $warning("--> starting");
 		#5us;
     while(1) begin
 			#1us;
 			fec_snk.recv(pkt);
-			//if(pkt.size-prev_size!=1)
-			//	$warning("--> recv: size=%4d, %4d", pkt.size, pkt.size-prev_size);
-			//if(pkt.dst[0]!=8'h11 || pkt.dst[1]!=8'h22 || pkt.dst[2]!=8'h33 || 
-			//	 pkt.dst[3]!=8'h44 || pkt.dst[4]!=8'h55 || pkt.dst[5]!=8'h66)
-			//if(pkt.dst[0]!=8'h16 || pkt.dst[1]!=8'h21 || pkt.dst[2]!=8'h2c || 
-			//	 pkt.dst[3]!=8'h2c || pkt.dst[4]!=8'h37 || pkt.dst[5]!=8'h42)
 			begin
 				$write("%02X:", pkt.dst[0]);
 				$write("%02X:", pkt.dst[1]);
@@ -354,17 +276,6 @@ module main;
 			//$display("fwd_cnt: %d", val64);
 			//acc_fec.write(`ADDR_LBK_MCR, `LBK_MCR_CLR);
 			//acc_fec.write(`ADDR_LBK_MCR, 0);
-      if(total_cnt % 50 == 0) begin
-        acc_lbk.read(`ADDR_LBK_RCV_CNT, val64);
-        $display("rcv_cnt: %d", val64);
-        acc_lbk.read(`ADDR_LBK_DRP_CNT, val64);
-        $display("drp_cnt: %d", val64);
-        acc_lbk.read(`ADDR_LBK_FWD_CNT, val64);
-        $display("fwd_cnt: %d", val64);
-      end
-      total_cnt++;
-
-
     end
   end
 
