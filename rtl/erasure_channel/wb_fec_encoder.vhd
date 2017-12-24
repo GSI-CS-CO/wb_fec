@@ -118,7 +118,7 @@ begin
   --      code_word_o => );
   --end generate;
 
-  FEC_CALC_LEN_PAD : fec_len_pad
+  FEC_CALC_LEN_PAD : fec_len_tx_pad
     generic map(
       g_num_block     => g_num_block)
     port map(
@@ -222,12 +222,11 @@ begin
             end if;
             fec_word_cnt <= fec_word_cnt + 1;
           when SEND_FEC_PAYLOAD =>
-            if (fec_word_cnt <= fec_hdr_payload_len - 1) then
+            if (fec_word_cnt <= fec_hdr_payload_len) then
               s_fec_strm  <= SEND_FEC_PAYLOAD;
-              if (fec_word_cnt <= fec_hdr_payload_len - 1 and
+            elsif (fec_word_cnt = fec_hdr_payload_len + 1 and
                   (padding.pad_block /= (padding.pad_block'range => '0'))) then
                 s_fec_strm  <= SEND_FEC_PADDING;
-              end if;
             elsif(fec_pkt_cnt <= g_num_block - 1) then
               s_fec_strm      <= IDLE_FEC;
               fec_pkt_cnt <= fec_pkt_cnt + 1;
@@ -298,12 +297,16 @@ begin
                 --hdr_ethertype <= snk_i.dat;
                 hdr_ethertype <= snk_i.dat;
                 --pkt_len       <= to_integer(unsigned(snk_i.dat) srl 2);
-                pkt_len       <= to_integer(unsigned(snk_i.dat) srl 2);
+                pkt_len       <= to_integer(unsigned(snk_i.dat) srl 1);
                 -- start getting payload
                 pkt_stb   <= '1';
-              elsif (eth_cnt < pkt_len - 1) then
+              elsif (eth_cnt = c_eth_hdr_len + pkt_len - 1) then
               -- getting the payload
-                pkt_stb   <= '1';
+                pkt_stb   <= '0';
+                if (pad_cnt < pad and padded = '0') then
+                  pad_stb <= '1';
+                  pad_cnt <= pad_cnt + 1;
+                end if;
               elsif (eth_cnt >= c_eth_pkt - 1) then
                 -- jumbo pkt error
                 pkt_stb   <= '0';
@@ -312,7 +315,8 @@ begin
             eth_cnt <= eth_cnt + 1;
             end if;
             padded  <= '0';
-          elsif (pad_cnt < pad - 1 and padded = '0') then
+          --elsif (pad_cnt < pad - 1 and padded = '0') then
+          elsif (pad_cnt < pad and padded = '0') then
             pad_stb <= '1';
             pkt_stb <= '0';
             pad_cnt <= pad_cnt + 1;
@@ -325,8 +329,9 @@ begin
             pkt_err       <= '0';
           end if;
         else -- c_DISABLE
-          eth_cnt       <= 0;
+          padded        <= '0';
           pad_cnt       <= 0;
+          eth_cnt       <= 0;
           pad_stb       <= '0';
           pkt_stb       <= '0';
           pkt_err       <= '0';
@@ -337,6 +342,7 @@ begin
 
   snk_stall   <=  src_i.stall when ctrl_reg_i.fec_enc_en = c_DISABLE else
                   '1'         when snk_i.cyc = '0' and fec_stb = '1'  else
+
                   '0';
   snk_o.stall <= snk_stall;
 
