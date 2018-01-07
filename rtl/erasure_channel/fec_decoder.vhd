@@ -50,7 +50,10 @@ architecture rtl of fec_decoder is
   signal read_payload   : std_logic_vector (g_num_block - 1 downto 0);
   signal read_fec_block : std_logic_vector (g_num_block - 1 downto 0);
   signal we_src_sel     : unsigned (g_num_block - 1 downto 0);
+  signal xor_op         : unsigned (g_num_block - 1 downto 0);
   signal we_mask        : unsigned (g_num_block - 1 downto 0);
+  signal pkt_block_fifo : t_wrf_bus_array (0 to g_num_block - 1);
+  signal pkt_block_xor  : t_wrf_bus_array (0 to g_num_block - 1);
   signal pkt_block      : t_wrf_bus_array (0 to g_num_block - 1);
   signal payload_block  : t_wrf_bus_array (0 to g_num_block - 1);
   signal cnt            : t_fifo_cnt_array (0 to g_num_block - 1);
@@ -155,12 +158,13 @@ architecture rtl of fec_decoder is
                 pkt_dec_err.dec_err <= '1';
                 fec_stb     <= '1';
                 s_DEC       <= DECODING;
-                s_NEXT_OP   <= f_next_op(fec_pkt_rx, fec_subid);
+                --s_NEXT_OP   <= f_next_op(fec_pkt_rx, fec_subid);
               else
               -- keep decoding
                 pkt_dec_err.dec_err <= '0';
-                s_NEXT_OP <= f_next_op(fec_pkt_rx, fec_subid);
+                --s_NEXT_OP <= f_next_op(fec_pkt_rx, fec_subid);
               end if;
+              s_NEXT_OP <= f_next_op(fec_pkt_rx, fec_subid);
             end if;
           when DECODED =>
             if (stream_out = '1') then
@@ -186,7 +190,7 @@ architecture rtl of fec_decoder is
                 fec_stb           <= '0';
               end if;
             end if;
-            pkt_payload_o <=  payload_block(block_stream);
+            pkt_payload_o <= pkt_block_fifo(block_stream);
           when others =>
         end case;
       end if;
@@ -209,6 +213,7 @@ architecture rtl of fec_decoder is
         fec_payload     <= (others => '0');
         subid           := (others => '0');
         new_pkt         := '0';
+        xor_op          <= (others => '0');
       else
         subid := s_fec_hdr.enc_frame_subid;
 
@@ -233,22 +238,24 @@ architecture rtl of fec_decoder is
             else
               we_src_sel <= (others => '0');
             end if;
+            xor_op  <= (others => '0');
           when XOR_0_1 =>
             if (fec_payload_cnt <= block_len - 1) then
-              read_block(2) <= c_FIFO_ON;
-              pkt_block(1)  <= pkt_block(2) xor fec_payload_i; -- [2] xor [1 xor 2] = [1]
-              we_src_sel(1) <= c_FIFO_ON;
+              read_block(2)     <= c_FIFO_ON;
+              pkt_block_xor(1)  <= pkt_block_fifo(2) xor fec_payload_i; -- [2] xor [1 xor 2] = [1]
+              xor_op(1)         <= '1';
+              we_src_sel(1)     <= c_FIFO_OFF;
             elsif (fec_payload_cnt <= (2 * block_len) - 1) then
-              we_src_sel(1) <= c_FIFO_OFF;
-              read_block(1) <= c_FIFO_ON;
-              xor_rd        <= c_FIFO_ON;
-              pkt_block(0)  <= pkt_block(1) xor xor_payload; -- [1] xor [0 xor 1] = [0]
-              --we can start the streaming
+              we_src_sel(1)     <= c_FIFO_OFF;
+              xor_op (1)        <= '0';
+              read_block(1)     <= c_FIFO_ON;
+              xor_rd            <= c_FIFO_ON;
+              pkt_block_xor(0)  <= pkt_block_fifo(1) xor xor_payload; -- [1] xor [0 xor 1] = [0]
+              xor_op (0)        <= '1';
+              -- Store block [3]
+              we_src_sel <= f_fifo_id(subid); -- [3]              
+              -- We can start the streaming
               stream_out    <= '1';
-              -- Store
-              --fifo_id     := f_fifo_id(subid);
-              --we_src_sel  <= fifo_id;  -- [3]
-              we_src_sel <= f_fifo_id(subid); -- [3]
             else
               stream_out  <= '0';
             end if;
@@ -285,7 +292,7 @@ architecture rtl of fec_decoder is
 
   -- Blocks FIFO
   g_PKT_BLOCK_FIFO : for i in 0 to g_num_block - 1 generate
-    PKT_BLOCK_FIFO : generic_sync_fifo
+    PKT_BLOCKS_FIFO : generic_sync_fifo
       generic map (
         g_data_width  => c_wrf_width,
         g_size        => c_fec_fifo_size,
@@ -300,15 +307,18 @@ architecture rtl of fec_decoder is
         we_i    => we_mask(i),
         empty_o => empty(i),
         full_o  => full(i),
-        q_o     => pkt_block(i),
+        q_o     => pkt_block_fifo(i),
         rd_i    => read_fec_block(i),
         count_o => cnt(i));
 
-    we_mask(i) <= (fec_payload_stb_i and we_src_sel(i)) or read_fec_block(i);
+    we_mask(i) <= (fec_payload_stb_i and ((we_src_sel(i) or read_fec_block(i)) or xor_op(i)));
 
     -- the fifo gets the data from the pkt or fifo lopping back the output
     payload_block(i)  <=  fec_payload   when we_src_sel(i) = '1' else
-                          pkt_block(i)  when we_src_sel(i) = '0';
+                          pkt_block(i)  when we_src_sel(i) = '0' and xor_op(i) = '1';
+
+    pkt_block(i)  <=  pkt_block_xor(i) when xor_op(i) = '1' else
+                      pkt_block_fifo(i);
   end generate;
   read_fec_block <= read_block or read_payload;
 end rtl;
