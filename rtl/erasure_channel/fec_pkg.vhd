@@ -82,6 +82,15 @@ package fec_pkg is
   type t_fifo_cnt_array     is array (natural range <>) of t_fec_fifo_cnt_width;
   subtype t_wrd_adr_width   is std_logic_vector(1 downto 0);
 
+  -- Dec FIFOs
+  subtype t_we_src     is unsigned(1 downto 0);
+  type t_we_src_sel is array (natural range <>) of t_we_src;
+  signal we_src_sel   : t_we_src_sel(3 downto 0);
+  constant c_DEC_IDLE : t_we_src := "00";
+  constant c_PAYLOAD  : t_we_src := "01";
+  constant c_XOR_OP   : t_we_src := "10";
+  constant c_LOOPBACK : t_we_src := "11";
+
   -- Ethernet Header
   subtype t_eth_vlan is std_logic_vector(15 downto 0);
   subtype t_mac_addr is std_logic_vector(47 downto 0);
@@ -399,7 +408,13 @@ package fec_pkg is
   function f_update_pkt_rx( fec_pkt_rx : std_logic_vector;
                             subid : t_enc_frame_sub_id;
                             status_fec_id : std_logic) return std_logic_vector;
-  function f_fifo_id (subid : t_enc_frame_sub_id) return unsigned;
+  function f_fifo_id (subid : t_enc_frame_sub_id)
+    return t_we_src_sel;
+
+  function f_we_src_sel (next_op : t_next_op; subid : t_enc_frame_sub_id ; op_step : integer) return t_we_src_sel;
+
+  function f_read_block (next_op : t_next_op; op_step : integer) return std_logic_vector;
+
   function f_parse_fec_hdr (fec_hdr_bus : t_wrf_bus) return t_fec_header;
 
 end package fec_pkg;
@@ -452,18 +467,64 @@ package body fec_pkg is
     return pkt_len;
   end function;
 
-  function f_fifo_id (subid : t_enc_frame_sub_id) return unsigned is
+  function f_fifo_id (subid : t_enc_frame_sub_id) 
+    return t_we_src_sel is
   --TODO make it generic to g_num_pkt
-    variable fifo_id  : unsigned (3 downto 0);
+    --variable fifo_id  : unsigned (3 downto 0);
+    variable fifo_sel : t_we_src_sel (3 downto 0);
     begin
       case subid is
-        when "000" => fifo_id := "0100";
-        when "001" => fifo_id := "1000";
-        when "010" => fifo_id := "0001";
-        when "011" => fifo_id := "0010";
-        when others => fifo_id := "0000";
+        when "000" => fifo_sel(2) := c_PAYLOAD;
+        when "001" => fifo_sel(3) := c_PAYLOAD;
+        when "010" => fifo_sel(0) := c_PAYLOAD;
+        when "011" => fifo_sel(1) := c_PAYLOAD;
+        when others => fifo_sel   := (others => (others => '0'));
       end case;
-    return fifo_id;
+    return fifo_sel;
+  end function;
+
+  function f_we_src_sel (next_op : t_next_op; subid : t_enc_frame_sub_id; op_step : integer) return t_we_src_sel is
+
+    variable we_src_sel : t_we_src_sel (3 downto 0);
+    begin
+      we_src_sel := (others => (others => '0'));
+      case next_op is
+        when IDLE     =>
+        when STORE    =>
+          we_src_sel := f_fifo_id(subid);
+        when XOR_0_1  =>
+          if (op_step = 0) then
+          elsif (op_step = 1) then
+            we_src_sel(1) := c_XOR_OP;
+          elsif (op_step = 2) then
+            we_src_sel    := f_fifo_id(subid);
+            we_src_sel(0) := c_XOR_OP;
+            we_src_sel(1) := c_LOOPBACK;
+         end if;
+        when others   => we_src_sel := (others => (others => '0'));
+      end case;
+    return we_src_sel;
+  end function;
+
+  function f_read_block (next_op : t_next_op; op_step : integer) return std_logic_vector is
+
+    variable read_block : std_logic_vector (3 downto 0);
+    begin
+      read_block  := (others => '0');
+      case next_op is
+        when IDLE     =>
+        when STORE    =>
+        when XOR_0_1  =>
+          if (op_step = 0) then
+          elsif (op_step = 1) then
+            read_block(2) := c_FIFO_ON;
+          elsif (op_step = 2) then
+            read_block(2) := c_FIFO_OFF;
+            read_block(1) := c_FIFO_ON;
+          end if;
+        when others   => read_block := (others => '0');
+      end case;
+    return read_block;
   end function;
 
   function f_next_op (fec_pkt_rx : std_logic_vector; subid : t_enc_frame_sub_id) return t_next_op is

@@ -49,12 +49,11 @@ architecture rtl of fec_decoder is
   signal read_block     : std_logic_vector (g_num_block - 1 downto 0);
   signal read_payload   : std_logic_vector (g_num_block - 1 downto 0);
   signal read_fec_block : std_logic_vector (g_num_block - 1 downto 0);
-  signal we_src_sel     : unsigned (g_num_block - 1 downto 0);
+  --signal we_src_sel     : unsigned (g_num_block - 1 downto 0);
   signal xor_op         : unsigned (g_num_block - 1 downto 0);
   signal we_mask        : unsigned (g_num_block - 1 downto 0);
   signal pkt_block_fifo : t_wrf_bus_array (0 to g_num_block - 1);
   signal pkt_block_xor  : t_wrf_bus_array (0 to g_num_block - 1);
-  signal pkt_block      : t_wrf_bus_array (0 to g_num_block - 1);
   signal payload_block  : t_wrf_bus_array (0 to g_num_block - 1);
   signal cnt            : t_fifo_cnt_array (0 to g_num_block - 1);
   signal empty          : std_logic_vector (g_num_block - 1 downto 0);
@@ -201,13 +200,14 @@ architecture rtl of fec_decoder is
   CTRL_DEC :  process(clk_i) is
     variable subid    : t_enc_frame_sub_id;
     variable new_pkt  : std_logic;
+    variable op_step  : integer range 0 to 3;
     begin
     if rising_edge(clk_i) then
       if (rst_n_i =  '0') then
         stream_out      <= '0';
         payload_cnt     <= (others => '0');
         xor_we          <= '0';
-        we_src_sel      <= (others => '0');
+        we_src_sel      <= (others => (others => '0'));
         read_block      <= (others => '0');
         fec_payload_cnt <= (others => '0');
         fec_payload     <= (others => '0');
@@ -225,39 +225,34 @@ architecture rtl of fec_decoder is
         end if;
 
         fec_payload <= fec_payload_i;
+        we_src_sel  <= f_we_src_sel(s_NEXT_OP, subid, op_step);
+        read_block  <= f_read_block(s_NEXT_OP, op_step);
 
         case s_NEXT_OP is
           when IDLE =>
             stream_out  <= '0';
           when STORE =>
             if (fec_payload_cnt <= block_len - 1) then
-              xor_we <= c_FIFO_ON;  -- [0 xor 1] / [1 xor 2] / [2 xor 3] / [3 xor 0]
+              op_step := 0;
+              xor_we  <= c_FIFO_ON;  -- [0 xor 1] / [1 xor 2] / [2 xor 3] / [3 xor 0]
             elsif (fec_payload_cnt <= (2 * block_len) - 1) then
-              xor_we <= c_FIFO_OFF;
-              we_src_sel <= f_fifo_id(subid); -- [0] / [1] / [2] / [3]
+              op_step := 1;
+              xor_we  <= c_FIFO_OFF;
             else
-              we_src_sel <= (others => '0');
+              op_step := 0;
             end if;
-            xor_op  <= (others => '0');
           when XOR_0_1 =>
             if (fec_payload_cnt <= block_len - 1) then
-              read_block(2)     <= c_FIFO_ON;
+              op_step           := 1;
               pkt_block_xor(1)  <= pkt_block_fifo(2) xor fec_payload_i; -- [2] xor [1 xor 2] = [1]
-              xor_op(1)         <= '1';
-              we_src_sel(1)     <= c_FIFO_OFF;
             elsif (fec_payload_cnt <= (2 * block_len) - 1) then
-              we_src_sel(1)     <= c_FIFO_OFF;
-              xor_op (1)        <= '0';
-              read_block(1)     <= c_FIFO_ON;
+              op_step           := 2;
               xor_rd            <= c_FIFO_ON;
               pkt_block_xor(0)  <= pkt_block_fifo(1) xor xor_payload; -- [1] xor [0 xor 1] = [0]
-              xor_op (0)        <= '1';
-              -- Store block [3]
-              we_src_sel <= f_fifo_id(subid); -- [3]              
-              -- We can start the streaming
-              stream_out    <= '1';
+              stream_out        <= '1';
             else
-              stream_out  <= '0';
+              op_step           := 0;
+              stream_out        <= '0';
             end if;
           when XOR_0_2 =>
           when XOR_0_3 =>
@@ -311,14 +306,14 @@ architecture rtl of fec_decoder is
         rd_i    => read_fec_block(i),
         count_o => cnt(i));
 
-    we_mask(i) <= (fec_payload_stb_i and ((we_src_sel(i) or read_fec_block(i)) or xor_op(i)));
+    payload_block(i)  <=  fec_payload       when we_src_sel(i) = c_PAYLOAD  else
+                          pkt_block_xor(i)  when we_src_sel(i) = c_XOR_OP   else
+                          pkt_block_fifo(i) when we_src_sel(i) = c_LOOPBACK else
+                          (others => '0')   when we_src_sel(i) = c_DEC_IDLE;
 
-    -- the fifo gets the data from the pkt or fifo lopping back the output
-    payload_block(i)  <=  fec_payload   when we_src_sel(i) = '1' else
-                          pkt_block(i)  when we_src_sel(i) = '0' and xor_op(i) = '1';
+    we_mask(i)  <=  fec_payload_stb_i and read_fec_block(i) when we_src_sel(i) = c_DEC_IDLE else
+                    fec_payload_stb_i                       when we_src_sel(i) /= c_DEC_IDLE;
 
-    pkt_block(i)  <=  pkt_block_xor(i) when xor_op(i) = '1' else
-                      pkt_block_fifo(i);
+    read_fec_block(i) <= read_block(i) or read_payload(i);
   end generate;
-  read_fec_block <= read_block or read_payload;
 end rtl;
