@@ -85,7 +85,6 @@ package fec_pkg is
   -- Dec FIFOs
   subtype t_we_src     is unsigned(1 downto 0);
   type t_we_src_sel is array (natural range <>) of t_we_src;
-  signal we_src_sel   : t_we_src_sel(3 downto 0);
   constant c_DEC_IDLE : t_we_src := "00";
   constant c_PAYLOAD  : t_we_src := "01";
   constant c_XOR_OP   : t_we_src := "10";
@@ -121,6 +120,7 @@ package fec_pkg is
   subtype fec_code_range     is natural range 15 downto 13;
   subtype fec_id_range       is natural range 12 downto  7;
   subtype fec_subid_range    is natural range  6 downto  4;
+  subtype reserved           is natural range  3 downto  0;
 
   constant c_fec_sdb : t_sdb_device := (
     abi_class       => x"0000", -- undocumented device
@@ -473,6 +473,7 @@ package body fec_pkg is
     --variable fifo_id  : unsigned (3 downto 0);
     variable fifo_sel : t_we_src_sel (3 downto 0);
     begin
+      fifo_sel  := (others => (others => '0'));
       case subid is
         when "000" => fifo_sel(2) := c_PAYLOAD;
         when "001" => fifo_sel(3) := c_PAYLOAD;
@@ -491,11 +492,15 @@ package body fec_pkg is
       case next_op is
         when IDLE     =>
         when STORE    =>
-          we_src_sel := f_fifo_id(subid);
+          if (op_step = 0) then
+          elsif (op_step = 1) then
+            we_src_sel := f_fifo_id(subid);
+          end if;
         when XOR_0_1  =>
           if (op_step = 0) then
           elsif (op_step = 1) then
             we_src_sel(1) := c_XOR_OP;
+            we_src_sel(2) := c_LOOPBACK;
           elsif (op_step = 2) then
             we_src_sel    := f_fifo_id(subid);
             we_src_sel(0) := c_XOR_OP;
@@ -519,7 +524,6 @@ package body fec_pkg is
           elsif (op_step = 1) then
             read_block(2) := c_FIFO_ON;
           elsif (op_step = 2) then
-            read_block(2) := c_FIFO_OFF;
             read_block(1) := c_FIFO_ON;
           end if;
         when others   => read_block := (others => '0');
@@ -598,7 +602,9 @@ package body fec_pkg is
       fec_hdr.fec_code        := fec_hdr_bus (fec_code_range);
       fec_hdr.enc_frame_id    := fec_hdr_bus (fec_id_range);
       fec_hdr.enc_frame_subid := fec_hdr_bus (fec_subid_range);
-      --fec_hdr.fec_blk_len     := fec_hdr_bus (fec_blk_len_range);
+      fec_hdr.reserved        := fec_hdr_bus (reserved);
+      fec_hdr.eth_pkt_len     := (others => '0');
+      fec_hdr.fec_padding_crc := (others => '0');
     return fec_hdr;
   end function;
 end fec_pkg;
