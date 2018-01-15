@@ -11,7 +11,6 @@ use ieee.numeric_std.all;
 
 library work;
 use work.fec_pkg.all;
---use work.golay_pk.all;
 use work.wishbone_pkg.all;
 use work.genram_pkg.all;
 use work.wr_fabric_pkg.all;
@@ -41,6 +40,7 @@ architecture rtl of wb_fec_decoder is
   signal pkt_stb          : std_logic;
   signal pkt_err          : std_logic;
   signal hdr_stb          : std_logic;
+  signal hdr_stall        : std_logic;
   signal fec_stb          : std_logic;
   signal fec_stb_d        : std_logic;
   signal eth_payload_stb  : std_logic;
@@ -50,10 +50,19 @@ architecture rtl of wb_fec_decoder is
   signal eth_payload      : t_wrf_bus;
   signal eth_hdr          : t_wrf_bus;
   signal eth_hdr_stb      : std_logic;
+  signal start_stream     : std_logic;
   signal ctrl_reg         : t_fec_ctrl_reg;
   signal snk_stall        : std_logic;
   type t_enc_refresh is (IDLE, WAIT_TO_APPLY);
   signal s_enc_refresh    : t_enc_refresh;
+  type t_eth_strm  is (IDLE, SEND_STATUS, SEND_HDR, SEND_PAYLOAD);
+  signal s_eth_strm       : t_eth_strm;
+  signal src_stb          : std_logic;
+  signal src_cyc          : std_logic;
+  signal wrf_adr          : t_wrf_adr;
+  signal wrf_dat          : t_wrf_bus;
+  signal stream_dat       : std_logic;
+  signal eth_hdr_done     : std_logic;
 
   constant c_div_num_block : integer := f_log2_size(g_num_block) + 1; -- in 16bit words
 begin
@@ -70,6 +79,8 @@ begin
     fec_stb_o         => fec_stb,
     pkt_payload_o     => eth_payload,
     pkt_payload_stb_o => eth_payload_stb,
+    eth_stream_o      => start_stream,
+    dat_stream_i      => stream_dat,
     halt_streaming_i  => src_halt,
     pkt_dec_err_o     => dec_err);
 
@@ -79,17 +90,19 @@ begin
       g_subid_width => c_subid_width,
       g_fec_type    => "decoder")
     port map(
-      clk_i         => clk_i,
-      rst_n_i       => rst_n_i,
-      hdr_i         => snk_i.dat,
-      hdr_stb_i     => hdr_stb,
-      pkt_len_i     => (others => '0'),
-      padding_i     => c_padding,
-      fec_stb_i     => fec_stb,
-      fec_hdr_stb_i => eth_hdr_stb,
-      fec_hdr_o     => eth_hdr,
-      enc_cnt_o     => open,
-      ctrl_reg_i    => ctrl_reg);
+      clk_i           => clk_i,
+      rst_n_i         => rst_n_i,
+      hdr_i           => snk_i.dat,
+      hdr_stb_i       => hdr_stb,
+      fec_hdr_stall_i => hdr_stall,
+      fec_hdr_done_o  => eth_hdr_done,
+      pkt_len_i       => (others => '0'),
+      padding_i       => c_padding,
+      fec_stb_i       => fec_stb,
+      fec_hdr_stb_i   => eth_hdr_stb,
+      fec_hdr_o       => eth_hdr,
+      enc_cnt_o       => open,
+      ctrl_reg_i      => ctrl_reg);
 
   hdr_stb <= '1' when (snk_i.cyc = '1' and snk_i.stb = '1' and pkt_stb = '0' and
                        snk_stall = '0' and snk_i.adr = c_WRF_DATA) else
@@ -126,6 +139,88 @@ begin
   --TODO
   --stat_reg_o.fec_enc_err  <= enc_err & pkt_err;
   --stat_reg_o.fec_enc_cnt  <= pkt_id;
+
+  -- Tx from decoder
+  tx_fabric : process(clk_i) is
+  begin
+    if rising_edge(clk_i) then
+      if rst_n_i = '0' then
+        s_eth_strm    <= IDLE;
+        eth_hdr_stb   <= '0';
+      else
+        case s_eth_strm is
+          when IDLE =>
+            if (start_stream = '1') then
+              s_eth_strm <= SEND_STATUS;
+            end if;
+            eth_hdr_stb <= '0';
+            stream_dat  <= '0';
+          when SEND_STATUS =>
+              if (src_halt = '0') then
+                s_eth_strm  <= SEND_HDR;
+              end if;
+          when SEND_HDR =>
+            if (eth_hdr_done = '1' and hdr_stall = '0') then
+              s_eth_strm  <= SEND_PAYLOAD;
+              eth_hdr_stb <= '0';
+            end if;
+
+            if (eth_hdr_done = '0' and hdr_stall = '0') then
+              eth_hdr_stb <= '1';
+            end if;
+          when SEND_PAYLOAD =>
+            if (eth_payload_stb = '0') then
+              s_eth_strm <= IDLE;
+            else
+              stream_dat  <= '1';
+            end if;
+        end case;
+      end if;
+    end if;
+  stream_dat <= eth_hdr_done;
+  end process;
+
+  src_halt  <= src_i.stall;
+  hdr_stall <= src_i.stall;
+
+  src_stb <= '1' when (s_eth_strm = SEND_HDR      or
+                       eth_payload_stb = '1'      or -- SEND_PAYLOAD
+                       s_eth_strm = SEND_STATUS) else
+             '0';
+
+  src_o.stb <= snk_i.stb when ctrl_reg_i.fec_dec_en = c_DISABLE else
+               src_stb   when ctrl_reg_i.fec_dec_en = c_ENABLE  else
+               '0';
+
+  src_cyc   <= src_stb or src_i.ack;
+
+  src_o.cyc <= snk_i.cyc when ctrl_reg_i.fec_dec_en = c_DISABLE else
+               src_cyc   when ctrl_reg_i.fec_dec_en = c_ENABLE  else
+               '0';
+
+  src_o.sel <= snk_i.sel when ctrl_reg_i.fec_dec_en = c_DISABLE else
+               "11";
+
+  src_o.we  <= snk_i.we when ctrl_reg_i.fec_dec_en = c_DISABLE else
+               '1';
+
+  wrf_adr   <=  c_WRF_STATUS  when s_eth_strm = SEND_STATUS   else
+                c_WRF_DATA    when (s_eth_strm = SEND_HDR      or
+                                    eth_payload_stb = '1')    else -- SEND_PAYLOAD
+                (others => '0');
+
+  src_o.adr <=  snk_i.adr when ctrl_reg_i.fec_dec_en = c_DISABLE else
+                wrf_adr   when ctrl_reg_i.fec_dec_en = c_ENABLE  else
+                (others => '0');
+
+  wrf_dat   <=  c_WRF_STATUS_FEC  when s_eth_strm = SEND_STATUS  else
+                eth_hdr           when s_eth_strm = SEND_HDR     else
+                eth_payload       when eth_payload_stb = '1'     else -- SEND_PAYLOAD
+                (others => '0');
+
+  src_o.dat <= snk_i.dat  when ctrl_reg_i.fec_dec_en = c_DISABLE else
+               wrf_dat    when ctrl_reg_i.fec_dec_en = c_ENABLE  else
+               (others => '0');
 
   -- Rx from WR Fabric
   rx_fabric : process(clk_i) is

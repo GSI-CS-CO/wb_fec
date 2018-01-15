@@ -134,17 +134,19 @@ begin
       g_subid_width => c_subid_width,
       g_fec_type    => "encoder")
     port map(
-      clk_i         => clk_i,
-      rst_n_i       => rst_n_i,
-      hdr_i         => snk_i.dat,
-      hdr_stb_i     => hdr_stb,
-      pkt_len_i     => hdr_ethertype,
-      padding_i     => padding,
-      fec_stb_i     => fec_stb,
-      fec_hdr_stb_i => fec_hdr_stb,
-      fec_hdr_o     => fec_hdr,
-      enc_cnt_o     => pkt_id,
-      ctrl_reg_i    => ctrl_reg);
+      clk_i           => clk_i,
+      rst_n_i         => rst_n_i,
+      hdr_i           => snk_i.dat,
+      hdr_stb_i       => hdr_stb,
+      pkt_len_i       => hdr_ethertype,
+      padding_i       => padding,
+      fec_stb_i       => fec_stb,
+      fec_hdr_done_o  => open,
+      fec_hdr_stall_i => '0',
+      fec_hdr_stb_i   => fec_hdr_stb,
+      fec_hdr_o       => fec_hdr,
+      enc_cnt_o       => pkt_id,
+      ctrl_reg_i      => ctrl_reg);
 
   hdr_stb <= '1' when (snk_i.cyc = '1' and snk_i.stb = '1' and pkt_stb = '0' and
                        snk_stall = '0' and snk_i.adr = c_WRF_DATA) else
@@ -365,11 +367,10 @@ begin
                         fifo_empty = '0' else
               '0';
 
-  --FIXME it works but it is not 100% compliant with the WRF spec
   src_o.stb <=  snk_i.stb when ctrl_reg_i.fec_enc_en = c_DISABLE else
                 src_stb   when ctrl_reg_i.fec_enc_en = c_ENABLE else
-                '0';  
-                
+                '0';
+
   src_cyc   <=  src_stb or src_i.ack;
 
   src_o.cyc <=  snk_i.cyc when ctrl_reg_i.fec_enc_en = c_DISABLE  else

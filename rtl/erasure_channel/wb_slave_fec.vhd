@@ -71,9 +71,10 @@ begin
 
         if wb_slave_i.cyc = '1' and wb_slave_i.stb = '1' then
           case wb_slave_i.adr(5 downto 2) is
-            when "0000"    =>  -- enable/disable encoder 0x0
+            when "0000"    =>  -- enable/disable encoder/decoder 0x0
               if wb_slave_i.we = '1' then
                 s_fec_ctrl.fec_enc_en <= wb_slave_i.dat(0);
+                s_fec_ctrl.fec_dec_en <= wb_slave_i.dat(0);
               end if;
               wb_slave_o.dat(0) <= s_fec_ctrl.fec_enc_en;
               wb_slave_o.dat(31 downto 1) <= (others => '0');

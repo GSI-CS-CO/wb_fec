@@ -17,17 +17,19 @@ entity fec_hdr_gen is
       g_subid_width : integer := 3;
       g_fec_type    : string  := "decoder"); -- decoder or encoder
     port (
-      clk_i         : in  std_logic;
-      rst_n_i       : in  std_logic;
-      hdr_i         : in  t_wrf_bus;
-      hdr_stb_i     : in  std_logic;
-      fec_stb_i     : in  std_logic;
-      fec_hdr_stb_i : in  std_logic;
-      fec_hdr_o     : out t_wrf_bus;
-      pkt_len_i     : in  t_eth_type;
-      padding_i     : in  t_padding;
-      enc_cnt_o     : out std_logic_vector(c_fec_cnt_width - 1 downto 0);
-      ctrl_reg_i    : in  t_fec_ctrl_reg);
+      clk_i           : in  std_logic;
+      rst_n_i         : in  std_logic;
+      hdr_i           : in  t_wrf_bus;
+      hdr_stb_i       : in  std_logic;
+      fec_stb_i       : in  std_logic;
+      fec_hdr_stb_i   : in  std_logic;
+      fec_hdr_stall_i : in  std_logic;
+      fec_hdr_done_o  : out std_logic;
+      fec_hdr_o       : out t_wrf_bus;
+      pkt_len_i       : in  t_eth_type;
+      padding_i       : in  t_padding;
+      enc_cnt_o       : out std_logic_vector(c_fec_cnt_width - 1 downto 0);
+      ctrl_reg_i      : in  t_fec_ctrl_reg);
 end fec_hdr_gen;
 
 architecture rtl of fec_hdr_gen is
@@ -70,21 +72,27 @@ begin
       if rst_n_i = '0' then
         fec_hdr_o   <= (others => '0');
         eth_hdr_len <= (others => '0');
+        fec_hdr_done_o  <= '0';
       else
-        if (fec_hdr_stb_i = '1') then
-          if (eth_hdr_len <= c_eth_hdr_len - 1) then
-            eth_hdr_len <= eth_hdr_len + 1;
+        if (fec_hdr_stall_i = '0') then
+          if (fec_hdr_stb_i = '1') then
+            if (eth_hdr_len <= c_eth_hdr_len - 1) then
+              eth_hdr_len <= eth_hdr_len + 1;
+            end if;
           else
+            eth_hdr_len <= (others => '0');
           end if;
-        else
-          eth_hdr_len <= (others => '0');
-        end if;
 
-        if (eth_hdr_len <=  c_eth_hdr_len - 3) then
-          fec_hdr_o <= f_extract_eth(eth_hdr_len, eth_hdr_reg);
-        elsif (fec_hdr_len <=  c_fec_hdr_len - 2) then
-          --TODO add eb_ethtype to wb register
-          --fec_hdr_o <= ctrl_reg_i.eb_ethtype;
+          if (eth_hdr_len <=  c_eth_hdr_len - 4) then
+            fec_hdr_o <= f_extract_eth(eth_hdr_len, eth_hdr_reg);
+          elsif (eth_hdr_len <=  c_eth_hdr_len - 3) then
+            fec_hdr_done_o <= '1';
+            fec_hdr_o <= x"0800";
+            --TODO add eb_ethtype to wb register
+            --fec_hdr_o <= ctrl_reg_i.eb_ethtype;
+          else
+            fec_hdr_done_o <= '0';
+          end if;
         end if;
       end if;
     end if;
