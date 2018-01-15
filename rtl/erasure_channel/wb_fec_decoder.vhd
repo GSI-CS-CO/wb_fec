@@ -147,6 +147,7 @@ begin
       if rst_n_i = '0' then
         s_eth_strm    <= IDLE;
         eth_hdr_stb   <= '0';
+        --stream_dat    <= '0';
       else
         case s_eth_strm is
           when IDLE =>
@@ -154,7 +155,7 @@ begin
               s_eth_strm <= SEND_STATUS;
             end if;
             eth_hdr_stb <= '0';
-            stream_dat  <= '0';
+            --stream_dat  <= '0';
           when SEND_STATUS =>
               if (src_halt = '0') then
                 s_eth_strm  <= SEND_HDR;
@@ -172,16 +173,15 @@ begin
             if (eth_payload_stb = '0') then
               s_eth_strm <= IDLE;
             else
-              stream_dat  <= '1';
             end if;
         end case;
       end if;
     end if;
-  stream_dat <= eth_hdr_done;
   end process;
 
-  src_halt  <= src_i.stall;
-  hdr_stall <= src_i.stall;
+  stream_dat  <= eth_hdr_done and (not src_i.stall);
+  src_halt    <= src_i.stall;
+  hdr_stall   <= src_i.stall;
 
   src_stb <= '1' when (s_eth_strm = SEND_HDR      or
                        eth_payload_stb = '1'      or -- SEND_PAYLOAD
