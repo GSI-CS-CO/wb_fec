@@ -93,26 +93,28 @@ add wave -noupdate -group WB_ENC /main/XWB_FEC_ENC/y_WB_FEC_ENC/FEC_ENC/wrf_adr_
 add wave -noupdate -group WB_ENC /main/XWB_FEC_ENC/y_WB_FEC_ENC/FEC_ENC/fec_pkt_o
 add wave -noupdate -group WB_ENC /main/XWB_FEC_ENC/y_WB_FEC_ENC/FEC_ENC/wrf_adr_i
 add wave -noupdate -group WB_ENC /main/XWB_FEC_ENC/y_WB_FEC_ENC/FEC_ENC/fec_pkt_i
-add wave -noupdate -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/hdr_i
-add wave -noupdate -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/hdr_stb_i
-add wave -noupdate -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/fec_stb_i
-add wave -noupdate -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/fec_hdr_stb_i
-add wave -noupdate -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/fec_hdr_o
-add wave -noupdate -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/pkt_len_i
-add wave -noupdate -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/padding_i
-add wave -noupdate -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/enc_cnt_o
-add wave -noupdate -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/ctrl_reg_i
-add wave -noupdate -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/id_cnt
-add wave -noupdate -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/subid_cnt
-add wave -noupdate -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/fec_hdr_stb_d
-add wave -noupdate -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/fec_stb_d
-add wave -noupdate -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/fec_hdr
-add wave -noupdate -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/fec_hdr_len
-add wave -noupdate -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/eth_hdr_len
-add wave -noupdate -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/eth_hdr_reg
-add wave -noupdate -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/eth_hdr_shift
-add wave -noupdate -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/eth_hdr
-add wave -noupdate -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/pkt_len
+add wave -noupdate -expand -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/hdr_i
+add wave -noupdate -expand -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/hdr_stb_i
+add wave -noupdate -expand -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/fec_stb_i
+add wave -noupdate -expand -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/fec_hdr_stall_i
+add wave -noupdate -expand -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/fec_hdr_done_o
+add wave -noupdate -expand -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/fec_hdr_stb_i
+add wave -noupdate -expand -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/fec_hdr_o
+add wave -noupdate -expand -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/pkt_len_i
+add wave -noupdate -expand -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/padding_i
+add wave -noupdate -expand -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/enc_cnt_o
+add wave -noupdate -expand -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/ctrl_reg_i
+add wave -noupdate -expand -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/id_cnt
+add wave -noupdate -expand -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/subid_cnt
+add wave -noupdate -expand -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/fec_hdr_stb_d
+add wave -noupdate -expand -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/fec_stb_d
+add wave -noupdate -expand -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/fec_hdr
+add wave -noupdate -expand -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/fec_hdr_len
+add wave -noupdate -expand -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/eth_hdr_len
+add wave -noupdate -expand -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/eth_hdr_reg
+add wave -noupdate -expand -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/eth_hdr_shift
+add wave -noupdate -expand -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/eth_hdr
+add wave -noupdate -expand -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/pkt_len
 add wave -noupdate -expand -group WB_DEC -expand /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/snk_i
 add wave -noupdate -expand -group WB_DEC /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/snk_o
 add wave -noupdate -expand -group WB_DEC /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/src_i
@@ -128,10 +130,10 @@ add wave -noupdate -expand -group WB_DEC /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/
 add wave -noupdate -expand -group WB_DEC /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/eth_cnt
 add wave -noupdate -expand -group WB_DEC /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/wrf_oob_cnt
 add wave -noupdate -expand -group WB_DEC -height 16 /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/s_eth_strm
-add wave -noupdate -expand -group WB_DEC -expand -group STB /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/hdr_stb
-add wave -noupdate -expand -group WB_DEC -expand -group STB /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/eth_hdr_stb
-add wave -noupdate -expand -group WB_DEC -expand -group STB /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/pkt_stb
-add wave -noupdate -expand -group WB_DEC -expand -group STB /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/eth_payload_stb
+add wave -noupdate -expand -group WB_DEC -group STB /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/hdr_stb
+add wave -noupdate -expand -group WB_DEC -group STB /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/eth_hdr_stb
+add wave -noupdate -expand -group WB_DEC -group STB /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/pkt_stb
+add wave -noupdate -expand -group WB_DEC -group STB /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/eth_payload_stb
 add wave -noupdate -expand -group WB_DEC /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/fec_pad_stb
 add wave -noupdate -expand -group WB_DEC /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/pkt_err
 add wave -noupdate -expand -group WB_DEC /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/fec_stb
@@ -251,7 +253,7 @@ add wave -noupdate -expand -group ENC /main/XWB_FEC_ENC/y_WB_FEC_ENC/FEC_ENC/PKT
 add wave -noupdate -expand -group ENC /main/XWB_FEC_ENC/y_WB_FEC_ENC/FEC_ENC/PKT_ERASURE_ENC/we_src_sel
 add wave -noupdate -expand -group ENC /main/XWB_FEC_ENC/y_WB_FEC_ENC/FEC_ENC/PKT_ERASURE_ENC/xor_code
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 5} {1490880870 fs} 0} {{Cursor 6} {1450849550 fs} 0} {{Cursor 3} {2321852660 fs} 0} {{Cursor 5} {582435932350 fs} 0} {{Cursor 6} {1738487290 fs} 0}
+WaveRestoreCursors {{Cursor 5} {1490880870 fs} 0} {{Cursor 6} {1450849550 fs} 0} {{Cursor 3} {2755024430 fs} 0} {{Cursor 5} {370558570530 fs} 0} {{Cursor 6} {2391258560 fs} 0}
 configure wave -namecolwidth 234
 configure wave -valuecolwidth 144
 configure wave -justifyvalue left
@@ -266,4 +268,4 @@ configure wave -griddelta 10
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {582364967750 fs} {582539043310 fs}
+WaveRestoreZoom {2221985080 fs} {2570136200 fs}
