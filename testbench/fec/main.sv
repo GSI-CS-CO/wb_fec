@@ -26,7 +26,10 @@ module main;
   int length = 0;
   int i = 0;
   int j = 0;
-  int cnt = 0;    
+  int cnt = 0;
+  
+  EthPacket tx_pk[$];
+  EthPacket rx_pk;
   
   integer f;
   integer sig_low, toggletime;
@@ -165,8 +168,9 @@ module main;
     .wb_stall_o                 (WB_lbk.master.stall));
 
   initial begin
+
     EthPacket pkt;
-    pkt = new; 
+    pkt = new;
 
     @(posedge rst_n);
     repeat(3) @(posedge clk_ref);
@@ -186,18 +190,18 @@ module main;
 		fec_src = new(enc_src.get_accessor());
 		//dec_snk.settings.cyc_on_stall = 1;
 
+    #1
+
     while(1) begin
       seed = (seed + 1) & 'hffff;
       length = $dist_uniform(seed, 64, 1500);
       if (length < 64)
         begin
         $stop;
-      end 
+      end
       length = length & 'hffff;
       length = (length + 7) & ~'h07;
       //length = 512;
-      
-      $write("----->LENGTH %d \n", length);
 
       /* somdummy addresses */
       pkt.dst        = '{'hff, 'hff, 'hff, 'hff, 'hff, 'hff};
@@ -211,16 +215,22 @@ module main;
       cnt = 0;
       for(j=0; j < 4; j++)
         begin
+          pkt.payload[cnt] = $dist_uniform(seed, 100, 1500) & 'hff;
         for (i=1; i <= length/4; i++)
           begin
+          pkt.payload[cnt] = $dist_uniform(seed, 64, 1500) & 'hff;
           //pkt.payload[cnt] = i & 'hff;
-          pkt.payload[cnt] = (j + 1)  & 'hff;
+          //pkt.payload[cnt] = (j + 1)  & 'hff;
           cnt = cnt + 1;
         end
       end
 
+      $write("\n----->LENGTH %d \n", length);
+      tx_pk.push_front(pkt);
+
       fec_src.send(pkt);
-      #5ns;
+      //#5ns;
+      #50us;
     end
   end
 
@@ -241,8 +251,8 @@ module main;
     EthPacket pkt;
 		int prev_size=0;
 		uint64_t val64;
-
-    //dec_snk.settings.gen_random_stalls = 1;
+    int len;
+    int lenx;
 
     dec_snk.settings.gen_random_stalls = 1;
     fec_snk = new(dec_snk.get_accessor());
@@ -250,22 +260,22 @@ module main;
 	  $warning("--> starting");
 		#5us;
     while(1) begin
-			#1us;
+			//#1us;
 			fec_snk.recv(pkt);
 			begin
-				$write("%02X:", pkt.dst[0]);
-				$write("%02X:", pkt.dst[1]);
-				$write("%02X:", pkt.dst[2]);
-				$write("%02X:", pkt.dst[3]);
-				$write("%02X:", pkt.dst[4]);
-				$write("%02X:", pkt.dst[5]);
-				$write("%02X:", pkt.src[0]);
-				$write("%02X:", pkt.src[1]);
-				$write("%02X:", pkt.src[2]);
-				$write("%02X:", pkt.src[3]);
-				$write("%02X:", pkt.src[4]);
-				$write("%02X",  pkt.src[5]);
-				$info("--> recv: size=%4d, %4d", pkt.size, pkt.size-prev_size);
+				//$write("%02X:", pkt.dst[0]);
+				//$write("%02X:", pkt.dst[1]);
+				//$write("%02X:", pkt.dst[2]);
+				//$write("%02X:", pkt.dst[3]);
+				//$write("%02X:", pkt.dst[4]);
+				//$write("%02X:", pkt.dst[5]);
+				//$write("%02X:", pkt.src[0]);
+				//$write("%02X:", pkt.src[1]);
+				//$write("%02X:", pkt.src[2]);
+				//$write("%02X:", pkt.src[3]);
+				//$write("%02X:", pkt.src[4]);
+				//$write("%02X",  pkt.src[5]);
+				//$info("--> recv: size=%4d, %4d", pkt.size, pkt.size-prev_size);
 			end;
 			prev_size = pkt.size;
 			//acc_fec.read(`ADDR_LBK_RCV_CNT, val64);
@@ -276,6 +286,55 @@ module main;
 			//$display("fwd_cnt: %d", val64);
 			//acc_fec.write(`ADDR_LBK_MCR, `LBK_MCR_CLR);
 			//acc_fec.write(`ADDR_LBK_MCR, 0);
+      //
+      $write("Tx Queue Size %d \n", tx_pk.size());
+
+      rx_pk = tx_pk.pop_back();
+
+      if ((rx_pk.size + 14) != pkt.size)
+        begin
+          lenx = 0;
+          while (lenx < rx_pk.size) begin
+            $write("%02X", rx_pk.payload[lenx]);
+            lenx++;
+          end
+
+          $write("\n");
+
+          lenx = 0;
+          while (lenx < pkt.size - 14) begin
+            $write("%02X", pkt.payload[lenx]);
+            lenx++;
+          end
+
+          $write("\nTx Size %4d Rx Size %4d \n", rx_pk.size, pkt.size - 14);
+          $stop;
+      end;
+
+
+      len = 0;
+      while (len < rx_pk.size) begin
+        if (rx_pk.payload[len] != pkt.payload[len])
+          begin
+          lenx = 0;
+          while (lenx < rx_pk.size) begin
+            $write("%02X", rx_pk.payload[lenx]);
+            lenx++;
+          end
+
+          $write("\n");
+
+          lenx = 0;
+          while (lenx < pkt.size - 14) begin
+            $write("%02X", pkt.payload[lenx]);
+            lenx++;
+          end
+
+          $write("\nError enc/dec");
+          $stop;
+        end
+        len++;
+      end
     end
   end
 
