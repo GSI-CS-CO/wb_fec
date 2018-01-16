@@ -3,7 +3,6 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library work;
-use work.genram_pkg.all;
 use work.wishbone_pkg.all;
 use work.wr_fabric_pkg.all;
 
@@ -17,7 +16,7 @@ package wrf_pkt_dropper_pkg is
   constant  c_XOR_1_3 : t_drop_conf := "0101";
   constant  c_XOR_2_3 : t_drop_conf := "0011";
 
-  constant c_fec_sdb : t_sdb_device := (
+  constant c_dropper_sdb : t_sdb_device := (
     abi_class       => x"0000", -- undocumented device
     abi_ver_major   => x"01",
     abi_ver_minor   => x"01",
@@ -40,9 +39,18 @@ package wrf_pkt_dropper_pkg is
   end record;
 
   constant c_config : t_conf := (
-    drop    => (others => '0'),
+    drop    =>  c_XOR_0_1,
     rnd     => '0',
     refresh => '1');
+
+  component wrf_pkt_wb_slave is
+    port (
+      clk_i     : in  std_logic;
+      rst_n_i   : in  std_logic;
+      config_o  : out t_conf;
+      wb_o      : out t_wishbone_slave_out;
+      wb_i      : in  t_wishbone_slave_in);
+  end component;
 
   component  wrf_pkt_dropper is
     generic (
@@ -56,15 +64,6 @@ package wrf_pkt_dropper_pkg is
         src_o     : out t_wrf_source_out;
         wb_o      : out t_wishbone_slave_out;
         wb_i      : in  t_wishbone_slave_in);
-  end component;
-
-  component wrf_pkt_wb_slave is
-    port (
-      clk_i     : in  std_logic;
-      rst_n_i   : in  std_logic;
-      config_o  : out t_conf;
-      wb_o      : out t_wishbone_slave_out;
-      wb_i      : in  t_wishbone_slave_in);
   end component;
 
   function f_pkt_drop (config : t_conf) return t_drop_conf ;

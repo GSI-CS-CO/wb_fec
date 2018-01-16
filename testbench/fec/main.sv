@@ -19,18 +19,18 @@ module main;
 
   wire clk_ref;
   wire clk_sys;
-  wire rst_n;    
-  
+  wire rst_n;
+
   int seed;
   uint32_t data;
   int length = 0;
   int i = 0;
   int j = 0;
   int cnt = 0;
-  
+
   EthPacket tx_pk[$];
   EthPacket rx_pk;
-  
+
   integer f;
   integer sig_low, toggletime;
 
@@ -44,6 +44,16 @@ module main;
   wire enc_src_stall;
   wire enc_src_err;
 
+  wire enc_snk_cyc;
+  wire enc_snk_stb;
+  wire [1:0] enc_snk_sel;
+  wire [1:0] enc_snk_adr;
+  wire [15:0]enc_snk_dat;
+  wire enc_snk_ack;
+  wire enc_snk_stall;
+  wire enc_snk_err;
+
+
   wire dec_snk_cyc;
   wire dec_snk_stb;
   wire [1:0] dec_snk_sel;
@@ -56,12 +66,13 @@ module main;
 	/* WB masters */
   IWishboneMaster WB_fec (clk_ref, rst_n);
   IWishboneMaster WB_lbk (clk_ref, rst_n);
+  IWishboneMaster WB_drop (clk_ref, rst_n);
 
 	/* WB accessors */
-  CWishboneAccessor acc_fec, acc_lbk;
+  CWishboneAccessor acc_fec, acc_lbk, acc_drop;
 
 	/* Fabrics */
-  IWishboneSlave  #(2,16) dec_snk (clk_ref, rst_n); 
+  IWishboneSlave  #(2,16) dec_snk (clk_ref, rst_n);
   IWishboneMaster #(2,16) enc_src (clk_ref, rst_n);
 
 	/* Fabrics accessors */
@@ -83,10 +94,10 @@ module main;
     .g_en_fec_dec(`true),
     .g_en_golay(`false),
     .g_en_dec_time(`false))
-  XWB_FEC_ENC ( 
+  XWB_FEC_ENC (
     .clk_i(clk_ref),
     .rst_n_i(rst_n),
-   
+
     .fec_dec_sink_cyc(dec_snk_cyc),
 		.fec_dec_sink_stb(dec_snk_stb),
 		.fec_dec_sink_we(dec_snk_we),
@@ -95,7 +106,7 @@ module main;
 		.fec_dec_sink_dat(dec_snk_dat),
 		.fec_dec_sink_stall(dec_snk_stall),
 		.fec_dec_sink_ack(dec_snk_ack),
- 
+
 		.fec_dec_src_cyc(dec_snk.slave.cyc),
 		.fec_dec_src_stb(dec_snk.slave.stb),
 		.fec_dec_src_we(dec_snk.slave.we),
@@ -114,14 +125,14 @@ module main;
     .fec_enc_sink_stall(enc_src.master.stall),
     .fec_enc_sink_ack(enc_src.master.ack),
 
-		.fec_enc_src_cyc(enc_src_cyc),
-		.fec_enc_src_stb(enc_src_stb),
-		.fec_enc_src_we(enc_src_we),
-		.fec_enc_src_sel(enc_src_sel),
-		.fec_enc_src_adr(enc_src_adr),
-		.fec_enc_src_dat(enc_src_dat),
-		.fec_enc_src_stall(enc_src_stall),
-		.fec_enc_src_ack(enc_src_ack),
+		.fec_enc_src_cyc(enc_snk_cyc),
+		.fec_enc_src_stb(enc_snk_stb),
+		.fec_enc_src_we(enc_snk_we),
+		.fec_enc_src_sel(enc_snk_sel),
+		.fec_enc_src_adr(enc_snk_adr),
+		.fec_enc_src_dat(enc_snk_dat),
+		.fec_enc_src_stall(enc_snk_stall),
+		.fec_enc_src_ack(enc_snk_ack),
 
     .wb_slave_cyc(WB_fec.master.cyc),
 		.wb_slave_stb(WB_fec.master.stb),
@@ -132,6 +143,39 @@ module main;
 		.wb_slave_dat_o(WB_fec.master.dat_i),
 		.wb_slave_ack(WB_fec.master.ack),
 		.wb_slave_stall(WB_fec.master.stall));
+
+  xwrf_pkt_dropper #()
+  XWRF_PKT(
+    .clk_i                    (clk_ref),
+    .rst_n_i                  (rst_n),
+
+    .snk_ack                  (enc_snk_ack),
+    .snk_stall                (enc_snk_stall),
+    .snk_adr                  (enc_snk_adr),
+    .snk_dat                  (enc_snk_dat),
+    .snk_cyc                  (enc_snk_cyc),
+    .snk_stb                  (enc_snk_stb),
+    .snk_we                   (enc_snk_we),
+    .snk_sel                  (enc_snk_sel),
+
+    .src_ack                  (enc_src_ack),
+    .src_stall                (enc_src_stall),
+    .src_adr                  (enc_src_adr),
+    .src_dat                  (enc_src_dat),
+    .src_cyc                  (enc_src_cyc),
+    .src_stb                  (enc_src_stb),
+    .src_we                   (enc_src_we),
+    .src_sel                  (enc_src_sel),
+
+    .wb_ack                   (WB_drop.master.ack),
+    .wb_stall                 (WB_drop.master.stall),
+    .wb_cyc                   (WB_drop.master.cyc),
+    .wb_stb                   (WB_drop.master.stb),
+    .wb_adr                   (WB_drop.master.adr),
+    .wb_sel                   (WB_drop.master.sel),
+    .wb_we                    (WB_drop.master.we),
+    .wb_dat_o                 (WB_drop.master.dat_i),
+    .wb_dat_i                 (WB_drop.master.dat_o));
 
   wrf_loopback #(
     .g_interface_mode           (PIPELINED),
@@ -183,6 +227,14 @@ module main;
 
 		acc_lbk.write(`ADDR_LBK_MCR, `LBK_MCR_ENA);
 
+    acc_drop = WB_drop.get_accessor();
+    acc_drop.set_mode(PIPELINED);
+    WB_drop.settings.cyc_on_stall = 1;
+
+	  acc_drop.write(`DROPP, `X23);
+    $write("\n----->X23 \n");
+    #5us
+
     acc_fec = WB_fec.get_accessor();
     acc_fec.set_mode(PIPELINED);
     WB_fec.settings.cyc_on_stall = 1;
@@ -190,7 +242,7 @@ module main;
 		fec_src = new(enc_src.get_accessor());
 		//dec_snk.settings.cyc_on_stall = 1;
 
-    #1
+    #1us
 
     while(1) begin
       seed = (seed + 1) & 'hffff;
@@ -230,7 +282,7 @@ module main;
 
       fec_src.send(pkt);
       //#5ns;
-      #50us;
+      #30us;
     end
   end
 

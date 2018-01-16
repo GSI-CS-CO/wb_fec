@@ -1,4 +1,12 @@
 `define FEC_ENC_EN                   1'h0
+`define DROPP                        1'h0
+`define X01                          4'h0
+`define X02                          4'h1
+`define X03                          4'h6
+`define X12                          4'h1
+`define X13                          4'h5
+`define X23                          4'h3
+
 //`define LBK_MCR_ENA_OFFSET 0
 //`define LBK_MCR_ENA 32'h00000001
 //`define LBK_MCR_CLR_OFFSET 1

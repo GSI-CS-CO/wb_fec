@@ -13,7 +13,6 @@ library work;
 use work.wrf_pkt_dropper_pkg.all;
 use work.fec_pkg.all;
 use work.wishbone_pkg.all;
-use work.genram_pkg.all;
 use work.wr_fabric_pkg.all;
 
 entity wrf_pkt_dropper is
@@ -30,7 +29,7 @@ entity wrf_pkt_dropper is
       wb_i      : in  t_wishbone_slave_in);
 end wrf_pkt_dropper;
 
-architecture rtl of wb_fec_encoder is
+architecture rtl of wrf_pkt_dropper is
   type t_refresh is (IDLE, WAIT_TO_APPLY);
   signal s_refresh        : t_refresh;
   type t_drop is (IDLE, DROP);
@@ -41,8 +40,7 @@ architecture rtl of wb_fec_encoder is
   signal src_stall        : std_logic;
   signal snk_cyc          : std_logic;
   signal snk_stb          : std_logic;
-  signal src_sel          : std_logic_vector(1 downto 0);
-  signal src_we           : std_logic;
+  signal snk_we           : std_logic;
   signal snk_sel          : std_logic_vector(1 downto 0);
   signal snk_adr          : t_wrf_adr;
   signal snk_dat          : t_wrf_bus;
@@ -51,16 +49,16 @@ architecture rtl of wb_fec_encoder is
   signal config           : t_conf;
   signal drop_config      : t_conf;
   signal pkt_drop         : t_drop_conf;
-  signal pkt_cnt          : integer range 0 to 3;
+  signal pkt_cnt          : integer range 0 to 4;
 begin
 
   WB_SLAVE : wrf_pkt_wb_slave
       port map (
-        clk_i     <= clk_i,
-        rst_n_i   <= rst_n_i,
-        config_o  <= config,
-        wb_o      <= wb_o,
-        wb_i      <= wb_i);
+        clk_i     => clk_i,
+        rst_n_i   => rst_n_i,
+        config_o  => config,
+        wb_o      => wb_o,
+        wb_i      => wb_i);
 
   -- Refresh the ctrl setting after pkt encoded
   ctrl_config_refresh : process(clk_i) is
@@ -72,12 +70,12 @@ begin
       else
         case s_refresh is
           when IDLE =>
-            --if (config.refresh = '1' and (pkt_cnt = 0)) then
-            --  drop_config  <= config;
-            --  s_refresh <= IDLE;
-            --elsif (config.refresh = '1' and (pkt_cnt != 0)) then
-            --  s_refresh <= WAIT_TO_APPLY;
-            --end if;
+            if (config.refresh = '1' and (pkt_cnt = 0)) then
+              drop_config  <= config;
+              s_refresh <= IDLE;
+            elsif (config.refresh = '1' and (pkt_cnt /= 0)) then
+              s_refresh <= WAIT_TO_APPLY;
+            end if;
           when WAIT_TO_APPLY => -- wait till the last enc pkt has been sent
             if (pkt_cnt = 0) then
               drop_config  <= config;
@@ -102,22 +100,23 @@ begin
         src_ack         <= '0';
         snk_ack         <= '0';
         snk_stb         <= '0';
-        src_we          <= '0';
+        snk_we          <= '0';
         pkt_cnt         <= 0;
-        src_adr         <= (others => '0');
-        src_dat         <= (others => '0');
+        s_NEXT_PKT      <= IDLE;
+        snk_adr         <= (others => '0');
+        snk_dat         <= (others => '0');
         pkt_drop        <= (others => '0');
-        src_sel         <= (others => '0');
+        snk_sel         <= (others => '0');
       else
-
+        -- Rx
         snk_cyc   <= snk_i.cyc;
         snk_stb   <= snk_i.stb;
-        src_sel   <= snk_i.sel;
-        src_we    <= snk_i.we;
-        src_adr   <= snk_i.adr;
-        src_dat   <= snk_i.dat;
+        snk_we    <= snk_i.we;
+        snk_sel   <= snk_i.sel;
+        snk_adr   <= snk_i.adr;
+        snk_dat   <= snk_i.dat;
 
-        -- Rx
+        -- Tx
         src_stall <= src_i.stall;
         src_ack   <= src_i.ack;
         snk_ack   <= snk_i.cyc and snk_i.stb;
@@ -135,7 +134,7 @@ begin
                 next_pkt_drop <= '0';
               end if;
 
-              if (pkt_cnt <= g_num_block - 1) then
+              if (pkt_cnt < g_num_block - 1) then
                 pkt_cnt <= pkt_cnt + 1;
               else
                 pkt_cnt <= 0;
@@ -144,9 +143,8 @@ begin
               next_pkt_drop <= '0';
             end if;
           when DROP =>
-            if (snk_i.cyc = '0' and snk_cyc = '1') then
+            if (snk_i.stb = '0' and snk_stb = '1') then
               s_NEXT_PKT    <= IDLE;
-              next_pkt_drop <= '0';
             else
               next_pkt_drop <= '1';
             end if;
@@ -184,4 +182,5 @@ begin
 
   src_o.dat <= snk_dat          when next_pkt_drop = '0' else
                (others => '0')  when next_pkt_drop = '1';
+
 end rtl;
