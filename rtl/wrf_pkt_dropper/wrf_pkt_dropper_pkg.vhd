@@ -6,7 +6,6 @@ library work;
 use work.genram_pkg.all;
 use work.wishbone_pkg.all;
 use work.wr_fabric_pkg.all;
-use work.endpoint_pkg.all;
 
 package wrf_pkt_dropper_pkg is
 
@@ -40,7 +39,7 @@ package wrf_pkt_dropper_pkg is
     refresh : std_logic;
   end record;
 
-  constant c_config : t_config := (
+  constant c_config : t_conf := (
     drop    => (others => '0'),
     rnd     => '0',
     refresh => '1');
@@ -63,22 +62,20 @@ package wrf_pkt_dropper_pkg is
     port (
       clk_i     : in  std_logic;
       rst_n_i   : in  std_logic;
-      config_o  : out t_config;
+      config_o  : out t_conf;
       wb_o      : out t_wishbone_slave_out;
       wb_i      : in  t_wishbone_slave_in);
   end component;
 
-  function f_pkt_drop (config : t_config) return t_drop_conf ;
+  function f_pkt_drop (config : t_conf) return t_drop_conf ;
 
-end package wrf_pkt_dropper;
+end package wrf_pkt_dropper_pkg;
 
-package body wrf_pkt_dropper is
+package body wrf_pkt_dropper_pkg is
 
-  function f_pkt_drop (config : t_config) return t_drop_conf is
+  function f_pkt_drop (config : t_conf) return t_drop_conf is
   begin
     return config.drop;
   end function;
 
-end wrf_pkt_dropper;
-
-
+end wrf_pkt_dropper_pkg;

@@ -10,13 +10,13 @@ entity wrf_pkt_wb_slave is
   port(
     clk_i     : in  std_logic;
     rst_n_i   : in  std_logic;
-    config_o  : out t_config;
+    config_o  : out t_conf;
     wb_o      : out t_wishbone_slave_out;
     wb_i      : in  t_wishbone_slave_in);
 end wrf_pkt_wb_slave;
 
 architecture rtl of wrf_pkt_wb_slave is
-  signal config t_conf;
+  signal config : t_conf;
 begin
 
   -- this wb slave doesn't supoort them
@@ -39,7 +39,7 @@ begin
           case wb_i.adr(5 downto 2) is
             when "0000"    =>
               if wb_i.we = '1' then
-                config.drop <= wb_slave_i.dat(3 downto 0);
+                config.drop <= wb_i.dat(3 downto 0);
               end if;
               wb_o.dat(3 downto 0)  <= config.drop;
               wb_o.dat(31 downto 4) <= (others => '0');
@@ -49,6 +49,7 @@ begin
               end if;
               wb_o.dat(0)           <= config.rnd;
               wb_o.dat(31 downto 1) <= (others => '0');
+            when others =>
           end case;
 
           -- progates the changes in the reg
