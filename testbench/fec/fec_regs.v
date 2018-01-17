@@ -1,7 +1,7 @@
 `define FEC_ENC_EN                   1'h0
 `define DROPP                        1'h0
 `define X01                          4'h0
-`define X02                          4'h1
+`define X02                          4'h2
 `define X03                          4'h6
 `define X12                          4'h1
 `define X13                          4'h5

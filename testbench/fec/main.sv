@@ -231,9 +231,8 @@ module main;
     acc_drop.set_mode(PIPELINED);
     WB_drop.settings.cyc_on_stall = 1;
 
-	  acc_drop.write(`DROPP, `X23);
-    $write("\n----->X23 \n");
-    #5us
+	  acc_drop.write(`DROPP, `X02);
+    $write("\n----->X02 \n");
 
     acc_fec = WB_fec.get_accessor();
     acc_fec.set_mode(PIPELINED);

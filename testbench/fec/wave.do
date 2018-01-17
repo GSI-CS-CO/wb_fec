@@ -141,68 +141,68 @@ add wave -noupdate -group WB_DEC /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/eth_hdr
 add wave -noupdate -group WB_DEC /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/ctrl_reg
 add wave -noupdate -group WB_DEC /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/snk_stall
 add wave -noupdate -group WB_DEC -height 16 /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/s_enc_refresh
-add wave -noupdate -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/fec_payload_stb_i
-add wave -noupdate -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/rst_n_fifo
-add wave -noupdate -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/rst_n_dec
-add wave -noupdate -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/rst_n_i
-add wave -noupdate -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/fec_pad_stb_i
-add wave -noupdate -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/pkt_block_fifo(0)
-add wave -noupdate -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/fec_stb_o
-add wave -noupdate -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/stream_out
-add wave -noupdate -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/block_stream
-add wave -noupdate -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/block_len
-add wave -noupdate -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/payload_cnt
-add wave -noupdate -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/pkt_payload_o
-add wave -noupdate -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/pkt_payload_stb_o
-add wave -noupdate -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/halt_streaming_i
-add wave -noupdate -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/pkt_dec_err_o
-add wave -noupdate -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/decoding_id
-add wave -noupdate -group DECODER -height 16 /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/s_DEC
-add wave -noupdate -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/s_NEXT_OP
-add wave -noupdate -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/fec_payload_cnt
-add wave -noupdate -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/CTRL_deFEC/new_pkt
-add wave -noupdate -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/CTRL_deFEC/new_fec_id
-add wave -noupdate -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/xor_we
-add wave -noupdate -group DECODER -expand -group XOR_0_1_0 /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/fec_payload_i
-add wave -noupdate -group DECODER -expand -group XOR_0_1_0 /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/fec_payload
-add wave -noupdate -group DECODER -expand -group XOR_0_1_0 /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/pkt_block_fifo(2)
-add wave -noupdate -group DECODER -expand -group XOR_0_1_0 /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/pkt_block_xor(1)
-add wave -noupdate -group DECODER -expand -group XOR_0_1_1 /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/pkt_block_fifo(4)
-add wave -noupdate -group DECODER -expand -group XOR_0_1_1 /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/xor_payload
-add wave -noupdate -group DECODER -expand -group XOR_0_1_1 /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/pkt_block_xor(0)
-add wave -noupdate -group DECODER -expand /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/we_mask
-add wave -noupdate -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/we_store_sel
-add wave -noupdate -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/we_xor_sel
-add wave -noupdate -group DECODER -expand /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/we_src_sel
-add wave -noupdate -group DECODER -expand /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/read_block
-add wave -noupdate -group DECODER -expand /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/read_payload
-add wave -noupdate -group DECODER -expand -group XOR_BLOCK_FIFO /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/fec_payload_i
-add wave -noupdate -group DECODER -expand -group XOR_BLOCK_FIFO /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/fec_payload
-add wave -noupdate -group DECODER -expand -group XOR_BLOCK_FIFO /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/xor_we
-add wave -noupdate -group DECODER -expand -group XOR_BLOCK_FIFO /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/xor_empty
-add wave -noupdate -group DECODER -expand -group XOR_BLOCK_FIFO /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/xor_full
-add wave -noupdate -group DECODER -expand -group XOR_BLOCK_FIFO /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/xor_rd
-add wave -noupdate -group DECODER -expand -group XOR_BLOCK_FIFO /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/xor_payload
-add wave -noupdate -group DECODER -expand -group XOR_BLOCK_FIFO /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/xor_cnt
-add wave -noupdate -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/fec_pkt_rx
-add wave -noupdate -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/pkt_dec_err
-add wave -noupdate -group DECODER -expand /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/pkt_block_xor
-add wave -noupdate -group DECODER -expand -group BLOCK_FIFO -expand /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/payload_block
-add wave -noupdate -group DECODER -expand -group BLOCK_FIFO -expand /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/pkt_block_fifo
-add wave -noupdate -group DECODER -expand -group BLOCK_FIFO /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/read_fec_block
-add wave -noupdate -group DECODER -expand -group BLOCK_FIFO /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/we_mask
-add wave -noupdate -group DECODER -expand -group BLOCK_FIFO /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/empty
-add wave -noupdate -group DECODER -expand -group BLOCK_FIFO /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/cnt
-add wave -noupdate -group DECODER -expand -group BLOCK_FIFO /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/full
-add wave -noupdate -group DECODER -expand /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/s_fec_hdr
-add wave -noupdate -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/fec_payload_stb_d
-add wave -noupdate -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/fec_pad_err
-add wave -noupdate -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/padding_crc
-add wave -noupdate -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/pkt_len
-add wave -noupdate -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/padding
-add wave -noupdate -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/fec_payload
-add wave -noupdate -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/CTRL_DEC/subid
-add wave -noupdate -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/fec_stb
+add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/fec_payload_stb_i
+add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/rst_n_fifo
+add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/rst_n_dec
+add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/rst_n_i
+add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/fec_pad_stb_i
+add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/pkt_block_fifo(0)
+add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/fec_stb_o
+add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/stream_out
+add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/block_stream
+add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/block_len
+add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/payload_cnt
+add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/pkt_payload_o
+add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/pkt_payload_stb_o
+add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/halt_streaming_i
+add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/pkt_dec_err_o
+add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/decoding_id
+add wave -noupdate -expand -group DECODER -height 16 /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/s_DEC
+add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/s_NEXT_OP
+add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/fec_payload_cnt
+add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/CTRL_deFEC/new_pkt
+add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/CTRL_deFEC/new_fec_id
+add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/xor_we
+add wave -noupdate -expand -group DECODER -expand -group XOR_0_1_0 /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/fec_payload_i
+add wave -noupdate -expand -group DECODER -expand -group XOR_0_1_0 /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/fec_payload
+add wave -noupdate -expand -group DECODER -expand -group XOR_0_1_0 /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/pkt_block_fifo(2)
+add wave -noupdate -expand -group DECODER -expand -group XOR_0_1_0 /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/pkt_block_xor(1)
+add wave -noupdate -expand -group DECODER -expand -group XOR_0_1_1 /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/pkt_block_fifo(4)
+add wave -noupdate -expand -group DECODER -expand -group XOR_0_1_1 /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/xor_payload
+add wave -noupdate -expand -group DECODER -expand -group XOR_0_1_1 /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/pkt_block_xor(0)
+add wave -noupdate -expand -group DECODER -expand /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/we_mask
+add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/we_store_sel
+add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/we_xor_sel
+add wave -noupdate -expand -group DECODER -expand /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/we_src_sel
+add wave -noupdate -expand -group DECODER -expand /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/read_block
+add wave -noupdate -expand -group DECODER -expand /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/read_payload
+add wave -noupdate -expand -group DECODER -expand -group XOR_BLOCK_FIFO /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/fec_payload_i
+add wave -noupdate -expand -group DECODER -expand -group XOR_BLOCK_FIFO /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/fec_payload
+add wave -noupdate -expand -group DECODER -expand -group XOR_BLOCK_FIFO /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/xor_we
+add wave -noupdate -expand -group DECODER -expand -group XOR_BLOCK_FIFO /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/xor_empty
+add wave -noupdate -expand -group DECODER -expand -group XOR_BLOCK_FIFO /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/xor_full
+add wave -noupdate -expand -group DECODER -expand -group XOR_BLOCK_FIFO /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/xor_rd
+add wave -noupdate -expand -group DECODER -expand -group XOR_BLOCK_FIFO /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/xor_payload
+add wave -noupdate -expand -group DECODER -expand -group XOR_BLOCK_FIFO /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/xor_cnt
+add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/fec_pkt_rx
+add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/pkt_dec_err
+add wave -noupdate -expand -group DECODER -expand /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/pkt_block_xor
+add wave -noupdate -expand -group DECODER -expand -group BLOCK_FIFO -expand /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/payload_block
+add wave -noupdate -expand -group DECODER -expand -group BLOCK_FIFO -expand /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/pkt_block_fifo
+add wave -noupdate -expand -group DECODER -expand -group BLOCK_FIFO /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/read_fec_block
+add wave -noupdate -expand -group DECODER -expand -group BLOCK_FIFO /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/we_mask
+add wave -noupdate -expand -group DECODER -expand -group BLOCK_FIFO /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/empty
+add wave -noupdate -expand -group DECODER -expand -group BLOCK_FIFO /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/cnt
+add wave -noupdate -expand -group DECODER -expand -group BLOCK_FIFO /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/full
+add wave -noupdate -expand -group DECODER -expand /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/s_fec_hdr
+add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/fec_payload_stb_d
+add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/fec_pad_err
+add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/padding_crc
+add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/pkt_len
+add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/padding
+add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/fec_payload
+add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/CTRL_DEC/subid
+add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/fec_stb
 add wave -noupdate -group PADDING /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/PADDING_MOD/fec_pad_stb_i
 add wave -noupdate -group PADDING /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/PADDING_MOD/fec_pad_stb_d
 add wave -noupdate -group PADDING /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/PADDING_MOD/calc_padding/pkt_len_mult
@@ -280,7 +280,7 @@ add wave -noupdate -expand -group DROPPER /main/XWRF_PKT/DROPPER/src_stall
 add wave -noupdate -expand -group DROPPER /main/XWRF_PKT/DROPPER/wb_i
 add wave -noupdate -expand -group DROPPER /main/XWRF_PKT/DROPPER/wb_o
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 5} {1490880870 fs} 0} {{Cursor 6} {1450849550 fs} 0} {{Cursor 3} {1736233330 fs} 0} {{Cursor 5} {32264334190 fs} 0} {{Cursor 6} {7780000000 fs} 0}
+WaveRestoreCursors {{Cursor 5} {1490880870 fs} 0} {{Cursor 6} {1450849550 fs} 0} {{Cursor 3} {1736233330 fs} 0} {{Cursor 5} {32264334190 fs} 0} {{Cursor 6} {3640352750 fs} 0}
 configure wave -namecolwidth 234
 configure wave -valuecolwidth 144
 configure wave -justifyvalue left
@@ -295,4 +295,4 @@ configure wave -griddelta 10
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {7325966140 fs} {8232838020 fs}
+WaveRestoreZoom {3417282030 fs} {3870717970 fs}
