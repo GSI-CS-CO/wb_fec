@@ -6,7 +6,7 @@
 `define X12                          4'h1
 `define X13                          4'h5
 `define X23                          4'h3
-
+`define ERR                          4'hE
 //`define LBK_MCR_ENA_OFFSET 0
 //`define LBK_MCR_ENA 32'h00000001
 //`define LBK_MCR_CLR_OFFSET 1

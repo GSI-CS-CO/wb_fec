@@ -213,6 +213,7 @@ module main;
 
   initial begin
 
+		uint64_t drop;
     EthPacket pkt;
     pkt = new;
 
@@ -231,7 +232,7 @@ module main;
     acc_drop.set_mode(PIPELINED);
     WB_drop.settings.cyc_on_stall = 1;
 
-	  acc_drop.write(`DROPP, `X02);
+	  acc_drop.write(`DROPP, `ERR);
     $write("\n----->X02 \n");
 
     acc_fec = WB_fec.get_accessor();
@@ -277,11 +278,22 @@ module main;
       end
 
       $write("\n----->LENGTH %d \n", length);
-      tx_pk.push_front(pkt);
+
+      acc_drop.read(`DROPP, drop);
+
+      if (drop != 4'hE)
+        begin
+        tx_pk.push_front(pkt);
+      end
 
       fec_src.send(pkt);
+
+      acc_drop.write(`DROPP, `X01);
+      $write("\n----->X02 \n");
+
       //#5ns;
       #30us;
+      //#60us;
     end
   end
 
@@ -340,51 +352,62 @@ module main;
       //
       $write("Tx Queue Size %d \n", tx_pk.size());
 
+      if(tx_pk.size() != 0)
+        begin
+
       rx_pk = tx_pk.pop_back();
 
-      if ((rx_pk.size + 14) != pkt.size)
+      if (((rx_pk.size + 14) != pkt.size) && pkt.size != 14)
         begin
           lenx = 0;
+          $write("Original Pkt: \n");
           while (lenx < rx_pk.size) begin
             $write("%02X", rx_pk.payload[lenx]);
             lenx++;
           end
 
-          $write("\n");
-
+          $write("\nRx Pkt: \n");
           lenx = 0;
           while (lenx < pkt.size - 14) begin
             $write("%02X", pkt.payload[lenx]);
             lenx++;
           end
 
+          $write("\nTx Size %4d Rx Size %4d -- %4d \n", rx_pk.size, pkt.size - 14, pkt.size);
+          //$stop;
+        end
+      else
+        begin
           $write("\nTx Size %4d Rx Size %4d \n", rx_pk.size, pkt.size - 14);
-          $stop;
       end;
 
 
-      len = 0;
-      while (len < rx_pk.size) begin
-        if (rx_pk.payload[len] != pkt.payload[len])
-          begin
-          lenx = 0;
-          while (lenx < rx_pk.size) begin
-            $write("%02X", rx_pk.payload[lenx]);
-            lenx++;
+      if (pkt.size != 14)
+        begin
+        len = 0;
+        while (len < rx_pk.size) begin
+          if (rx_pk.payload[len] != pkt.payload[len])
+            begin
+            lenx = 0;
+            while (lenx < rx_pk.size) begin
+              $write("%02X", rx_pk.payload[lenx]);
+              lenx++;
+            end
+
+            $write("\n");
+
+            lenx = 0;
+            while (lenx < pkt.size - 14) begin
+              $write("%02X", pkt.payload[lenx]);
+              lenx++;
+            end
+
+            $write("\nError enc/dec");
+            $stop;
           end
-
-          $write("\n");
-
-          lenx = 0;
-          while (lenx < pkt.size - 14) begin
-            $write("%02X", pkt.payload[lenx]);
-            lenx++;
-          end
-
-          $write("\nError enc/dec");
-          $stop;
+          len++;
         end
-        len++;
+      end
       end
     end
   end
