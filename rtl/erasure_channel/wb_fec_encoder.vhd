@@ -371,7 +371,8 @@ begin
                 src_stb   when ctrl_reg_i.fec_enc_en = c_ENABLE else
                 '0';
 
-  src_cyc   <=  src_stb or src_i.ack;
+  --src_cyc   <=  src_stb or src_i.ack;
+  src_cyc   <=  src_stb;
 
   src_o.cyc <=  snk_i.cyc when ctrl_reg_i.fec_enc_en = c_DISABLE  else
                 src_cyc   when ctrl_reg_i.fec_enc_en = c_ENABLE   else
