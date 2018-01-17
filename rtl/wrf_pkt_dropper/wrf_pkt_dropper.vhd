@@ -119,7 +119,7 @@ begin
         -- Tx
         src_stall <= src_i.stall;
         src_ack   <= src_i.ack;
-        snk_ack   <= snk_i.cyc and snk_i.stb;
+        snk_ack   <= snk_cyc and snk_stb;
 
 
         pkt_drop <= f_pkt_drop(drop_config);
@@ -140,7 +140,7 @@ begin
                 pkt_cnt <= 0;
               end if;
             else
-              next_pkt_drop <= '0';
+              --sext_pkt_drop <= '0';
             end if;
           when DROP =>
             if (snk_i.stb = '0' and snk_stb = '1') then
