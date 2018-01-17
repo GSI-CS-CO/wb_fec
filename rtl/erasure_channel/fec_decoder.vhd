@@ -139,7 +139,7 @@ architecture rtl of fec_decoder is
             decoding_id <= fec_id;
           else
             new_fec_id  := '0';
-            -- check if with the incoming pkt we can decode already
+            -- check if with the incoming pkt we can already decode
             fec_decoded := f_is_decoded(fec_pkt_rx, fec_subid);
           end if;
           fec_pkt_rx  <= f_update_pkt_rx(fec_pkt_rx, fec_subid, new_fec_id);
@@ -150,9 +150,11 @@ architecture rtl of fec_decoder is
             if (new_fec_id = '1')  then
             -- new fec_id, start decoding
               s_DEC     <= DECODING;
-              s_NEXT_OP <= f_next_op(fec_pkt_rx, fec_subid);
+              --s_NEXT_OP <= f_next_op(fec_pkt_rx, fec_subid);
+              s_NEXT_OP <= f_next_op("0000", fec_subid);
               fec_stb   <= '1';
               rst_n_dec <= '1';
+              pkt_dec_err.dec_err <= '0';
             elsif (new_fec_id = '0')  then
             -- this fec_id has been already decoded, do nothing
               s_DEC     <= IDLE;
@@ -165,8 +167,10 @@ architecture rtl of fec_decoder is
               elsif(new_fec_id = '1') then
               -- new fec_id and the pkt was not decoded yet --> error and start dec
                 pkt_dec_err.dec_err <= '1';
+                rst_n_dec   <= '0';
                 fec_stb     <= '1';
-                s_DEC       <= DECODING;
+                --s_DEC       <= DECODING;
+                s_DEC       <= IDLE;
               else
               -- keep decoding
                 pkt_dec_err.dec_err <= '0';
@@ -217,6 +221,8 @@ architecture rtl of fec_decoder is
     end if;
   end process;
 
+  pkt_dec_err_o <= pkt_dec_err;
+
   read_payload  <= f_hotbit(block_stream) when s_DEC = STREAMING and halt_streaming_i = '0' else
                    (others => '0');
 
@@ -253,6 +259,7 @@ architecture rtl of fec_decoder is
         case s_NEXT_OP is
           when IDLE =>
             stream_out  <= '0';
+            xor_we      <= c_FIFO_OFF;
           when STORE =>
             if (fec_payload_cnt <= block_len - 1) then
               xor_we        <= c_FIFO_ON;  -- [0 xor 1] / [1 xor 2] / [2 xor 3] / [3 xor 0]
@@ -274,16 +281,17 @@ architecture rtl of fec_decoder is
             if (fec_payload_cnt <= block_len - 1) then
               pkt_block_xor(3)  <= pkt_block_fifo(2) xor fec_payload_i; -- [2] xor [2 xor 3] = [3]
             elsif (fec_payload_cnt <= (2 * block_len) - 1) then
-              pkt_block_xor(1)  <= fec_payload_i xor xor_payload;   -- [0] xor [0 xor 1] = [1]
+              pkt_block_xor(1)  <= fec_payload_i xor xor_payload;       -- [0] xor [0 xor 1] = [1]
               stream_out        <= '1';
             end if;
           when XOR_0_3 =>
           if (fec_payload_cnt <= block_len - 1) then
-              pkt_block_xor(4)  <= xor_payload xor fec_payload_i;       -- [0 xor 1] xor [3 xor 0]
+              pkt_block_xor(4)  <= fec_payload_i;                       -- [3 xor 0]
             elsif (fec_payload_cnt <= (2 * block_len) - 1) then
               stream_out        <= '1';
-              pkt_block_xor(3)  <= pkt_block_fifo(4) xor fec_payload_i; -- [3 xor 1] xor [1] = [3]
-              pkt_block_xor(0)  <= xor_payload xor fec_payload_i;       -- [0 xor 1] xor [1] = 0
+              pkt_block_xor(3)  <= pkt_block_fifo(4) xor xor_payload xor
+                                   fec_payload_i;                       -- [0 xor 1] xor [3 xor 0] xor [1] = [3]
+              pkt_block_xor(0)  <= xor_payload xor fec_payload_i;       -- [0 xor 1] xor [1] = [0]
             end if;
           when XOR_1_2 =>
             if (fec_payload_cnt <= block_len - 1) then
@@ -291,7 +299,7 @@ architecture rtl of fec_decoder is
               pkt_block_xor(4)  <= pkt_block_fifo(3) xor fec_payload_i; -- tmp fifo for next op
             elsif (fec_payload_cnt <= (2 * block_len) - 1) then
               stream_out        <= '1';
-              pkt_block_xor(1)  <= pkt_block_fifo(4) xor xor_payload;   -- [2] xor [1 xor 2] = [0]
+              pkt_block_xor(1)  <= pkt_block_fifo(4) xor xor_payload;   -- [2] xor [1 xor 2] = [1]
             end if;
           when XOR_1_3 =>
             if (fec_payload_cnt <= block_len - 1) then
@@ -306,7 +314,7 @@ architecture rtl of fec_decoder is
               pkt_block_xor(4)  <= pkt_block_fifo(0) xor fec_payload_i; -- tmp fifo for next op
             elsif (fec_payload_cnt <= (2 * block_len) - 1) then
               stream_out        <= '1';
-              pkt_block_xor(2)  <= pkt_block_fifo(4) xor xor_payload;   -- [2] xor [1 xor 2] = [0]
+              pkt_block_xor(2)  <= pkt_block_fifo(4) xor xor_payload;   -- [3] xor [2 xor 3] = [2]
             end if;
           when others =>
         end case;
@@ -327,7 +335,7 @@ architecture rtl of fec_decoder is
              c_FIFO_ON when (s_NEXT_OP = XOR_1_2 and fec_payload_cnt > block_len - 1) else
              c_FIFO_ON when (s_NEXT_OP = XOR_1_3 and fec_payload_cnt > block_len - 1) else
              c_FIFO_ON when (s_NEXT_OP = XOR_2_3 and fec_payload_cnt > block_len - 1) else
-             c_FIFO_ON when (s_NEXT_OP = XOR_0_3) else
+             c_FIFO_ON when (s_NEXT_OP = XOR_0_3 and fec_payload_cnt > block_len - 1) else
              c_FIFO_OFF;
 
   read_block  <= f_read_block(s_NEXT_OP, fec_payload_cnt, block_len);

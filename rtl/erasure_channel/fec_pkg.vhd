@@ -518,7 +518,7 @@ package body fec_pkg is
           elsif (len <= (2 * block_len) - 1) then
             we_src_sel    := f_fifo_id(subid);
             we_src_sel(3) := c_XOR_OP;
-            we_src_sel(1) := c_XOR_OP;
+            we_src_sel(0) := c_XOR_OP;
           end if;
         when XOR_1_2 =>
           if (len <= block_len - 1) then
@@ -526,7 +526,7 @@ package body fec_pkg is
             we_src_sel(4) := c_XOR_OP;
           elsif (len <= (2 * block_len) - 1) then
             we_src_sel    := f_fifo_id(subid);
-            we_src_sel(2) := c_XOR_OP;
+            we_src_sel(1) := c_XOR_OP;
           end if;
         when XOR_1_3 =>
           if (len <= block_len - 1) then
@@ -566,6 +566,11 @@ package body fec_pkg is
           elsif (len <= (2 * block_len) - 1) then
           end if;
         when XOR_0_3 =>
+          if (len <= block_len - 1) then
+          elsif (len <= (2 * block_len) - 1) then
+            read_block(4) := c_FIFO_ON;
+          end if;
+
         when XOR_1_2 =>
           if (len <= block_len - 1) then
             read_block(3) := c_FIFO_ON;
