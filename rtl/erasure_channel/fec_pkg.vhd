@@ -478,14 +478,13 @@ package body fec_pkg is
   function f_fifo_id (subid : t_enc_frame_sub_id) 
     return t_we_src_sel is
   --TODO make it generic to g_num_pkt
-    --variable fifo_id  : unsigned (3 downto 0);
     variable fifo_sel : t_we_src_sel (4 downto 0);
     begin
       fifo_sel  := (others => (others => '0'));
       case subid is
         when "000" => fifo_sel(2) := c_PAYLOAD;
         when "001" => fifo_sel(3) := c_PAYLOAD;
-        when "100" => fifo_sel(0) := c_PAYLOAD;
+        when "010" => fifo_sel(0) := c_PAYLOAD;
         when "011" => fifo_sel(1) := c_PAYLOAD;
         when others => fifo_sel   := (others => (others => '0'));
       end case;
@@ -500,12 +499,51 @@ package body fec_pkg is
       case next_op is
         when XOR_0_1  =>
           if (len <= block_len - 1) then
-            we_src_sel(4) := c_XOR_OP;
             we_src_sel(1) := c_XOR_OP;
+            we_src_sel(4) := c_XOR_OP;
           elsif (len <= (2 * block_len) - 1) then
             we_src_sel    := f_fifo_id(subid);
             we_src_sel(0) := c_XOR_OP;
          end if;
+        when XOR_0_2 =>
+          if (len <= block_len - 1) then
+            we_src_sel(3) := c_XOR_OP;
+          elsif (len <= (2 * block_len) - 1) then
+            we_src_sel    := f_fifo_id(subid);
+            we_src_sel(1) := c_XOR_OP;
+          end if;
+        when XOR_0_3 =>
+          if (len <= block_len - 1) then
+            we_src_sel(4) := c_XOR_OP;
+          elsif (len <= (2 * block_len) - 1) then
+            we_src_sel    := f_fifo_id(subid);
+            we_src_sel(3) := c_XOR_OP;
+            we_src_sel(1) := c_XOR_OP;
+          end if;
+        when XOR_1_2 =>
+          if (len <= block_len - 1) then
+            we_src_sel(2) := c_XOR_OP;
+            we_src_sel(4) := c_XOR_OP;
+          elsif (len <= (2 * block_len) - 1) then
+            we_src_sel    := f_fifo_id(subid);
+            we_src_sel(2) := c_XOR_OP;
+          end if;
+        when XOR_1_3 =>
+          if (len <= block_len - 1) then
+            we_src_sel(0) := c_XOR_OP;
+            we_src_sel(4) := c_XOR_OP;
+          elsif (len <= (2 * block_len) - 1) then
+            we_src_sel    := f_fifo_id(subid);
+            we_src_sel(2) := c_XOR_OP;
+          end if;
+        when XOR_2_3 =>
+          if (len <= block_len - 1) then
+            we_src_sel(3) := c_XOR_OP;
+            we_src_sel(4) := c_XOR_OP;
+          elsif (len <= (2 * block_len) - 1) then
+            we_src_sel    := f_fifo_id(subid);
+            we_src_sel(2) := c_XOR_OP;
+          end if;
         when others   => we_src_sel := (others => (others => '0'));
       end case;
     return we_src_sel;
@@ -519,6 +557,29 @@ package body fec_pkg is
         when XOR_0_1  =>
           if (len <= block_len - 1) then
             read_block(2) := c_FIFO_ON;
+          elsif (len <= (2 * block_len) - 1) then
+            read_block(4) := c_FIFO_ON;
+          end if;
+        when XOR_0_2 =>
+          if (len <= block_len - 1) then
+            read_block(2) := c_FIFO_ON;
+          elsif (len <= (2 * block_len) - 1) then
+          end if;
+        when XOR_0_3 =>
+        when XOR_1_2 =>
+          if (len <= block_len - 1) then
+            read_block(3) := c_FIFO_ON;
+          elsif (len <= (2 * block_len) - 1) then
+            read_block(4) := c_FIFO_ON;
+          end if;
+        when XOR_1_3 =>
+          if (len <= block_len - 1) then
+            read_block(3) := c_FIFO_ON;
+          elsif (len <= (2 * block_len) - 1) then
+          end if;
+        when XOR_2_3 =>
+          if (len <= block_len - 1) then
+            read_block(0) := c_FIFO_ON;
           elsif (len <= (2 * block_len) - 1) then
             read_block(4) := c_FIFO_ON;
           end if;
