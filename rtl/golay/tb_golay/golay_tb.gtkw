@@ -1,0 +1,31 @@
+[*]
+[*] GTKWave Analyzer v3.3.82 (w)1999-2017 BSI
+[*] Wed Oct 25 14:30:13 2017
+[*]
+[dumpfile] "/home/bradomyn/project/cores-dev-bak/golay/tb_golay/golay_tb.ghw"
+[dumpfile_mtime] "Wed Oct 25 14:28:32 2017"
+[dumpfile_size] 4359
+[savefile] "/home/bradomyn/project/cores-dev-bak/golay/tb_golay/golay_tb.gtkw"
+[timestart] 0
+[size] 1224 773
+[pos] -555 284
+*-25.000000 62500000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] top.
+[treeopen] top.golay_tb.
+[treeopen] top.golay_tb.uut_dec.
+[sst_width] 225
+[signals_width] 156
+[sst_expanded] 1
+[sst_vpaned_height] 207
+@28
+top.golay_tb.clk
+top.golay_tb.rst_n
+top.golay_tb.stb
+top.golay_tb.stb_dec
+@22
+#{top.golay_tb.payload[11:0]} top.golay_tb.payload[11] top.golay_tb.payload[10] top.golay_tb.payload[9] top.golay_tb.payload[8] top.golay_tb.payload[7] top.golay_tb.payload[6] top.golay_tb.payload[5] top.golay_tb.payload[4] top.golay_tb.payload[3] top.golay_tb.payload[2] top.golay_tb.payload[1] top.golay_tb.payload[0]
+#{top.golay_tb.paycode[23:0]} top.golay_tb.paycode[23] top.golay_tb.paycode[22] top.golay_tb.paycode[21] top.golay_tb.paycode[20] top.golay_tb.paycode[19] top.golay_tb.paycode[18] top.golay_tb.paycode[17] top.golay_tb.paycode[16] top.golay_tb.paycode[15] top.golay_tb.paycode[14] top.golay_tb.paycode[13] top.golay_tb.paycode[12] top.golay_tb.paycode[11] top.golay_tb.paycode[10] top.golay_tb.paycode[9] top.golay_tb.paycode[8] top.golay_tb.paycode[7] top.golay_tb.paycode[6] top.golay_tb.paycode[5] top.golay_tb.paycode[4] top.golay_tb.paycode[3] top.golay_tb.paycode[2] top.golay_tb.paycode[1] top.golay_tb.paycode[0]
+@23
+#{top.golay_tb.uut_dec.syndrome[11:0]} top.golay_tb.uut_dec.syndrome[11] top.golay_tb.uut_dec.syndrome[10] top.golay_tb.uut_dec.syndrome[9] top.golay_tb.uut_dec.syndrome[8] top.golay_tb.uut_dec.syndrome[7] top.golay_tb.uut_dec.syndrome[6] top.golay_tb.uut_dec.syndrome[5] top.golay_tb.uut_dec.syndrome[4] top.golay_tb.uut_dec.syndrome[3] top.golay_tb.uut_dec.syndrome[2] top.golay_tb.uut_dec.syndrome[1] top.golay_tb.uut_dec.syndrome[0]
+[pattern_trace] 1
+[pattern_trace] 0
