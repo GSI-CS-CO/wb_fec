@@ -86,7 +86,7 @@ begin
     eth_stream_o      => start_stream,
     dat_stream_i      => stream_dat,
     halt_streaming_i  => src_halt,
-    pkt_dec_err_o     => dec_err);
+    pkt_dec_err_o     => dec_err.dec_err);
 
   FEC_HDR_PROC : fec_hdr_gen
     generic map(

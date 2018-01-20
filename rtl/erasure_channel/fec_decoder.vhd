@@ -30,7 +30,7 @@ entity fec_decoder is
     eth_stream_o      : out std_logic;
     dat_stream_i      : in  std_logic;
     halt_streaming_i  : in  std_logic;
-    pkt_dec_err_o     : out t_dec_err);
+    pkt_dec_err_o     : out std_logic);
 end fec_decoder;
 
 architecture rtl of fec_decoder is
@@ -46,7 +46,7 @@ architecture rtl of fec_decoder is
   signal xor_payload    : t_wrf_bus;
   signal xor_cnt        : t_fec_fifo_cnt_width;
   signal fec_pkt_rx     : std_logic_vector (g_num_block - 1 downto 0);
-  signal pkt_dec_err    : t_dec_err;
+  signal pkt_dec_err    : std_logic;
   signal payload_cnt    : unsigned (c_block_len_width - 1 downto 0);
   signal read_block     : std_logic_vector (g_num_block downto 0);
   signal read_payload   : std_logic_vector (g_num_block downto 0);
@@ -109,7 +109,7 @@ architecture rtl of fec_decoder is
       if (rst_n_i =  '0') then
         s_DEC         <= IDLE;
         s_NEXT_OP     <= IDLE;
-        pkt_dec_err   <= c_dec_err;
+        pkt_dec_err   <= '0';
         fec_pkt_rx    <= (others => '0');
         decoding_id   <= (others => '1');
         fec_decoded   := '0';
@@ -153,7 +153,7 @@ architecture rtl of fec_decoder is
               s_NEXT_OP <= f_next_op("0000", fec_subid);
               fec_stb   <= '1';
               rst_n_dec <= '1';
-              pkt_dec_err.dec_err <= '0';
+              pkt_dec_err <= '0';
             elsif (new_fec_id = '0')  then
             -- this fec_id has been already decoded, do nothing
               s_DEC     <= IDLE;
@@ -165,13 +165,13 @@ architecture rtl of fec_decoder is
                 s_DEC       <= DECODED;
               elsif(new_fec_id = '1') then
               -- new fec_id and the pkt was not decoded yet --> error and start dec
-                pkt_dec_err.dec_err <= '1';
+                pkt_dec_err <= '1';
                 rst_n_dec   <= '0';
                 fec_stb     <= '1';
                 s_DEC       <= IDLE;
               else
               -- keep decoding
-                pkt_dec_err.dec_err <= '0';
+                pkt_dec_err <= '0';
               end if;
               s_NEXT_OP <= f_next_op(fec_pkt_rx, fec_subid);
             end if;

@@ -359,7 +359,7 @@ package fec_pkg is
       eth_stream_o      : out std_logic;
       dat_stream_i      : in  std_logic;
       halt_streaming_i  : in  std_logic;
-      pkt_dec_err_o     : out t_dec_err);
+      pkt_dec_err_o     : out std_logic);
   end component;
 
   component wb_fec_encoder is
