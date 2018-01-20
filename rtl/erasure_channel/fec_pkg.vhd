@@ -140,6 +140,13 @@ package fec_pkg is
     pad_pkt     : unsigned(c_fec_padding - 1 downto 0);
   end record;
 
+  constant c_fec_timestamps : t_txtsu_timestamp := (
+    stb       => '0',
+    tsval     => (others => '0'),
+    port_id   => (others => '0'),
+    frame_id  => (others => '0'),
+    incorrect => '0');
+
   constant c_padding : t_padding := (
     pad_block   => (others => '0'),
     pad_pkt     => (others => '0'));
