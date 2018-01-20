@@ -2,16 +2,19 @@
 --! @brief  A FEC Encoder
 --! @author C.Prados <cprados@mailfence.com>
 --!
+--! it receives frames eth from the WR fabric and passes it to
+--! the Fixed Rate Encoder.The encoder generates up to 4 FEC pkts
+--! and this module steers the transmission of the FEC frames over
+--! the WR Frabirc.
+--! 
 --! See the file "LICENSE" for the full license governing this code.
---! TODO bypass if the encoder is not enable
---!-------------------------------------------------------------------------------
+--!--------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library work;
 use work.fec_pkg.all;
---use work.golay_pk.all;
 use work.wishbone_pkg.all;
 use work.genram_pkg.all;
 use work.wr_fabric_pkg.all;
@@ -108,16 +111,6 @@ begin
   fec_enc_rd  <=  '1' when s_fec_strm  = SEND_FEC_PAYLOAD else
                   '0';
 
-  --g_GOLAY_ENC : if g_en_golay generate
-  --  GOLAY_ENC : golay_encoder
-  --    port map (
-  --      clk_i       => clk_i,
-  --      rst_n_i     => rst_n_i,
-  --      stb_i       =>
-  --      payload_i   =>
-  --      code_word_o => );
-  --end generate;
-
   FEC_CALC_LEN_PAD : fec_len_tx_pad
     generic map(
       g_num_block     => g_num_block)
@@ -153,9 +146,6 @@ begin
              '0';
   fec_hdr_stb <= '1' when s_fec_strm  = SEND_FEC_HDR else
                  '0';
-
-  -- Encoded pkt payload length
-  --fec_block_len <= f_calc_len_block(hdr_ethertype, c_div_num_block, g_num_block);
 
   -- Refresh the ctrl setting after pkt encoded
   ctrl_config_refresh : process(clk_i) is
@@ -203,7 +193,6 @@ begin
         fec_hdr_payload_len := c_fec_hdr_len + (2 * to_integer(fec_block_len - 1));
         case s_fec_strm is
           when IDLE =>
-            --if (eth_cnt >= fec_block_len + 2 and pkt_stb = '1') then
             if (start_streaming = '1') then
               s_fec_strm  <= SEND_STATUS;
               fec_stb     <= '1';
@@ -296,11 +285,8 @@ begin
               if (eth_cnt < c_eth_hdr_len - 1) then
                 pkt_stb <= '0';
               elsif (eth_cnt = c_eth_hdr_len - 1) then
-                --hdr_ethertype <= snk_i.dat;
                 hdr_ethertype <= snk_i.dat;
-                --pkt_len       <= to_integer(unsigned(snk_i.dat) srl 2);
                 pkt_len       <= to_integer(unsigned(snk_i.dat) srl 1);
-                -- start getting payload
                 pkt_stb   <= '1';
               elsif (eth_cnt = c_eth_hdr_len + pkt_len - 1) then
               -- getting the payload
@@ -317,7 +303,6 @@ begin
             eth_cnt <= eth_cnt + 1;
             end if;
             padded  <= '0';
-          --elsif (pad_cnt < pad - 1 and padded = '0') then
           elsif (pad_cnt < pad and padded = '0') then
             pad_stb <= '1';
             pkt_stb <= '0';
@@ -462,8 +447,4 @@ begin
         end if;
       end if;
     end process;
-
-    -- TODO
-    -- homogenize pkt and frame names
-    -- IF HALT TOO LONG AND FIFO FULL, ERROR and RESET EVERYTHING
 end rtl;

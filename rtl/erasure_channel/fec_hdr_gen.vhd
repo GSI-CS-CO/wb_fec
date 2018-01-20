@@ -1,6 +1,10 @@
 --! @file fec_hdr_gen_stat.vhd
 --! @brief Generates and streams the FEC header
---! @author C.Prados <cprados@mailfence.com>
+--! @author C.Prados <c.prados@gsi.de> <bradomyn@gmail.com>
+--!
+--! For the encoder stores the original eth frame header and creates the fec one
+--! For the decoder recovers the FEC header and uses for the FEC decoding and
+--! recreates the eth hdr after decoding.
 --!
 --! See the file "LICENSE" for the full license governing this code.
 --!-------------------------------------------------------------------------------

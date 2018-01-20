@@ -1,11 +1,12 @@
 --! @file fec_len_pad.vhd
 --! @brief Calculates the padding to the fec pkts
---! @author C.Prados <cprados@mailfence.com>
---! Calculates the len of the encoding fec blocks and pads the fec pkts up to 64 bits
---! or/and padding up to next multiple of 8
+--! @author C.Prados <c.prados@gsi.de> <bradomyn@gmail.com>
+--!
+--! Calculates the len of the encoding fec blocks and pads the fec pkts 
+--! up to 64 bits or/and padding up to next multiple of 8
 --!
 --! See the file "LICENSE" for the full license governing this code.
---!-------------------------------------------------------------------------------
+--!---------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;

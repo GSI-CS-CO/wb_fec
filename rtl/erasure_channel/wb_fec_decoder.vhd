@@ -1,10 +1,13 @@
 --! @file wb_fec_encoder.vhd
---! @brief  A FEC Encoder
---! @author C.Prados <cprados@mailfence.com>
+--! @brief  WB FEC Encoder
+--! @author C.Prados <c.prados@gsi.de> <bradomyn@gmail.com>
+--!
+--! This module receives eth frames from the WR Fabric and passes it to
+--! actual Fixed Rate Decoder. Once the frames have been decoded steers
+--! the transmission of the frame over the WR Frabric.
 --!
 --! See the file "LICENSE" for the full license governing this code.
---! TODO bypass if the encoder is not enable
---!-------------------------------------------------------------------------------
+--!------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -252,7 +255,6 @@ begin
               elsif (eth_cnt = c_fec_hdr_len - 3) then
               -- check FEC ethertype
                 if (ctrl_reg.fec_ethtype /= snk_i.dat) then
-                  --TODO No FEC pkt and FEC enable -> error
                   fec_skip_pkt  <= '1';
                 else
                   fec_pad_stb   <= '1';
@@ -265,6 +267,7 @@ begin
               elsif (eth_cnt < c_eth_pkt - 1) then
                 pkt_stb <= '1';
               else
+                -- error getting a jumbo_frame
                 jumbo_frame <= '1';
               end if;
               eth_cnt <= eth_cnt + 1;

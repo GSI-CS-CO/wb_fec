@@ -1,9 +1,11 @@
 --! @file fec_decoder.vhd
 --! @brief  A FEC Decoder
---! @author C.Prados <cprados@mailfence.com>
+--! @author C.Prados <c.prados@gsi.de> <bradomyn@gmail.com>
+--!
+--! Fixed Rate Decoder - for more information about this code check my thesis
 --!
 --! See the file "LICENSE" for the full license governing this code.
---!-------------------------------------------------------------------------------
+--!-----------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -115,12 +117,10 @@ architecture rtl of fec_decoder is
         fec_stb       <= '0';
         block_stream  <= 0;
         payload_cnt   <= (others => '0');
-        --pkt_payload_o <= (others => '0');
         fec_hdr       := (others => '0');
         s_fec_hdr     <= c_fec_header;
         new_fec_id    := '0';
         rst_n_dec     <= '1';
-        --read_payload  <= (others => '0');
         cnt_stb       <= '0';
         fec_payload_stb_d <= '0';
         pkt_payload_stb <= '0';
@@ -150,7 +150,6 @@ architecture rtl of fec_decoder is
             if (new_fec_id = '1')  then
             -- new fec_id, start decoding
               s_DEC     <= DECODING;
-              --s_NEXT_OP <= f_next_op(fec_pkt_rx, fec_subid);
               s_NEXT_OP <= f_next_op("0000", fec_subid);
               fec_stb   <= '1';
               rst_n_dec <= '1';
@@ -169,7 +168,6 @@ architecture rtl of fec_decoder is
                 pkt_dec_err.dec_err <= '1';
                 rst_n_dec   <= '0';
                 fec_stb     <= '1';
-                --s_DEC       <= DECODING;
                 s_DEC       <= IDLE;
               else
               -- keep decoding
@@ -179,7 +177,6 @@ architecture rtl of fec_decoder is
             end if;
           when DECODED =>
             if (dat_stream_i = '1') then
-              --read_payload(block_stream) <= '1';
               pkt_payload_stb <= '1';
               s_DEC <= STREAMING;
             else
@@ -196,24 +193,16 @@ architecture rtl of fec_decoder is
               if (payload_cnt < block_len - 1) then
                 cnt_stb         <= '1';
                 pkt_payload_stb <= '1';
-                --payload_cnt     <= payload_cnt + 1;
-                --read_payload(block_stream) <= '1';
               elsif (block_stream < g_num_block - 1) then
-                --read_payload(block_stream )<= '0';
-                --read_payload(block_stream + 1)<= '1';
                 block_stream  <= block_stream + 1;
-                --payload_cnt   <= (others => '0');
               else
                 cnt_stb           <= '0';
                 pkt_payload_stb   <= '0';
-                --read_payload      <= (others => '0');
                 s_DEC             <= IDLE;
                 s_NEXT_OP         <= IDLE;
                 block_stream      <= 0;
                 fec_stb           <= '0';
               end if;
-            else
-              --read_payload <= (others => '0');
             end if;
           when others =>
         end case;

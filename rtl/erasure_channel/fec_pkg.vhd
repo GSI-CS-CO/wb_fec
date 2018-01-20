@@ -1,6 +1,6 @@
 --! @file fec_pkg.vhd
 --! @brief package for the fec code
---! @author C.Prados <cprados@mailfence.com>
+--! @author C.Prados <c.prados@gsi.de> <bradomyn@gmail.com>
 --!
 --! package for the fec project
 --!
@@ -28,11 +28,8 @@ package fec_pkg is
   constant c_eth_pkt          : integer := c_eth_hdr_len + c_eth_payload;
   constant c_eth_pkt_width    : integer := f_ceil_log2(c_eth_pkt);
   constant c_block_max_len    : integer := 188; -- 16 bit word
-  --constant c_block_len_width  : integer := f_ceil_log2(c_block_max_len);
   constant c_block_len_width  : integer := 8;
   constant c_eth_pkt_len_widht: integer := 12;
-  --constant c_FROM_STR         : std_logic := '0';
-  --constant c_FROM_XOR         : std_logic := '1';
   constant c_FIFO_ON          : std_logic := '1';
   constant c_FIFO_OFF         : std_logic := '0';
   constant c_ENABLE           : std_logic := '1';
@@ -139,11 +136,8 @@ package fec_pkg is
     name            => "GSI:FEC            ")));
 
   type t_padding is record
-    --pad_block   : std_logic_vector(c_fec_padding - 1 downto 0);
-    --pad_pkt     : std_logic_vector(c_fec_padding - 1 downto 0);
     pad_block   : unsigned(c_fec_padding - 1 downto 0);
     pad_pkt     : unsigned(c_fec_padding - 1 downto 0);
-
   end record;
 
   constant c_padding : t_padding := (
@@ -174,7 +168,6 @@ package fec_pkg is
   type t_fec_ctrl_reg is record
     fec_ctrl_refresh  : std_logic;
     fec_code          : t_erasure_code;
-    --time_code         : t_time_code;
     fec_ethtype       : t_eth_type;
     eb_ethtype        : t_eth_type;
     fec_enc_en        : std_logic;
@@ -184,7 +177,6 @@ package fec_pkg is
   constant c_fec_ctrl_reg : t_fec_ctrl_reg := (
     fec_ctrl_refresh  => '0',
     fec_code          => "000", -- Simple Code
-    --time_code         => c_time_code
     fec_ethtype       => x"cafe",
     eb_ethtype        => x"0800",
     fec_enc_en        => c_ENABLE,
@@ -596,53 +588,6 @@ package body fec_pkg is
       end case;
     return read_block;
   end function;
-
---  function f_we_src_sel (next_op : t_next_op; subid : t_enc_frame_sub_id; op_step : integer) return t_we_src_sel is
---
---    variable we_src_sel : t_we_src_sel (3 downto 0);
---    begin
---      we_src_sel := (others => (others => '0'));
---      case next_op is
---        when IDLE     =>
---        when STORE    =>
---          if (op_step = 0) then
---          elsif (op_step = 1) then
---            we_src_sel := f_fifo_id(subid);
---          end if;
---        when XOR_0_1  =>
---          if (op_step = 0) then
---          elsif (op_step = 1) then
---            we_src_sel(1) := c_XOR_OP;
---            we_src_sel(2) := c_LOOPBACK;
---          elsif (op_step = 2) then
---            we_src_sel    := f_fifo_id(subid);
---            we_src_sel(0) := c_XOR_OP;
---            we_src_sel(1) := c_LOOPBACK;
---         end if;
---        when others   => we_src_sel := (others => (others => '0'));
---      end case;
---    return we_src_sel;
---  end function;
---
---  function f_read_block (next_op : t_next_op; op_step : integer) return std_logic_vector is
---
---    variable read_block : std_logic_vector (3 downto 0);
---    begin
---      read_block  := (others => '0');
---      case next_op is
---        when IDLE     =>
---        when STORE    =>
---        when XOR_0_1  =>
---          if (op_step = 0) then
---          elsif (op_step = 1) then
---            read_block(2) := c_FIFO_ON;
---          elsif (op_step = 2) then
---            read_block(1) := c_FIFO_ON;
---          end if;
---        when others   => read_block := (others => '0');
---      end case;
---    return read_block;
---  end function;
 
   function f_next_op (fec_pkt_rx : std_logic_vector; subid : t_enc_frame_sub_id) return t_next_op is
   --TODO make it generic to g_num_pkt

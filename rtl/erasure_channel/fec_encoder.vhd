@@ -1,9 +1,11 @@
 --! @file fec_encoder.vhd
 --! @brief  A FEC Encoder
---! @author C.Prados <cprados@mailfence.com>
+--! @author C.Prados <c.prados@gsi.de> <bradomyn@gmail.com>
+--!
+--! Fixed Rate Encoder -- for more information about this code check my thesis
 --!
 --! See the file "LICENSE" for the full license governing this code.
---!-------------------------------------------------------------------------------
+--!----------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -189,8 +191,6 @@ begin
             block_cnt   <= (others => '0');
             we_src_sel  <= we_src_sel sll 1;
           end if;
-            --error frame bigger than provide
-            --enc_err_o <= '1';
         end if;
       end if;
     end if;

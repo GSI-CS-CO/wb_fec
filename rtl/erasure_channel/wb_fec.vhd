@@ -1,9 +1,9 @@
 --! @file wb_fec.vhd
 --! @brief  FEC
---! @author C.Prados <cprados@mailfence.com>
+--! @author C.Prados <c.prados@gsi.de> <bradomyn@gmail.com>
 --!
 --! See the file "LICENSE" for the full license governing this code.
---!-------------------------------------------------------------------------------
+--!----------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
