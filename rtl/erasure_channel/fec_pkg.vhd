@@ -176,6 +176,7 @@ package fec_pkg is
     fec_code          : t_erasure_code;
     --time_code         : t_time_code;
     fec_ethtype       : t_eth_type;
+    eb_ethtype        : t_eth_type;
     fec_enc_en        : std_logic;
     fec_dec_en        : std_logic;
   end record;
@@ -185,18 +186,21 @@ package fec_pkg is
     fec_code          => "000", -- Simple Code
     --time_code         => c_time_code
     fec_ethtype       => x"cafe",
+    eb_ethtype        => x"0800",
     fec_enc_en        => c_ENABLE,
     fec_dec_en        => c_ENABLE);
 
   type t_fec_stat_reg is record
     fec_enc_err : std_logic_vector(1 downto 0);
     fec_enc_cnt : std_logic_vector(c_fec_cnt_width - 1 downto 0);
+    fec_dec_cnt : std_logic_vector(c_fec_cnt_width - 1 downto 0);
     fec_dec_err : t_dec_err;
   end record;
 
   constant c_fec_stat_reg : t_fec_stat_reg := (
     fec_enc_err => (others => '0'),
     fec_enc_cnt => (others => '0'),
+    fec_dec_cnt => (others => '0'),
     fec_dec_err => c_dec_err);
 
   type t_frame_fsm  is (

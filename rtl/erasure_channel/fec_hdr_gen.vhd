@@ -87,9 +87,7 @@ begin
             fec_hdr_o <= f_extract_eth(eth_hdr_len, eth_hdr_reg);
           elsif (eth_hdr_len <=  c_eth_hdr_len - 3) then
             fec_hdr_done_o <= '1';
-            fec_hdr_o <= x"0800";
-            --TODO add eb_ethtype to wb register
-            --fec_hdr_o <= ctrl_reg_i.eb_ethtype;
+            fec_hdr_o <= ctrl_reg_i.eb_ethtype;
           else
             fec_hdr_done_o <= '0';
           end if;

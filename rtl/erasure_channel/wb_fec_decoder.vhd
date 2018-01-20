@@ -38,7 +38,7 @@ architecture rtl of wb_fec_decoder is
   signal eth_cnt          : unsigned (c_eth_pkt_width - 1 downto 0);
   signal wrf_oob_cnt      : unsigned (1 downto 0);
   signal pkt_stb          : std_logic;
-  signal pkt_err          : std_logic;
+  signal jumbo_frame      : std_logic;
   signal hdr_stb          : std_logic;
   signal hdr_stall        : std_logic;
   signal fec_stb          : std_logic;
@@ -63,6 +63,7 @@ architecture rtl of wb_fec_decoder is
   signal wrf_dat          : t_wrf_bus;
   signal stream_dat       : std_logic;
   signal eth_hdr_done     : std_logic;
+  signal fec_dec_cnt      : unsigned (c_fec_cnt_width - 1 downto 0);
 
   constant c_div_num_block : integer := f_log2_size(g_num_block) + 1; -- in 16bit words
 begin
@@ -136,9 +137,9 @@ begin
       end if;
     end if;
   end process;
-  --TODO
-  --stat_reg_o.fec_enc_err  <= enc_err & pkt_err;
-  --stat_reg_o.fec_enc_cnt  <= pkt_id;
+  stat_reg_o.fec_dec_err  <= dec_err;
+  dec_err.jumbo_frame     <= jumbo_frame;
+  stat_reg_o.fec_dec_cnt  <= std_logic_vector(fec_dec_cnt);
 
   -- Tx from decoder
   tx_fabric : process(clk_i) is
@@ -172,6 +173,7 @@ begin
           when SEND_PAYLOAD =>
             if (eth_payload_stb = '0') then
               s_eth_strm <= IDLE;
+              fec_dec_cnt <= fec_dec_cnt + 1;
             else
             end if;
         end case;
@@ -231,7 +233,7 @@ begin
         fec_skip_pkt  <= '0';
         eth_cnt       <= (others => '0');
         pkt_stb       <= '0';
-        pkt_err       <= '0';
+        jumbo_frame   <= '0';
         fec_pad_stb   <= '0';
       else
         if (ctrl_reg_i.fec_enc_en =  c_ENABLE) then
@@ -263,8 +265,7 @@ begin
               elsif (eth_cnt < c_eth_pkt - 1) then
                 pkt_stb <= '1';
               else
-              --TODO jumbo pkt error
-                --pkt_err   <= '1';
+                jumbo_frame <= '1';
               end if;
               eth_cnt <= eth_cnt + 1;
             elsif (snk_i.adr = c_WRF_OOB) then
@@ -283,12 +284,12 @@ begin
           else
             eth_cnt     <= (others => '0');
             wrf_oob_cnt <= (others => '0');
-            pkt_err     <= '0';
+            jumbo_frame <= '0';
             fec_skip_pkt<= '0';
             pkt_stb     <= '0';
           end if;
         else -- c_DISABLE
-          pkt_err       <= '0';
+          jumbo_frame   <= '0';
           fec_skip_pkt  <= '0';
           pkt_stb       <= '0';
         end if;

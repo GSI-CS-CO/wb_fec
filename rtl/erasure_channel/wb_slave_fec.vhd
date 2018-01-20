@@ -5,20 +5,15 @@
 --! See the file "LICENSE" for the full license governing this code.
 --!-------------------------------------------------------------------------------
 --! Register Map
---! Ctrl Enc/Dec
---! 0x00, wr, enable/disable encoder 1bit
---! 0x04, wr, Pkt Erasure Code 2bit - Bit Erasure Code 2bit
---! 0x08  wr, Ethertype 16bit
--- Stat Enc/Dec
---! 0x0, r, Number of encoded frames --TBD
---! 0x0, wr, Encoded Frames Counter 32bit
--- Decoder Latency Statitcis
---! 0x, wr, decoder last latency
---! 0x, wr, decoder max latency
---! 0x, wr, decoder min latency
---! 0x, wr, decoder latency accumulated
---! 0x, wr, decoder number of latency measured
--- Ctrl Reset Stat Registers
+--! 0x0  Enable/disable encoder/decoder
+--! 0x4  FEC type
+--! 0x8  FEC Ethertype
+--! 0xC  Etherbone Ethertype
+--! 0x10 Num of Encoded Frames
+--! 0x14 Num of Decoded Frames
+--! 0x18 Num of Jumbo Frames Errors in Rx
+--! 0x1C Num of Decoding Errors > 2 FEC pkts lost
+--! 0x20 Num of Encoding Errors & Jumbo Frames Errors
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -43,8 +38,14 @@ end wb_slave_fec;
 
 architecture rtl of wb_slave_fec is
 
-  signal s_fec_stat : t_fec_stat_reg;
-  signal s_fec_ctrl : t_fec_ctrl_reg;
+  signal s_fec_stat   : t_fec_stat_reg;
+  signal s_fec_ctrl   : t_fec_ctrl_reg;
+  signal dec_err_d    : std_logic;
+  signal enc_err_d    : std_logic_vector(1 downto 0);
+  signal dec_err_cnt  : unsigned (c_fec_cnt_width - 1 downto 0);
+  signal enc_err_cnt  : unsigned (c_fec_cnt_width - 1 downto 0);
+  signal jumbo_pkt_cnt: unsigned (c_fec_cnt_width - 1 downto 0);
+  signal jumbo_pkt_d  : std_logic;
 
 begin
 
@@ -52,7 +53,6 @@ begin
   wb_slave_o.int <= '0';
   wb_slave_o.rty <= '0';
   wb_slave_o.err <= '0';
-
 
   wb_process : process(clk_i)
 
@@ -62,8 +62,12 @@ begin
       if rst_n_i = '0' then
         s_fec_stat  <= c_fec_stat_reg;
         s_fec_ctrl  <= c_fec_ctrl_reg;
-        wb_slave_o.ack    <= '0';
-        wb_slave_o.dat    <= (others => '0');
+        jumbo_pkt_d <= '0';
+        dec_err_d   <= '0';
+        dec_err_cnt <= (others => '0');
+        jumbo_pkt_cnt   <= (others => '0');
+        wb_slave_o.dat  <= (others => '0');
+        wb_slave_o.ack  <= '0';
         s_fec_ctrl.fec_ctrl_refresh <= '1';
       else
         wb_slave_o.stall <= '0';
@@ -71,46 +75,70 @@ begin
 
         if wb_slave_i.cyc = '1' and wb_slave_i.stb = '1' then
           case wb_slave_i.adr(5 downto 2) is
-            when "0000"    =>  -- enable/disable encoder/decoder 0x0
+            when "0000" =>  -- enable/disable encoder/decoder
               if wb_slave_i.we = '1' then
                 s_fec_ctrl.fec_enc_en <= wb_slave_i.dat(0);
                 s_fec_ctrl.fec_dec_en <= wb_slave_i.dat(0);
               end if;
-              wb_slave_o.dat(0) <= s_fec_ctrl.fec_enc_en;
+              wb_slave_o.dat(0) <= s_fec_ctrl.fec_enc_en or s_fec_ctrl.fec_dec_en;
               wb_slave_o.dat(31 downto 1) <= (others => '0');
-            when "0001"    => --  Pkt Erasure Code / Bit Erasure Code 0x4
+            when "0001" =>  -- Pkt Erasure Code / Bit Erasure Code
               if wb_slave_i.we = '1' then
                 s_fec_ctrl.fec_code <= wb_slave_i.dat(2 downto 0);
               end if;
               wb_slave_o.dat(2  downto 0) <= s_fec_ctrl.fec_code;
               wb_slave_o.dat(31 downto 3) <= (others => '0');
-            when "0010"    => -- Ethertype 0x8
+            when "0010" => -- FEC Ethertype
               if wb_slave_i.we = '1' then
                 s_fec_ctrl.fec_ethtype <= wb_slave_i.dat(15 downto 0);
               end if;
               wb_slave_o.dat(15 downto 0)   <= s_fec_ctrl.fec_ethtype;
               wb_slave_o.dat(31 downto 16)  <= (others => '0');
-            when "0011"    => -- decoded frames 0xC
+            when "0011" => -- Etherbone Ethertype
               if wb_slave_i.we = '1' then
-                --s_fec_stat.stat_dec.err_dec <= wb_slave_i.dat; -- it'd be set to 0
+                s_fec_ctrl.eb_ethtype <= wb_slave_i.dat(15 downto 0);
               end if;
-              --wb_slave_o.dat <= s_fec_stat.stat_dec.err_dec;
+              wb_slave_o.dat(15 downto 0)   <= s_fec_ctrl.eb_ethtype;
+              wb_slave_o.dat(31 downto 16)  <= (others => '0');
+            when "0100" => -- number of encoded frames
+              wb_slave_o.dat  <= fec_stat_reg_i.fec_enc_cnt;
+            when "0101" => --number of decoded frames
+              wb_slave_o.dat  <= fec_stat_reg_i.fec_dec_cnt;
+            when "0110" => -- number of errors jumbo frames
+              wb_slave_o.dat  <= std_logic_vector(jumbo_pkt_cnt);
+            when "0111" => -- number of dec errors
+              wb_slave_o.dat  <= std_logic_vector(dec_err_cnt);
+            when "1000" => -- number of enc errors
+              wb_slave_o.dat  <= std_logic_vector(enc_err_cnt);
             when others =>
           end case;
 
-          -- progates the changes in the reg
+          -- propagates the changes in the reg
           if (wb_slave_i.we = '1') then
             s_fec_ctrl.fec_ctrl_refresh <= '1';
           end if;
+
         else
             s_fec_ctrl.fec_ctrl_refresh <= '0';
         end if;
 
-      --s_fec_ctrl.time_code <= time_code_i;
-      fec_ctrl_reg_o <= s_fec_ctrl;
-      s_fec_stat     <= fec_stat_reg_i;
+        -- Encoding Error Counter
+        enc_err_d <= fec_stat_reg_i.fec_enc_err;
+        if ((enc_err_d(0) = '0' and fec_stat_reg_i.fec_enc_err(0) = '1') or
+            (enc_err_d(1) = '0' and fec_stat_reg_i.fec_enc_err(1) = '1')) then
+          enc_err_cnt <= enc_err_cnt + 1;
+        end if;
+        -- Decoding Error Counter
+        dec_err_d <= fec_stat_reg_i.fec_dec_err.dec_err;
+        if (dec_err_d = '0' and fec_stat_reg_i.fec_dec_err.dec_err = '1') then
+          dec_err_cnt <= dec_err_cnt + 1;
+        end if;
+        -- Jumbo Frame Error
+        jumbo_pkt_d <= fec_stat_reg_i.fec_dec_err.jumbo_frame;
+        if (jumbo_pkt_d = '0' and fec_stat_reg_i.fec_dec_err.jumbo_frame = '1') then
+          jumbo_pkt_cnt <= jumbo_pkt_cnt + 1;
+        end if;
       end if;
     end if;
   end process;
-
 end rtl;
