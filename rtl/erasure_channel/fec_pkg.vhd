@@ -162,15 +162,38 @@ package fec_pkg is
     tai         => (others => '0'),
     cycles      => (others => '0'));
 
-  type t_dec_err  is
+  type t_dec_err is
     record
     jumbo_frame : std_logic;
     dec_err     : std_logic;
+    fec_dec_cnt : std_logic_vector(c_fec_cnt_width - 1 downto 0);
   end record;
+
+  type t_enc_err is
+    record
+    fec_enc_err : std_logic_vector(1 downto 0);
+    fec_enc_cnt : std_logic_vector(c_fec_cnt_width - 1 downto 0);
+  end record;
+
+  constant c_enc_err : t_enc_err := (
+    fec_enc_err => (others => '0'),
+    fec_enc_cnt => (others => '0')
+    );
 
   constant c_dec_err : t_dec_err := (
     jumbo_frame => '0',
-    dec_err     => '0');
+    dec_err     => '0',
+    fec_dec_cnt => (others => '0')
+    );
+
+  type t_fec_stat_reg is record
+    enc_err   : t_enc_err;
+    dec_err   : t_dec_err;
+  end record;
+
+  constant c_fec_stat_reg : t_fec_stat_reg := (
+    enc_err => c_enc_err,
+    dec_err => c_dec_err);
 
   type t_fec_ctrl_reg is record
     fec_ctrl_refresh  : std_logic;
@@ -188,19 +211,6 @@ package fec_pkg is
     eb_ethtype        => x"0800",
     fec_enc_en        => c_ENABLE,
     fec_dec_en        => c_ENABLE);
-
-  type t_fec_stat_reg is record
-    fec_enc_err : std_logic_vector(1 downto 0);
-    fec_enc_cnt : std_logic_vector(c_fec_cnt_width - 1 downto 0);
-    fec_dec_cnt : std_logic_vector(c_fec_cnt_width - 1 downto 0);
-    fec_dec_err : t_dec_err;
-  end record;
-
-  constant c_fec_stat_reg : t_fec_stat_reg := (
-    fec_enc_err => (others => '0'),
-    fec_enc_cnt => (others => '0'),
-    fec_dec_cnt => (others => '0'),
-    fec_dec_err => c_dec_err);
 
   type t_frame_fsm  is (
     INIT_HDR,
@@ -341,7 +351,7 @@ package fec_pkg is
       src_i         : in  t_wrf_source_in;
       src_o         : out t_wrf_source_out;
       ctrl_reg_i    : in  t_fec_ctrl_reg;
-      stat_reg_o    : out t_fec_stat_reg);
+      stat_dec_o    : out t_dec_err);
   end component;
 
   component fec_decoder is
@@ -374,7 +384,7 @@ package fec_pkg is
       src_i         : in  t_wrf_source_in;
       src_o         : out t_wrf_source_out;
       ctrl_reg_i    : in  t_fec_ctrl_reg;
-      stat_reg_o    : out t_fec_stat_reg);
+      stat_enc_o    : out t_enc_err);
   end component;
 
   component fec_encoder is

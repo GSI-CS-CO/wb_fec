@@ -6,7 +6,7 @@
 --! the Fixed Rate Encoder.The encoder generates up to 4 FEC pkts
 --! and this module steers the transmission of the FEC frames over
 --! the WR Frabirc.
---! 
+--!
 --! See the file "LICENSE" for the full license governing this code.
 --!--------------------------------------------------------------------------
 library ieee;
@@ -32,7 +32,7 @@ entity wb_fec_encoder is
       src_i         : in  t_wrf_source_in;
       src_o         : out t_wrf_source_out;
       ctrl_reg_i    : in  t_fec_ctrl_reg;
-      stat_reg_o    : out t_fec_stat_reg);
+      stat_enc_o    : out t_enc_err);
 end wb_fec_encoder;
 
 architecture rtl of wb_fec_encoder is
@@ -175,8 +175,8 @@ begin
       end if;
     end if;
   end process;
-  stat_reg_o.fec_enc_err  <= enc_err & pkt_err;
-  stat_reg_o.fec_enc_cnt  <= pkt_id;
+  stat_enc_o.fec_enc_err  <= enc_err & pkt_err;
+  stat_enc_o.fec_enc_cnt  <= pkt_id;
 
   -- Ctrl the streaming of FEC pkts
   fec_streaming : process(clk_i) is

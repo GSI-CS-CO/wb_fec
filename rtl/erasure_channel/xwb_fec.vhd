@@ -83,6 +83,8 @@ architecture rtl of xwb_fec is
 
   signal fec_ctrl_reg : t_fec_ctrl_reg;
   signal fec_stat_reg : t_fec_stat_reg;
+  signal fec_dec_reg  : t_dec_err;
+  signal fec_enc_reg  : t_enc_err;
 
   signal fec_dec_sink_i  :  t_wrf_sink_in;
   signal fec_dec_sink_o  :  t_wrf_sink_out;
@@ -111,7 +113,7 @@ begin
       src_i       => fec_dec_src_i,
       src_o       => fec_dec_src_o,
       ctrl_reg_i  => fec_ctrl_reg,
-      stat_reg_o  => fec_stat_reg);
+      stat_dec_o  => fec_dec_reg);
 
     -- Decoder
 
@@ -134,25 +136,23 @@ begin
    fec_dec_src_stb   <=  fec_dec_src_o.stb;
    fec_dec_src_we    <=  fec_dec_src_o.we;
    fec_dec_src_sel   <=  fec_dec_src_o.sel;
-  end generate;  
-  
-  n_WB_FEC_DEC : if not g_en_fec_dec generate        
+   fec_stat_reg.dec_err  <= fec_dec_reg;
+  end generate;
+
+  n_WB_FEC_DEC : if not g_en_fec_dec generate
   fec_dec_sink_ack    <= fec_dec_src_ack;
   fec_dec_sink_stall  <= fec_dec_src_stall;
 
-  fec_dec_src_adr   <= fec_dec_sink_adr; 
+  fec_dec_src_adr   <= fec_dec_sink_adr;
   fec_dec_src_dat   <= fec_dec_sink_dat;
   fec_dec_src_cyc   <= fec_dec_sink_cyc;
   fec_dec_src_stb   <= fec_dec_sink_stb;
   fec_dec_src_we    <= fec_dec_sink_we ;
   fec_dec_src_sel   <= fec_dec_sink_sel;
+  fec_stat_reg.dec_err  <= c_dec_err;
   end generate;
 
-
-   --fec_dec_sink_o   <= c_dummy_src_in;
-   --fec_dec_src_o    <= c_dummy_snk_in;
-
-  -- Encoder  
+  -- Encoder
   y_WB_FEC_ENC : if g_en_fec_enc generate
   FEC_ENC: wb_fec_encoder
     generic map (
@@ -166,7 +166,7 @@ begin
       src_i       => fec_enc_src_i,
       src_o       => fec_enc_src_o,
       ctrl_reg_i  => fec_ctrl_reg,
-      stat_reg_o  => fec_stat_reg);
+      stat_enc_o  => fec_enc_reg);
 
   fec_enc_sink_ack    <= fec_enc_sink_o.ack;
   fec_enc_sink_stall  <= fec_enc_sink_o.stall;
@@ -187,18 +187,20 @@ begin
   fec_enc_src_stb   <=  fec_enc_src_o.stb;
   fec_enc_src_we    <=  fec_enc_src_o.we;
   fec_enc_src_sel   <=  fec_enc_src_o.sel;
+  fec_stat_reg.enc_err  <= fec_enc_reg;
   end generate;
 
   n_WB_FEC_ENC : if not g_en_fec_enc generate
   fec_enc_sink_ack    <= fec_enc_src_ack;
   fec_enc_sink_stall  <= fec_enc_src_stall;
 
-  fec_enc_src_adr   <=  fec_enc_sink_adr;  
-  fec_enc_src_dat   <=  fec_enc_sink_dat;  
-  fec_enc_src_cyc   <=  fec_enc_sink_cyc;  
-  fec_enc_src_stb   <=  fec_enc_sink_stb;  
-  fec_enc_src_we    <=  fec_enc_sink_we ;  
-  fec_enc_src_sel   <=  fec_enc_sink_sel;  
+  fec_enc_src_adr   <=  fec_enc_sink_adr;
+  fec_enc_src_dat   <=  fec_enc_sink_dat;
+  fec_enc_src_cyc   <=  fec_enc_sink_cyc;
+  fec_enc_src_stb   <=  fec_enc_sink_stb;
+  fec_enc_src_we    <=  fec_enc_sink_we ;
+  fec_enc_src_sel   <=  fec_enc_sink_sel;
+  fec_stat_reg.enc_err  <= c_enc_err;
   end generate;
 
   WB_SLAVE: wb_slave_fec

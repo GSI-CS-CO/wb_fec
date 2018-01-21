@@ -43,6 +43,8 @@ end wb_fec;
 
 architecture rtl of wb_fec is
   signal fec_ctrl_reg : t_fec_ctrl_reg;
+  signal fec_dec_reg  : t_dec_err;
+  signal fec_enc_reg  : t_enc_err;
   signal fec_stat_reg : t_fec_stat_reg;
 
 begin
@@ -60,15 +62,18 @@ begin
       src_i       => fec_enc_src_i,
       src_o       => fec_enc_src_o,
       ctrl_reg_i  => fec_ctrl_reg,
-      stat_reg_o  => fec_stat_reg);
+      stat_enc_o  => fec_enc_reg);
+
+    fec_stat_reg.enc_err  <= fec_enc_reg;
   end generate;
 
   n_WB_FEC_ENC : if not g_en_fec_enc generate
-    fec_enc_sink_o  <= fec_enc_src_i;
-    fec_enc_src_o   <= fec_enc_sink_i;
+    fec_enc_sink_o        <= fec_enc_src_i;
+    fec_enc_src_o         <= fec_enc_sink_i;
+    fec_stat_reg.enc_err  <= c_enc_err;
   end generate;
 
-  y_WB_FEC_DEC : if g_en_fec_enc generate
+  y_WB_FEC_DEC : if g_en_fec_dec generate
   FEC_DEC : wb_fec_decoder
     generic map (
     g_num_block   => 4,
@@ -81,12 +86,15 @@ begin
       src_i       => fec_dec_src_i,
       src_o       => fec_dec_src_o,
       ctrl_reg_i  => fec_ctrl_reg,
-      stat_reg_o  => fec_stat_reg);
+      stat_dec_o  => fec_dec_reg);
+
+    fec_stat_reg.dec_err  <= fec_dec_reg;
   end generate;
 
-  n_WB_FEC_DEC : if not g_en_fec_enc generate
-    fec_dec_src_o   <= fec_dec_sink_i;
-    fec_dec_sink_o  <= fec_dec_src_i;
+  n_WB_FEC_DEC : if not g_en_fec_dec generate
+    fec_dec_src_o         <= fec_dec_sink_i;
+    fec_dec_sink_o        <= fec_dec_src_i;
+    fec_stat_reg.dec_err  <= c_dec_err;
   end generate;
 
   WB_SLAVE: wb_slave_fec

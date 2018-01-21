@@ -31,7 +31,7 @@ entity wb_fec_decoder is
       src_i         : in  t_wrf_source_in;
       src_o         : out t_wrf_source_out;
       ctrl_reg_i    : in  t_fec_ctrl_reg;
-      stat_reg_o    : out t_fec_stat_reg);
+      stat_dec_o    : out t_dec_err);
 end wb_fec_decoder;
 
 architecture rtl of wb_fec_decoder is
@@ -49,7 +49,6 @@ architecture rtl of wb_fec_decoder is
   signal eth_payload_stb  : std_logic;
   signal fec_pad_stb      : std_logic;
   signal src_halt         : std_logic;
-  signal dec_err          : t_dec_err;
   signal eth_payload      : t_wrf_bus;
   signal eth_hdr          : t_wrf_bus;
   signal eth_hdr_stb      : std_logic;
@@ -66,6 +65,7 @@ architecture rtl of wb_fec_decoder is
   signal wrf_dat          : t_wrf_bus;
   signal stream_dat       : std_logic;
   signal eth_hdr_done     : std_logic;
+  signal dec_err          : std_logic;
   signal fec_dec_cnt      : unsigned (c_fec_cnt_width - 1 downto 0);
 
   constant c_div_num_block : integer := f_log2_size(g_num_block) + 1; -- in 16bit words
@@ -86,7 +86,7 @@ begin
     eth_stream_o      => start_stream,
     dat_stream_i      => stream_dat,
     halt_streaming_i  => src_halt,
-    pkt_dec_err_o     => dec_err.dec_err);
+    pkt_dec_err_o     => dec_err);
 
   FEC_HDR_PROC : fec_hdr_gen
     generic map(
@@ -140,9 +140,10 @@ begin
       end if;
     end if;
   end process;
-  stat_reg_o.fec_dec_err  <= dec_err;
-  dec_err.jumbo_frame     <= jumbo_frame;
-  stat_reg_o.fec_dec_cnt  <= std_logic_vector(fec_dec_cnt);
+
+  stat_dec_o.fec_dec_cnt  <= std_logic_vector(fec_dec_cnt);
+  stat_dec_o.jumbo_frame  <= jumbo_frame;
+  stat_dec_o.dec_err      <= dec_err;
 
   -- Tx from decoder
   tx_fabric : process(clk_i) is
@@ -151,7 +152,7 @@ begin
       if rst_n_i = '0' then
         s_eth_strm    <= IDLE;
         eth_hdr_stb   <= '0';
-        --stream_dat    <= '0';
+        fec_dec_cnt   <= (others => '0');
       else
         case s_eth_strm is
           when IDLE =>

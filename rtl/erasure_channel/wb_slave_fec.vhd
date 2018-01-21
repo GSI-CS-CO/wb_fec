@@ -38,7 +38,6 @@ end wb_slave_fec;
 
 architecture rtl of wb_slave_fec is
 
-  signal s_fec_stat   : t_fec_stat_reg;
   signal s_fec_ctrl   : t_fec_ctrl_reg;
   signal dec_err_d    : std_logic;
   signal enc_err_d    : std_logic_vector(1 downto 0);
@@ -60,7 +59,6 @@ begin
 
     if rising_edge(clk_i) then
       if rst_n_i = '0' then
-        s_fec_stat  <= c_fec_stat_reg;
         s_fec_ctrl  <= c_fec_ctrl_reg;
         jumbo_pkt_d <= '0';
         dec_err_d   <= '0';
@@ -101,9 +99,9 @@ begin
               wb_slave_o.dat(15 downto 0)   <= s_fec_ctrl.eb_ethtype;
               wb_slave_o.dat(31 downto 16)  <= (others => '0');
             when "0100" => -- number of encoded frames
-              wb_slave_o.dat  <= fec_stat_reg_i.fec_enc_cnt;
+              wb_slave_o.dat  <= fec_stat_reg_i.enc_err.fec_enc_cnt;
             when "0101" => --number of decoded frames
-              wb_slave_o.dat  <= fec_stat_reg_i.fec_dec_cnt;
+              wb_slave_o.dat  <= fec_stat_reg_i.dec_err.fec_dec_cnt;
             when "0110" => -- number of errors jumbo frames
               wb_slave_o.dat  <= std_logic_vector(jumbo_pkt_cnt);
             when "0111" => -- number of dec errors
@@ -123,19 +121,19 @@ begin
         end if;
 
         -- Encoding Error Counter
-        enc_err_d <= fec_stat_reg_i.fec_enc_err;
-        if ((enc_err_d(0) = '0' and fec_stat_reg_i.fec_enc_err(0) = '1') or
-            (enc_err_d(1) = '0' and fec_stat_reg_i.fec_enc_err(1) = '1')) then
+        enc_err_d <= fec_stat_reg_i.enc_err.fec_enc_err;
+        if ((enc_err_d(0) = '0' and fec_stat_reg_i.enc_err.fec_enc_err(0) = '1') or
+            (enc_err_d(1) = '0' and fec_stat_reg_i.enc_err.fec_enc_err(1) = '1')) then
           enc_err_cnt <= enc_err_cnt + 1;
         end if;
         -- Decoding Error Counter
-        dec_err_d <= fec_stat_reg_i.fec_dec_err.dec_err;
-        if (dec_err_d = '0' and fec_stat_reg_i.fec_dec_err.dec_err = '1') then
+        dec_err_d <= fec_stat_reg_i.dec_err.dec_err;
+        if (dec_err_d = '0' and fec_stat_reg_i.dec_err.dec_err = '1') then
           dec_err_cnt <= dec_err_cnt + 1;
         end if;
         -- Jumbo Frame Error
-        jumbo_pkt_d <= fec_stat_reg_i.fec_dec_err.jumbo_frame;
-        if (jumbo_pkt_d = '0' and fec_stat_reg_i.fec_dec_err.jumbo_frame = '1') then
+        jumbo_pkt_d <= fec_stat_reg_i.dec_err.jumbo_frame;
+        if (jumbo_pkt_d = '0' and fec_stat_reg_i.dec_err.jumbo_frame = '1') then
           jumbo_pkt_cnt <= jumbo_pkt_cnt + 1;
         end if;
       end if;
