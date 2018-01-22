@@ -53,6 +53,8 @@ begin
   wb_slave_o.rty <= '0';
   wb_slave_o.err <= '0';
 
+  fec_ctrl_reg_o  <= s_fec_ctrl;
+
   wb_process : process(clk_i)
 
   begin
