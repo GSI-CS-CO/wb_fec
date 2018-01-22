@@ -301,6 +301,9 @@ begin
     end if;
   end process;
 
+  snk_o.err <= '0';
+  snk_o.rty <= '0';
+
   snk_stall   <= src_i.stall  when ctrl_reg_i.fec_enc_en = c_DISABLE else
                 '1'           when snk_i.cyc = '0'                   else
                 '0';
