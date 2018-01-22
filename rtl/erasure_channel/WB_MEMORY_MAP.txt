@@ -1,0 +1,11 @@
+WB Register Map
+---------------
+0x0  Enable/disable encoder/decoder
+0x4  FEC type
+0x8  FEC Ethertype
+0xC  Etherbone Ethertype
+0x10 Num of Encoded Frames
+0x14 Num of Decoded Frames
+0x18 Num of Jumbo Frames Errors in Rx
+0x1C Num of Decoding Errors > 2 FEC pkts lost
+0x20 Num of Encoding Errors & Jumbo Frames Errors
