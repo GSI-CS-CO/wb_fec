@@ -1,3 +1,25 @@
+// @file main.sv
+// @brief Testbench for the WB_FEC
+// @author C.Prados <c.prados@gsi.de> <bradomyn@gmail.com>
+//
+// This test-bench is inspired by the test-benches of the WR Core.
+//
+// See the file "LICENSE" for the full license governing this code.
+//---------------------------------------------------------------------------
+// This testbench produces pkts with random payload at regular intervals.
+// The WB_FEC encodes 1 packet into 4 packets and sends it to the WR Fabric
+// Loop Back. Before the packets reaches this module there is a module
+// which simulates the losses of packets in a fiber optic. This module it
+// is configurable and to drop specific packets out of the 4 encoded packets.
+// Finally the WR Fabric Loop Back sends back the encoded frames to the WB_FEC
+// decoder, which decodes the encoded packets.
+//
+// The payload of the original packets are stored and compared with the payload
+// of the decoded packet. If the length or payload of the decoded packet is not
+// the same the payload and length of the decoded packet is printed.
+//
+// See WR_TEST_BENCH.pdf for a visual representation of the testbench
+
 `timescale 1ns/1ps
 
 `include "tbi_utils.sv"
@@ -27,6 +49,8 @@ module main;
   int i = 0;
   int j = 0;
   int cnt = 0;
+  int err = 0;
+
 
   EthPacket tx_pk[$];
   EthPacket rx_pk;
@@ -212,8 +236,8 @@ module main;
     .wb_stall_o                 (WB_lbk.master.stall));
 
   initial begin
-
 		uint64_t drop;
+    int err_array[7];
     EthPacket pkt;
     pkt = new;
 
@@ -243,21 +267,29 @@ module main;
     // configures the Module Dropper to drop packets
     // check the file fec_regs.v for more
     // info about errors that you can trigger
-    acc_drop.write(`DROPP, `X01);
+    //acc_drop.write(`DROPP, `X01);
+    // array of drop errors
+    err_array = '{4'h0, 4'h2, 4'h6, 4'h1, 4'h5, 4'h3, 4'hE};
 
     #1us
 
     while(1) begin
       seed = (seed + 1) & 'hffff;
+      // rnd length of the frames
       length = $dist_uniform(seed, 64, 1500);
       if (length < 64)
         begin
         $stop;
       end
       length = length & 'hffff;
-      length = (length + 7) & ~'h07;
+      length = (length + 7) & ~'h07; // Multiple of 8
 
-      /* somdummy addresses */
+      // rnd pkt drop generator
+      err = err_array[$dist_uniform(seed, 0, 6)];
+      acc_drop.write(`DROPP, err);
+      $write("\nDROPPING PKT WITH ERRO CODE %h \n", err);
+
+      /* dummy addresses */
       pkt.dst        = '{'hff, 'hff, 'hff, 'hff, 'hff, 'hff};
       pkt.src        = '{1,2,3,4,5,6};
       pkt.ethertype  = length;
@@ -273,25 +305,28 @@ module main;
         for (i=1; i <= length/4; i++)
           begin
           pkt.payload[cnt] = $dist_uniform(seed, 64, 1500) & 'hff;
-          //pkt.payload[cnt] = i & 'hff;
-          //pkt.payload[cnt] = (j + 1)  & 'hff;
           cnt = cnt + 1;
         end
       end
 
-      $write("\n----->LENGTH %d \n", length);
+      $write("\n----->TX LENGTH %d \n", length);
 
-      tx_pk.push_front(pkt);
+      // if drops more than 3 packets no possible to decode
+      if (err != 4'hE) begin
+        tx_pk.push_front(pkt);
+      end
 
       fec_src.send(pkt);
 
       // Test at 1 Gb/s the Encoder
-      // The problem is that the tx/rx verilog functions 
-      // are not blocking and you can miss some packets in the rx
+      // The problem is that the tx/rx verilog functions are nota
+      // blocking and you can miss some packets in the rx
       //#5ns;
       #30us;
     end
   end
+
+// Log file
 
   initial begin
     f = $fopen("output.txt","w");
@@ -316,7 +351,7 @@ module main;
     dec_snk.settings.gen_random_stalls = 1;
     fec_snk = new(dec_snk.get_accessor());
 
-	  $warning("--> starting");
+	  $write("--> starting");
 		#5us;
     while(1) begin
 			//#1us;
@@ -334,17 +369,17 @@ module main;
 				$write("%02X:", pkt.src[3]);
 				$write("%02X:", pkt.src[4]);
 				$write("%02X",  pkt.src[5]);
-				$info("--> recv: size=%4d, %4d", pkt.size, pkt.size-prev_size);
 			end;
 			prev_size = pkt.size;
 
-      $write("Tx Queue Size %d \n", tx_pk.size());
+      //$write("Tx Queue Size %d \n", tx_pk.size());
+      $write("\n");
+			$write("--> RECV LENTH: size=%4d", pkt.size - 14);
 
-      if(tx_pk.size() != 0)
+      rx_pk = tx_pk.pop_back();
+
+      if((pkt.size - 14) != rx_pk.size)
         begin
-
-        rx_pk = tx_pk.pop_back();
-
         lenx = 0;
         $write("Original Pkt: \n");
         while (lenx < rx_pk.size) begin
@@ -359,7 +394,7 @@ module main;
           lenx++;
         end
 
-        $write("\nTx Size %4d Rx Size %4d -- %4d \n", rx_pk.size, pkt.size - 14, pkt.size);
+        $write("\nERROR Tx Size %4d Rx Size %4d -- %4d \n", rx_pk.size, pkt.size - 14, pkt.size);
         $stop;
       end
 
@@ -386,6 +421,8 @@ module main;
         end
         len++;
       end
+
+    $write("\n--------------------------------------------\n");
     end
   end
 endmodule // main

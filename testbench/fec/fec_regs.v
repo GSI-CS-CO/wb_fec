@@ -12,18 +12,18 @@
 // The FEC packet 0 and 3 are use for decoding
 // packet FEC 1 and 2 are dropped in the Dropper module
 `define X03                          4'h6
-// The FEC packet 0 and 2 are use for decoding
-// packet FEC 1 is dropped in the Dropper module
-`define X12                          4'h1
 // The FEC packet 1 and 2 are use for decoding
 // packet FEC 0 is dropped in the Dropper module
-`define X13                          4'h5
+`define X12                          4'h1
 // The FEC packet 1 and 3 are use for decoding
 // packet FEC 0 and 2 are dropped in the Dropper module
-`define X23                          4'h3
+`define X13                          4'h5
 // The FEC packet 2 and 3 are use for decoding
 // packet FEC 0 and 1 are dropped in the Dropper module
+`define X23                          4'h3
+// No possible to decode more than 2 packets dropped
 `define ERR                          4'hE
+
 //`define LBK_MCR_ENA_OFFSET 0
 //`define LBK_MCR_ENA 32'h00000001
 //`define LBK_MCR_CLR_OFFSET 1
