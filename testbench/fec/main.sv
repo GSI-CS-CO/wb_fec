@@ -232,8 +232,6 @@ module main;
     acc_drop.set_mode(PIPELINED);
     WB_drop.settings.cyc_on_stall = 1;
 
-	  acc_drop.write(`DROPP, `ERR);
-    $write("\n----->X02 \n");
 
     acc_fec = WB_fec.get_accessor();
     acc_fec.set_mode(PIPELINED);
@@ -241,6 +239,11 @@ module main;
 
 		fec_src = new(enc_src.get_accessor());
 		//dec_snk.settings.cyc_on_stall = 1;
+
+    // configures the Module Dropper to drop packets
+    // check the file fec_regs.v for more
+    // info about errors that you can trigger
+    acc_drop.write(`DROPP, `X01);
 
     #1us
 
@@ -253,7 +256,6 @@ module main;
       end
       length = length & 'hffff;
       length = (length + 7) & ~'h07;
-      //length = 512;
 
       /* somdummy addresses */
       pkt.dst        = '{'hff, 'hff, 'hff, 'hff, 'hff, 'hff};
@@ -279,21 +281,15 @@ module main;
 
       $write("\n----->LENGTH %d \n", length);
 
-      acc_drop.read(`DROPP, drop);
-
-      if (drop != 4'hE)
-        begin
-        tx_pk.push_front(pkt);
-      end
+      tx_pk.push_front(pkt);
 
       fec_src.send(pkt);
 
-      acc_drop.write(`DROPP, `X01);
-      $write("\n----->X02 \n");
-
+      // Test at 1 Gb/s the Encoder
+      // The problem is that the tx/rx verilog functions 
+      // are not blocking and you can miss some packets in the rx
       //#5ns;
       #30us;
-      //#60us;
     end
   end
 
@@ -326,90 +322,70 @@ module main;
 			//#1us;
 			fec_snk.recv(pkt);
 			begin
-				//$write("%02X:", pkt.dst[0]);
-				//$write("%02X:", pkt.dst[1]);
-				//$write("%02X:", pkt.dst[2]);
-				//$write("%02X:", pkt.dst[3]);
-				//$write("%02X:", pkt.dst[4]);
-				//$write("%02X:", pkt.dst[5]);
-				//$write("%02X:", pkt.src[0]);
-				//$write("%02X:", pkt.src[1]);
-				//$write("%02X:", pkt.src[2]);
-				//$write("%02X:", pkt.src[3]);
-				//$write("%02X:", pkt.src[4]);
-				//$write("%02X",  pkt.src[5]);
-				//$info("--> recv: size=%4d, %4d", pkt.size, pkt.size-prev_size);
+				$write("%02X:", pkt.dst[0]);
+				$write("%02X:", pkt.dst[1]);
+				$write("%02X:", pkt.dst[2]);
+				$write("%02X:", pkt.dst[3]);
+				$write("%02X:", pkt.dst[4]);
+				$write("%02X:", pkt.dst[5]);
+				$write("%02X:", pkt.src[0]);
+				$write("%02X:", pkt.src[1]);
+				$write("%02X:", pkt.src[2]);
+				$write("%02X:", pkt.src[3]);
+				$write("%02X:", pkt.src[4]);
+				$write("%02X",  pkt.src[5]);
+				$info("--> recv: size=%4d, %4d", pkt.size, pkt.size-prev_size);
 			end;
 			prev_size = pkt.size;
-			//acc_fec.read(`ADDR_LBK_RCV_CNT, val64);
-			//$display("rcv_cnt: %d", val64);
-			//acc_fec.read(`ADDR_LBK_DRP_CNT, val64);
-			//$display("drp_cnt: %d", val64);
-			//acc_fec.read(`ADDR_LBK_FWD_CNT, val64);
-			//$display("fwd_cnt: %d", val64);
-			//acc_fec.write(`ADDR_LBK_MCR, `LBK_MCR_CLR);
-			//acc_fec.write(`ADDR_LBK_MCR, 0);
-      //
+
       $write("Tx Queue Size %d \n", tx_pk.size());
 
       if(tx_pk.size() != 0)
         begin
 
-      rx_pk = tx_pk.pop_back();
+        rx_pk = tx_pk.pop_back();
 
-      if (((rx_pk.size + 14) != pkt.size) && pkt.size != 14)
-        begin
+        lenx = 0;
+        $write("Original Pkt: \n");
+        while (lenx < rx_pk.size) begin
+          $write("%02X", rx_pk.payload[lenx]);
+          lenx++;
+        end
+
+        $write("\nRx Pkt: \n");
+        lenx = 0;
+        while (lenx < pkt.size - 14) begin
+          $write("%02X", pkt.payload[lenx]);
+          lenx++;
+        end
+
+        $write("\nTx Size %4d Rx Size %4d -- %4d \n", rx_pk.size, pkt.size - 14, pkt.size);
+        $stop;
+      end
+
+      len = 0;
+      while (len < rx_pk.size) begin
+        if (rx_pk.payload[len] != pkt.payload[len])
+          begin
           lenx = 0;
-          $write("Original Pkt: \n");
           while (lenx < rx_pk.size) begin
             $write("%02X", rx_pk.payload[lenx]);
             lenx++;
           end
 
-          $write("\nRx Pkt: \n");
+          $write("\n");
+
           lenx = 0;
           while (lenx < pkt.size - 14) begin
             $write("%02X", pkt.payload[lenx]);
             lenx++;
           end
 
-          $write("\nTx Size %4d Rx Size %4d -- %4d \n", rx_pk.size, pkt.size - 14, pkt.size);
-          //$stop;
+          $write("\nError enc/dec");
+          $stop;
         end
-      else
-        begin
-          $write("\nTx Size %4d Rx Size %4d \n", rx_pk.size, pkt.size - 14);
-      end;
-
-
-      if (pkt.size != 14)
-        begin
-        len = 0;
-        while (len < rx_pk.size) begin
-          if (rx_pk.payload[len] != pkt.payload[len])
-            begin
-            lenx = 0;
-            while (lenx < rx_pk.size) begin
-              $write("%02X", rx_pk.payload[lenx]);
-              lenx++;
-            end
-
-            $write("\n");
-
-            lenx = 0;
-            while (lenx < pkt.size - 14) begin
-              $write("%02X", pkt.payload[lenx]);
-              lenx++;
-            end
-
-            $write("\nError enc/dec");
-            $stop;
-          end
-          len++;
-        end
-      end
+        len++;
       end
     end
   end
-
 endmodule // main
