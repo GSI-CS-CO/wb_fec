@@ -36,18 +36,18 @@ begin
         wb_o.ack    <= wb_i.cyc and wb_i.stb;
 
         if wb_i.cyc = '1' and wb_i.stb = '1' then
-          case wb_i.adr(5 downto 2) is
-            when "0000"    =>
+          case wb_i.adr(2 downto 0) is
+            when "000"    =>
               if wb_i.we = '1' then
                 config.drop <= wb_i.dat(3 downto 0);
               end if;
               wb_o.dat(3 downto 0)  <= config.drop;
               wb_o.dat(31 downto 4) <= (others => '0');
-            when "0001"    =>
+            when "001"     =>
               if wb_i.we = '1' then
-                config.rnd <= wb_i.dat(0);
+                config.en <= wb_i.dat(0);
               end if;
-              wb_o.dat(0)           <= config.rnd;
+              wb_o.dat(0)           <= config.en;
               wb_o.dat(31 downto 1) <= (others => '0');
             when others =>
           end case;
