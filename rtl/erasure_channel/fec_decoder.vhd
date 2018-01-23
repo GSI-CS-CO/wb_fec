@@ -254,6 +254,7 @@ architecture rtl of fec_decoder is
           when STORE =>
             if (fec_payload_cnt <= block_len - 1) then
               xor_we        <= c_FIFO_ON;  -- [0 xor 1] / [1 xor 2] / [2 xor 3] / [3 xor 0]
+              we_store_sel  <= (others => (others => '0'));
             elsif (fec_payload_cnt <= (2 * block_len) - 1) then
               xor_we        <= c_FIFO_OFF;
               we_store_sel  <= f_fifo_id(subid);
@@ -321,12 +322,12 @@ architecture rtl of fec_decoder is
                  (others => (others => '0'))when s_NEXT_OP = IDLE  else
                  we_xor_sel;
 
-  xor_rd  <= c_FIFO_ON when (s_NEXT_OP = XOR_0_1 and fec_payload_cnt > block_len - 1) else
-             c_FIFO_ON when (s_NEXT_OP = XOR_0_2 and fec_payload_cnt > block_len - 1) else
-             c_FIFO_ON when (s_NEXT_OP = XOR_1_2 and fec_payload_cnt > block_len - 1) else
-             c_FIFO_ON when (s_NEXT_OP = XOR_1_3 and fec_payload_cnt > block_len - 1) else
-             c_FIFO_ON when (s_NEXT_OP = XOR_2_3 and fec_payload_cnt > block_len - 1) else
-             c_FIFO_ON when (s_NEXT_OP = XOR_0_3 and fec_payload_cnt > block_len - 1) else
+  xor_rd  <= c_FIFO_ON when (s_NEXT_OP = XOR_0_1 and fec_payload_cnt > block_len - 1) or
+                            (s_NEXT_OP = XOR_0_2 and fec_payload_cnt > block_len - 1) or
+                            (s_NEXT_OP = XOR_1_2 and fec_payload_cnt > block_len - 1) or
+                            (s_NEXT_OP = XOR_1_3 and fec_payload_cnt > block_len - 1) or
+                            (s_NEXT_OP = XOR_2_3 and fec_payload_cnt > block_len - 1) or
+                            (s_NEXT_OP = XOR_0_3 and fec_payload_cnt > block_len - 1) else
              c_FIFO_OFF;
 
   read_block  <= f_read_block(s_NEXT_OP, fec_payload_cnt, block_len);
