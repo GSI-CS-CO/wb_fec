@@ -161,7 +161,7 @@ module main;
     .wb_slave_cyc(WB_fec.master.cyc),
 		.wb_slave_stb(WB_fec.master.stb),
 		.wb_slave_we(WB_fec.master.we),
-		.wb_slave_sel(4'b1111),
+		.wb_slave_sel(WB_fec.master.sel),
 		.wb_slave_adr(WB_fec.master.adr),
 		.wb_slave_dat_i(WB_fec.master.dat_o),
 		.wb_slave_dat_o(WB_fec.master.dat_i),
@@ -315,6 +315,10 @@ module main;
       if (err != 4'hE) begin
         tx_pk.push_front(pkt);
       end
+      else begin
+        $write("\n Error Decoding >2 Lost\n");
+      $write("\n--------------------------------------------\n");
+      end
 
       fec_src.send(pkt);
 
@@ -342,7 +346,9 @@ module main;
   end
 
   initial begin
+		uint64_t fec_info=0;
     EthPacket pkt;
+    int total_cnt=0;
 		int prev_size=0;
 		uint64_t val64;
     int len;
@@ -374,7 +380,7 @@ module main;
 
       //$write("Tx Queue Size %d \n", tx_pk.size());
       $write("\n");
-			$write("--> RECV LENTH: size=%4d", pkt.size - 14);
+			$write("--> RECV LENTH: size=%4d \n", pkt.size - 14);
 
       rx_pk = tx_pk.pop_back();
 
@@ -387,7 +393,7 @@ module main;
           lenx++;
         end
 
-        $write("\nRx Pkt: \n");
+        $write("\nDecoded Pkt: \n");
         lenx = 0;
         while (lenx < pkt.size - 14) begin
           $write("%02X", pkt.payload[lenx]);
@@ -402,6 +408,8 @@ module main;
       while (len < rx_pk.size) begin
         if (rx_pk.payload[len] != pkt.payload[len])
           begin
+
+          $write("Original Pkt: \n");
           lenx = 0;
           while (lenx < rx_pk.size) begin
             $write("%02X", rx_pk.payload[lenx]);
@@ -410,6 +418,7 @@ module main;
 
           $write("\n");
 
+          $write("\nDecoded Pkt: \n");
           lenx = 0;
           while (lenx < pkt.size - 14) begin
             $write("%02X", pkt.payload[lenx]);
@@ -421,8 +430,22 @@ module main;
         end
         len++;
       end
-
-    $write("\n--------------------------------------------\n");
+      $write("\n--------------------------------------------\n");
+      if(total_cnt % 4 == 0) begin
+        acc_fec.read(`ADD_FEC_NUM_ENC_PKT, fec_info);
+        $write("Encoded Frames %04D -- ", fec_info);
+        acc_fec.read(`ADD_FEC_NUM_ENC_ERR, fec_info);
+        $write("Encoded Errors %04D -- ", fec_info);
+        acc_fec.read(`ADD_FEC_NUM_DEC_PKT, fec_info);
+        $write("Decoded Frames %04D -- ", fec_info);
+        acc_fec.read(`ADD_FEC_NUM_DEC_ERR, fec_info);
+        $write("Decoded Errors %04D -- ", fec_info);
+        acc_fec.read(`ADD_FEC_NUM_JUMBO, fec_info);
+        $write("Jumbo Frames: %04D\n", fec_info);
+      end
+      total_cnt++;
+      $write("\n--------------------------------------------\n");
     end
+
   end
 endmodule // main
