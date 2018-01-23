@@ -269,14 +269,14 @@ module main;
     // info about errors that you can trigger
     //acc_drop.write(`DROPP, `X01);
     // array of drop errors
-    err_array = '{4'h0, 4'h2, 4'h6, 4'h1, 4'h5, 4'h3, 4'hE};
+    err_array = '{4'h0, 4'h2, 4'h6, 4'h1, 4'h5, 4'h3, 4'h7};
 
     #1us
 
     while(1) begin
-      seed = (seed + 1) & 'hffff;
+      seed = (seed + 6) & 'hffff;
       // rnd length of the frames
-      length = $dist_uniform(seed, 64, 1500);
+      length = $dist_uniform(seed, 500, 1400);
       if (length < 64)
         begin
         $stop;
@@ -312,7 +312,7 @@ module main;
       $write("\n----->TX LENGTH %d \n", length);
 
       // if drops more than 3 packets no possible to decode
-      if (err != 4'hE) begin
+      if (err != 4'h7) begin
         tx_pk.push_front(pkt);
       end
       else begin
@@ -353,6 +353,7 @@ module main;
 		uint64_t val64;
     int len;
     int lenx;
+    int len_block;
 
     dec_snk.settings.gen_random_stalls = 1;
     fec_snk = new(dec_snk.get_accessor());
@@ -411,18 +412,38 @@ module main;
 
           $write("Original Pkt: \n");
           lenx = 0;
+          len_block = 0;
           while (lenx < rx_pk.size) begin
             $write("%02X", rx_pk.payload[lenx]);
             lenx++;
+            if (len_block < (rx_pk.size)/4)
+              begin
+              len_block = len_block + 1;
+            end
+            else
+              begin
+              len_block = 0;
+              $write("\n");
+            end
           end
 
           $write("\n");
 
           $write("\nDecoded Pkt: \n");
           lenx = 0;
+          len_block = 0;
           while (lenx < pkt.size - 14) begin
             $write("%02X", pkt.payload[lenx]);
             lenx++;
+            if (len_block <= ((rx_pk.size - 14)/4))
+              begin
+              len_block = len_block + 1;
+            end
+            else
+              begin
+              len_block = 0;
+              $write("\n");
+            end
           end
 
           $write("\nError enc/dec");
