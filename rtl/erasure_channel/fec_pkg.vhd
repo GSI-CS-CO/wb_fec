@@ -314,6 +314,17 @@ package fec_pkg is
       ctrl_reg_i        : in  t_fec_ctrl_reg);
   end component;
 
+  component xwb_slave_fec is
+    port (
+      clk_i          : in  std_logic;
+      rst_n_i        : in  std_logic;
+      wb_slave_i     : in  t_wishbone_slave_in;
+      wb_slave_o     : out t_wishbone_slave_out;
+      fec_stat_reg_i : in  t_fec_stat_reg;
+      fec_ctrl_reg_o : out t_fec_ctrl_reg;
+      time_code_i    : in  t_time_code);
+  end component;
+
   component wb_fec is
     generic (
       g_num_block   : integer := 4;

@@ -65,6 +65,7 @@ begin
         jumbo_pkt_d <= '0';
         dec_err_d   <= '0';
         dec_err_cnt <= (others => '0');
+        enc_err_cnt <= (others => '0');
         jumbo_pkt_cnt   <= (others => '0');
         wb_slave_o.dat  <= (others => '0');
         wb_slave_o.ack  <= '0';

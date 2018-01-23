@@ -1,6 +1,7 @@
 files = [ "fec_pkg.vhd",
           "fec_encoder.vhd",
           "wb_slave_fec.vhd",
+          "xwb_slave_fec.vhd",
           "wb_fec_decoder.vhd",
           "fec_len_rx_pad.vhd",
           "fec_len_tx_pad.vhd",

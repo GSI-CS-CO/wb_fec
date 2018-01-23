@@ -83,5 +83,4 @@ package xfec_pkg is
         wb_slave_we     : in std_logic;
         wb_slave_dat    : in t_wishbone_data);
   end component;
-
 end package fec_pkg;

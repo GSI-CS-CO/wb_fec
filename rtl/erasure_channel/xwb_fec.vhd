@@ -203,7 +203,7 @@ begin
   fec_stat_reg.enc_err  <= c_enc_err;
   end generate;
 
-  WB_SLAVE: wb_slave_fec
+  XWB_SLAVE: xwb_slave_fec
     port map (
       clk_i           => clk_i,
       rst_n_i         => rst_n_i,
