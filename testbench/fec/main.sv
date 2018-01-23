@@ -262,14 +262,19 @@ module main;
     WB_fec.settings.cyc_on_stall = 1;
 
 		fec_src = new(enc_src.get_accessor());
-		//dec_snk.settings.cyc_on_stall = 1;
+		//enc_src.settings.cyc_on_stall = 1;
 
     // configures the Module Dropper to drop packets
     // check the file fec_regs.v for more
     // info about errors that you can trigger
-    //acc_drop.write(`DROPP, `X01);
+    // e.g acc_drop.write(`ADD_DROPP, `X01);
     // array of drop errors
     err_array = '{4'h0, 4'h2, 4'h6, 4'h1, 4'h5, 4'h3, 4'h7};
+
+    // If you want to test the FEC bypass uncomment
+    // and comment the lines 293, 294, 295
+    //acc_drop.write(`ADD_DROPP, `X01);
+    //acc_fec.write(`ADD_FEC_EN, 4'h0);
 
     #1us
 
@@ -282,11 +287,11 @@ module main;
         $stop;
       end
       length = length & 'hffff;
-      length = (length + 7) & ~'h07; // Multiple of 8
+      length = (length + 8) & ~'h07; // Multiple of 8
 
       // rnd pkt drop generator
       err = err_array[$dist_uniform(seed, 0, 6)];
-      acc_drop.write(`DROPP, err);
+      acc_drop.write(`ADD_DROPP, err);
       $write("\nDROPPING PKT WITH ERRO CODE %h \n", err);
 
       /* dummy addresses */
