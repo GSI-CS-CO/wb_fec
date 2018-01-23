@@ -160,7 +160,6 @@ begin
               s_eth_strm <= SEND_STATUS;
             end if;
             eth_hdr_stb <= '0';
-            --stream_dat  <= '0';
           when SEND_STATUS =>
               if (src_halt = '0') then
                 s_eth_strm  <= SEND_HDR;
@@ -240,8 +239,8 @@ begin
         jumbo_frame   <= '0';
         fec_pad_stb   <= '0';
       else
+        snk_o.ack <= snk_i.cyc or snk_i.stb;
         if (ctrl_reg_i.fec_enc_en =  c_ENABLE) then
-          snk_o.ack <= snk_i.cyc or snk_i.stb;
           if snk_i.cyc = '1' and snk_i.stb = '1' and snk_stall = '0' and
              fec_skip_pkt = '0' then
             eth_cnt <= eth_cnt + 1;
