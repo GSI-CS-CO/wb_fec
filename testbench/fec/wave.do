@@ -110,7 +110,7 @@ add wave -noupdate -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC
 add wave -noupdate -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/eth_hdr_shift
 add wave -noupdate -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/eth_hdr
 add wave -noupdate -group DEC_FEC_HDR /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/FEC_HDR_PROC/pkt_len
-add wave -noupdate -expand -group WB_DEC /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/snk_i
+add wave -noupdate -expand -group WB_DEC -expand /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/snk_i
 add wave -noupdate -expand -group WB_DEC /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/snk_o
 add wave -noupdate -expand -group WB_DEC /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/src_i
 add wave -noupdate -expand -group WB_DEC /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/src_o
@@ -140,6 +140,7 @@ add wave -noupdate -expand -group WB_DEC /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/
 add wave -noupdate -expand -group WB_DEC /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/snk_stall
 add wave -noupdate -expand -group WB_DEC -height 16 /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/s_enc_refresh
 add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/fec_payload_stb_i
+add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/pkt_dec_err
 add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/rst_n_fifo
 add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/rst_n_dec
 add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/rst_n_i
@@ -172,6 +173,12 @@ add wave -noupdate -expand -group DECODER -expand -group XOR_0_3_1 /main/XWB_FEC
 add wave -noupdate -expand -group DECODER -expand -group XOR_0_3_1 /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/xor_payload
 add wave -noupdate -expand -group DECODER -expand -group XOR_0_3_1 /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/pkt_block_xor(3)
 add wave -noupdate -expand -group DECODER -expand -group XOR_0_3_1 /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/pkt_block_xor(0)
+add wave -noupdate -expand -group DECODER -expand -group XOR_0_2_0 /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/pkt_block_fifo(2)
+add wave -noupdate -expand -group DECODER -expand -group XOR_0_2_0 /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/fec_payload_i
+add wave -noupdate -expand -group DECODER -expand -group XOR_0_2_0 /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/pkt_block_xor(3)
+add wave -noupdate -expand -group DECODER -expand -group XOR_0_2_1 /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/xor_payload
+add wave -noupdate -expand -group DECODER -expand -group XOR_0_2_1 /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/fec_payload_i
+add wave -noupdate -expand -group DECODER -expand -group XOR_0_2_1 /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/pkt_block_xor(1)
 add wave -noupdate -expand -group DECODER -expand -group XOR_0_3_0 /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/fec_payload_i
 add wave -noupdate -expand -group DECODER -expand -group XOR_0_3_0 /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/xor_payload
 add wave -noupdate -expand -group DECODER -expand -group XOR_0_3_0 /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/pkt_block_fifo(4)
@@ -199,13 +206,12 @@ add wave -noupdate -expand -group DECODER -expand -group XOR_BLOCK_FIFO /main/XW
 add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/s_NEXT_OP
 add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/fec_pkt_rx
 add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/s_fec_hdr.enc_frame_subid
-add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/pkt_dec_err
 add wave -noupdate -expand -group DECODER -expand /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/pkt_block_xor
 add wave -noupdate -expand -group DECODER -expand -group BLOCK_FIFO -expand /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/payload_block
 add wave -noupdate -expand -group DECODER -expand -group BLOCK_FIFO -expand /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/pkt_block_fifo
 add wave -noupdate -expand -group DECODER -expand -group BLOCK_FIFO /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/read_fec_block
 add wave -noupdate -expand -group DECODER -expand -group BLOCK_FIFO /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/we_mask
-add wave -noupdate -expand -group DECODER -expand -group BLOCK_FIFO /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/empty
+add wave -noupdate -expand -group DECODER -expand -group BLOCK_FIFO -expand /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/empty
 add wave -noupdate -expand -group DECODER -expand -group BLOCK_FIFO /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/cnt
 add wave -noupdate -expand -group DECODER -expand -group BLOCK_FIFO /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/full
 add wave -noupdate -expand -group DECODER /main/XWB_FEC_ENC/y_WB_FEC_DEC/FEC_DEC/PKT_ERASURE_DEC/s_fec_hdr
@@ -305,7 +311,7 @@ add wave -noupdate -group XWB_SLAVE /main/XWB_FEC_ENC/XWB_SLAVE/jumbo_pkt_d
 add wave -noupdate -expand -subitemconfig {/main/XWB_FEC_ENC/fec_stat_reg.enc_err -expand /main/XWB_FEC_ENC/fec_stat_reg.dec_err -expand} /main/XWB_FEC_ENC/fec_stat_reg
 add wave -noupdate /main/XWB_FEC_ENC/fec_ctrl_reg
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 3} {26107680000 fs} 0} {{Cursor 5} {1888397076700 fs} 0} {{Cursor 6} {666476000000 fs} 0}
+WaveRestoreCursors {{Cursor 3} {172697891870 fs} 0} {{Cursor 5} {1888397076700 fs} 0} {{Cursor 6} {666476000000 fs} 0}
 configure wave -namecolwidth 234
 configure wave -valuecolwidth 144
 configure wave -justifyvalue left
@@ -320,4 +326,4 @@ configure wave -griddelta 10
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {666394739460 fs} {666557260540 fs}
+WaveRestoreZoom {172372849710 fs} {173022934030 fs}

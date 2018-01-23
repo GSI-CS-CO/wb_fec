@@ -31,7 +31,7 @@
 // packet FEC 0 and 1 are dropped in the Dropper module
 `define X23                          4'h3
 // No possible to decode more than 2 packets dropped
-`define ERR                          4'hE
+`define ERR                          4'h7
 
 // LOOPBACK MODULE
 `define LBK_MCR_ENA_OFFSET 0
