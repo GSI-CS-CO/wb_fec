@@ -163,17 +163,19 @@ architecture rtl of fec_decoder is
             if (new_pkt = '1') then
               if (new_fec_id = '0' and fec_decoded = '1') then
                 s_DEC       <= DECODED;
+                s_NEXT_OP <= f_next_op(fec_pkt_rx, fec_subid);
               elsif(new_fec_id = '1') then
               -- new fec_id and the pkt was not decoded yet --> error and start dec
                 pkt_dec_err <= '1';
                 rst_n_dec   <= '0';
                 fec_stb     <= '1';
                 s_DEC       <= IDLE;
+                s_NEXT_OP <= f_next_op("0000", fec_subid);
               else
               -- keep decoding
                 pkt_dec_err <= '0';
+                s_NEXT_OP <= f_next_op(fec_pkt_rx, fec_subid);
               end if;
-              s_NEXT_OP <= f_next_op(fec_pkt_rx, fec_subid);
             end if;
           when DECODED =>
             if (dat_stream_i = '1') then
