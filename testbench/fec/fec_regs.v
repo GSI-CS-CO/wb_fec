@@ -10,7 +10,8 @@
 `define ADD_FEC_NUM_ENC_ERR          6'h20
 
 // WB Address of the WB Dropper Interface
-`define DROPP                        5'h0
+`define ADD_DROPP                        5'h0
+`define ADD_DROPP_EN                     5'h4
 // FEC Errors
 // The FEC packet 0 and 1 are use for decoding
 // no packets are dropped
@@ -31,7 +32,7 @@
 // packet FEC 0 and 1 are dropped in the Dropper module
 `define X23                          4'h3
 // No possible to decode more than 2 packets dropped
-`define ERR                          4'hE
+`define ERR                          4'h7
 
 // LOOPBACK MODULE
 `define LBK_MCR_ENA_OFFSET 0

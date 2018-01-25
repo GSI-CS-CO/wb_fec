@@ -121,12 +121,11 @@ begin
         src_ack   <= src_i.ack;
         snk_ack   <= snk_cyc and snk_stb;
 
-
         pkt_drop <= f_pkt_drop(drop_config);
 
         case s_NEXT_PKT is
           when IDLE =>
-            if (snk_i.cyc = '1' and snk_cyc = '0') then
+            if (snk_i.cyc = '1' and snk_cyc = '0' and config.en = '1') then
               if (pkt_drop(pkt_cnt) = '1') then
                 s_NEXT_PKT <= DROP;
                 next_pkt_drop <= '1';
@@ -141,6 +140,7 @@ begin
               end if;
             else
               --sext_pkt_drop <= '0';
+              next_pkt_drop <= '0';
             end if;
           when DROP =>
             if (snk_i.stb = '0' and snk_stb = '1') then

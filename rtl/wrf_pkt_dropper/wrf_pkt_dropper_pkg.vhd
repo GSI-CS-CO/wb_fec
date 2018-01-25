@@ -34,13 +34,13 @@ package wrf_pkt_dropper_pkg is
 
   type t_conf is record
     drop    : t_drop_conf;
-    rnd     : std_logic;
+    en      : std_logic;
     refresh : std_logic;
   end record;
 
   constant c_config : t_conf := (
     drop    =>  c_XOR_0_1,
-    rnd     => '0',
+    en      => '1',
     refresh => '1');
 
   component wrf_pkt_wb_slave is
