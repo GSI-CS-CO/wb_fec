@@ -74,7 +74,7 @@ begin
   end generate;
 
   y_WB_FEC_DEC : if g_en_fec_dec generate
-  FEC_DEC : wb_fec_decoder
+  FEC_DEC : wb_fec_decoder_mux
     generic map (
     g_num_block   => 4,
     g_en_golay    => FALSE)

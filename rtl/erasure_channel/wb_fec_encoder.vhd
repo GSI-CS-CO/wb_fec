@@ -118,8 +118,11 @@ begin
       clk_i           => clk_i,
       rst_n_i         => rst_n_i,
       pkt_len_i       => hdr_ethertype,
-      fec_block_len_o => fec_block_len,
+      fec_block_len_o => open,
+      --fec_block_len_o => fec_block_len,
       padding_o       => padding);
+
+    fec_block_len <= x"44";
 
   FEC_HDR_PROC : fec_hdr_gen
     generic map(
@@ -286,7 +289,8 @@ begin
                 pkt_stb <= '0';
               elsif (eth_cnt = c_eth_hdr_len - 1) then
                 hdr_ethertype <= snk_i.dat;
-                pkt_len       <= to_integer(unsigned(snk_i.dat) srl 1);
+                --pkt_len       <= to_integer(unsigned(snk_i.dat) srl 1);
+                pkt_len       <= 68;
                 pkt_stb   <= '1';
               elsif (eth_cnt = c_eth_hdr_len + pkt_len - 1) then
               -- getting the payload

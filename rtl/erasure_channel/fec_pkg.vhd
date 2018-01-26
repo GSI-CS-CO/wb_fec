@@ -207,7 +207,7 @@ package fec_pkg is
   constant c_fec_ctrl_reg : t_fec_ctrl_reg := (
     fec_ctrl_refresh  => '0',
     fec_code          => "000", -- Simple Code
-    fec_ethtype       => x"cafe",
+    fec_ethtype       => x"babe",
     eb_ethtype        => x"0800",
     fec_enc_en        => c_ENABLE,
     fec_dec_en        => c_ENABLE);
@@ -348,6 +348,21 @@ package fec_pkg is
       fec_enc_src_o   : out t_wrf_source_out;
       wb_slave_o      : out t_wishbone_slave_out;
       wb_slave_i      : in  t_wishbone_slave_in);
+  end component;
+
+  component wb_fec_decoder_mux is
+    generic (
+      g_num_block   : integer := 4;
+      g_en_golay    : boolean := FALSE);
+    port (
+      clk_i         : in  std_logic;
+      rst_n_i       : in  std_logic;
+      snk_i         : in  t_wrf_sink_in;
+      snk_o         : out t_wrf_sink_out;
+      src_i         : in  t_wrf_source_in;
+      src_o         : out t_wrf_source_out;
+      ctrl_reg_i    : in  t_fec_ctrl_reg;
+      stat_dec_o    : out t_dec_err);
   end component;
 
   component wb_fec_decoder is
