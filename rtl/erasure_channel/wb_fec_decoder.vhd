@@ -243,12 +243,12 @@ begin
         if (ctrl_reg_i.fec_enc_en =  c_ENABLE) then
           if snk_i.cyc = '1' and snk_i.stb = '1' and snk_stall = '0' and
              fec_skip_pkt = '0' then
-            eth_cnt <= eth_cnt + 1;
             if (snk_i.adr = c_WRF_STATUS) then
               if (snk_i.dat(1) = '1') then
                 fec_skip_pkt  <= '1';
               end if;
             elsif (snk_i.adr = c_WRF_DATA) then
+              eth_cnt <= eth_cnt + 1;
               if (eth_cnt < c_fec_hdr_len - 3) then
               -- getting the pkt header
                 pkt_stb <= '0';
