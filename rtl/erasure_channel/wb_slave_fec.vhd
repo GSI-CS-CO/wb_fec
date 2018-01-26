@@ -78,11 +78,12 @@ begin
           case wb_slave_i.adr(5 downto 2) is
             when "0000" =>  -- enable/disable encoder/decoder
               if wb_slave_i.we = '1' then
-                s_fec_ctrl.fec_enc_en <= wb_slave_i.dat(0);
                 s_fec_ctrl.fec_dec_en <= wb_slave_i.dat(0);
+                s_fec_ctrl.fec_enc_en <= wb_slave_i.dat(1);
               end if;
-              wb_slave_o.dat(0) <= s_fec_ctrl.fec_enc_en or s_fec_ctrl.fec_dec_en;
-              wb_slave_o.dat(31 downto 1) <= (others => '0');
+              wb_slave_o.dat(0) <= s_fec_ctrl.fec_dec_en;
+              wb_slave_o.dat(1) <= s_fec_ctrl.fec_enc_en;
+              wb_slave_o.dat(31 downto 2) <= (others => '0');
             when "0001" =>  -- Pkt Erasure Code / Bit Erasure Code
               if wb_slave_i.we = '1' then
                 s_fec_ctrl.fec_code <= wb_slave_i.dat(2 downto 0);
