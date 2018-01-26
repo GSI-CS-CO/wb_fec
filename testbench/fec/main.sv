@@ -50,7 +50,8 @@ module main;
   int j = 0;
   int cnt = 0;
   int err = 0;
-
+  int send_bogus_etype = 0;
+  int dropper_en = 1;
 
   EthPacket tx_pk[$];
   EthPacket rx_pk;
@@ -289,11 +290,6 @@ module main;
       length = length & 'hffff;
       length = (length + 8) & ~'h07; // Multiple of 8
 
-      // rnd pkt drop generator
-      err = err_array[$dist_uniform(seed, 0, 6)];
-      acc_drop.write(`ADD_DROPP, err);
-      $write("\nDROPPING PKT WITH ERRO CODE %h \n", err);
-
       /* dummy addresses */
       pkt.dst        = '{'hff, 'hff, 'hff, 'hff, 'hff, 'hff};
       pkt.src        = '{1,2,3,4,5,6};
@@ -316,21 +312,54 @@ module main;
 
       $write("\n----->TX LENGTH %d \n", length);
 
-      // if drops more than 3 packets no possible to decode
-      if (err != 4'h7) begin
-        tx_pk.push_front(pkt);
+      // send frame with non-FEC ethertype
+      if (send_bogus_etype == 8)
+        begin
+          pkt.ethertype  = 'hdead;
+          send_bogus_etype = 0;
+          //disable DROPPER
+          acc_drop.write(`ADD_DROPP_EN, 4'h0);
+          acc_fec.write(`ADD_FEC_EN, 4'h2);
+          dropper_en = 0;        
+          $write("\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
+          $write("\nSending bogus ethertype this frame will be skipped by the decoder \n");
+          $write("\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
+          #1us;
       end
-      else begin
-        $write("\n Error Decoding >2 Lost\n");
-      $write("\n--------------------------------------------\n");
+      else
+        begin
+        send_bogus_etype++;
+        dropper_en = 1;
+      end;
+      
+      if (dropper_en == 1)
+        begin
+        // rnd pkt drop generator
+        err = err_array[$dist_uniform(seed, 0, 6)];
+        acc_drop.write(`ADD_DROPP_EN, 4'h1);
+        acc_drop.write(`ADD_DROPP, err);
+        $write("\nDROPPING PKT WITH ERRO CODE %h \n", err);
+
+        // if drops more than 3 packets no possible to decode
+        if (err != 4'h7) begin
+          tx_pk.push_front(pkt);
+        end
+        else begin
+          $write("\n Error Decoding >2 Lost\n");
+          $write("\n--------------------------------------------\n");
+        end
       end
 
       fec_src.send(pkt);
-
-      // Test at 1 Gb/s the Encoder
-      // The problem is that the tx/rx verilog functions are nota
-      // blocking and you can miss some packets in the rx
-      //#5ns;
+      acc_fec.write(`ADD_FEC_EN, 4'h3);
+      // Test at high max throughput:
+      //#8ns;      
+      //// if you want to test it comment out the $stop command from
+      // line 400 on 
+      // The problem is that the tx/rx packet verilog functions are not
+      // blocking and the queue tx_pk and the fec_snk.recv(pkt) can't be
+      // synchronized and the check of the decoded payload and encoded payload
+      // will fail.
       #30us;
     end
   end
