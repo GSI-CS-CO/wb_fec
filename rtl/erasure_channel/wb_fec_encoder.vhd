@@ -286,7 +286,7 @@ begin
                 pkt_stb <= '0';
               elsif (eth_cnt = c_eth_hdr_len - 1) then
                 hdr_ethertype <= snk_i.dat;
-                pkt_len       <= to_integer(unsigned(snk_i.dat) srl 1);
+                pkt_len   <= to_integer(unsigned(snk_i.dat) srl 1);
                 pkt_stb   <= '1';
               elsif (eth_cnt = c_eth_hdr_len + pkt_len - 1) then
               -- getting the payload

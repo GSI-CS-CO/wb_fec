@@ -49,12 +49,15 @@ package fec_pkg is
   type t_next_op  is (IDLE, STORE, XOR_0_1, XOR_0_2, XOR_0_3, XOR_1_2, XOR_1_3, XOR_2_3);
 
   -- Fabric
+  constant c_num_streams : integer := 2;
+  type t_mux_class is array (c_num_streams - 1 downto 0) of std_logic_vector(7 downto 0);
+  constant c_default_classes : t_mux_class := ( 0 => x"40", 1 => x"80");
   constant c_wrf_width      : integer := 16;
   constant c_wrf_adr_width  : integer := 2;
   subtype t_wrf_adr  is std_logic_vector(c_wrf_adr_width - 1 downto 0);
   subtype t_wrf_bus  is std_logic_vector(c_wrf_width - 1 downto 0);
   type t_wrf_bus_array is array (natural range <>) of t_wrf_bus;
-  constant c_WRF_STATUS_FEC   : t_wrf_bus := x"0005"; -- vCRC = 0, vSMAC = 1, err = 1, isHP = 1
+  constant c_WRF_STATUS_FEC   : t_wrf_bus := x"8005"; -- vCRC = 0, vSMAC = 1, err = 1, isHP = 1
   constant c_WRF_OOB_FEC      : t_wrf_bus := c_WRF_OOB_TYPE_TX & x"aaa";
 
   -- FIFOs
@@ -346,6 +349,33 @@ package fec_pkg is
       fec_enc_sink_o  : out t_wrf_sink_out;
       fec_enc_src_i   : in  t_wrf_source_in;
       fec_enc_src_o   : out t_wrf_source_out;
+      wb_slave_o      : out t_wishbone_slave_out;
+      wb_slave_i      : in  t_wishbone_slave_in);
+  end component;
+
+  component wb_fec_mux is
+    generic (
+      g_num_block     : integer := 4;
+      g_mux_class     : t_mux_class := c_default_classes;
+      g_en_fec_enc    : boolean := true;
+      g_en_fec_dec    : boolean := false;
+      g_en_golay      : boolean := false;
+      g_en_dec_time   : boolean := false);
+    port (
+      clk_i           : in  std_logic;
+      rst_n_i         : in  std_logic;
+      fec_timestamps_i: in  t_txtsu_timestamp;
+      fec_tm_tai_i    : in  std_logic_vector(39 downto 0);
+      fec_tm_cycle_i  : in  std_logic_vector(27 downto 0);
+      eb2fec_snk_i    : in  t_wrf_sink_in;
+      eb2fec_snk_o    : out t_wrf_sink_out;
+      fec2eb_src_i    : in  t_wrf_source_in;
+      fec2eb_src_o    : out t_wrf_source_out;
+
+      wr2fec_snk_i    : in  t_wrf_sink_in;
+      wr2fec_snk_o    : out t_wrf_sink_out;
+      fec2wr_src_i    : in  t_wrf_source_in;
+      fec2wr_src_o    : out t_wrf_source_out;
       wb_slave_o      : out t_wishbone_slave_out;
       wb_slave_i      : in  t_wishbone_slave_in);
   end component;
