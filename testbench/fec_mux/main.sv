@@ -114,7 +114,7 @@ module main;
     .rst_n_o(rst_n)
   );
 
-  xwb_fec #(
+  xwb_fec_mux #(
     .g_en_fec_enc(`true),
     .g_en_fec_dec(`true),
     .g_en_golay(`false),
@@ -123,41 +123,41 @@ module main;
     .clk_i(clk_ref),
     .rst_n_i(rst_n),
 
-    .fec_dec_sink_cyc(dec_snk_cyc),
-		.fec_dec_sink_stb(dec_snk_stb),
-		.fec_dec_sink_we(dec_snk_we),
-		.fec_dec_sink_sel(dec_snk_sel),
-		.fec_dec_sink_adr(dec_snk_adr),
-		.fec_dec_sink_dat(dec_snk_dat),
-		.fec_dec_sink_stall(dec_snk_stall),
-		.fec_dec_sink_ack(dec_snk_ack),
+    .wr2fec_snk_cyc(dec_snk_cyc),
+		.wr2fec_snk_stb(dec_snk_stb),
+		.wr2fec_snk_we(dec_snk_we),
+		.wr2fec_snk_sel(dec_snk_sel),
+		.wr2fec_snk_adr(dec_snk_adr),
+		.wr2fec_snk_dat(dec_snk_dat),
+		.wr2fec_snk_stall(dec_snk_stall),
+		.wr2fec_snk_ack(dec_snk_ack),
 
-		.fec_dec_src_cyc(dec_snk.slave.cyc),
-		.fec_dec_src_stb(dec_snk.slave.stb),
-		.fec_dec_src_we(dec_snk.slave.we),
-		.fec_dec_src_sel(dec_snk.slave.sel),
-		.fec_dec_src_adr(dec_snk.slave.adr),
-		.fec_dec_src_dat(dec_snk.slave.dat_i),
-		.fec_dec_src_stall(dec_snk.slave.stall),
-		.fec_dec_src_ack(dec_snk.slave.ack),
+		.fec2eb_src_cyc(dec_snk.slave.cyc),
+		.fec2eb_src_stb(dec_snk.slave.stb),
+		.fec2eb_src_we(dec_snk.slave.we),
+		.fec2eb_src_sel(dec_snk.slave.sel),
+		.fec2eb_src_adr(dec_snk.slave.adr),
+		.fec2eb_src_dat(dec_snk.slave.dat_i),
+		.fec2eb_src_stall(dec_snk.slave.stall),
+		.fec2eb_src_ack(dec_snk.slave.ack),
 
-    .fec_enc_sink_cyc(enc_src.master.cyc),
-    .fec_enc_sink_stb(enc_src.master.stb),
-    .fec_enc_sink_we(enc_src.master.we),
-    .fec_enc_sink_sel(enc_src.master.sel),
-    .fec_enc_sink_adr(enc_src.master.adr),
-    .fec_enc_sink_dat(enc_src.master.dat_o),
-    .fec_enc_sink_stall(enc_src.master.stall),
-    .fec_enc_sink_ack(enc_src.master.ack),
+    .eb2fec_snk_cyc(enc_src.master.cyc),
+    .eb2fec_snk_stb(enc_src.master.stb),
+    .eb2fec_snk_we(enc_src.master.we),
+    .eb2fec_snk_sel(enc_src.master.sel),
+    .eb2fec_snk_adr(enc_src.master.adr),
+    .eb2fec_snk_dat(enc_src.master.dat_o),
+    .eb2fec_snk_stall(enc_src.master.stall),
+    .eb2fec_snk_ack(enc_src.master.ack),
 
-		.fec_enc_src_cyc(enc_snk_cyc),
-		.fec_enc_src_stb(enc_snk_stb),
-		.fec_enc_src_we(enc_snk_we),
-		.fec_enc_src_sel(enc_snk_sel),
-		.fec_enc_src_adr(enc_snk_adr),
-		.fec_enc_src_dat(enc_snk_dat),
-		.fec_enc_src_stall(enc_snk_stall),
-		.fec_enc_src_ack(enc_snk_ack),
+		.fec2wr_src_cyc(enc_snk_cyc),
+		.fec2wr_src_stb(enc_snk_stb),
+		.fec2wr_src_we(enc_snk_we),
+		.fec2wr_src_sel(enc_snk_sel),
+		.fec2wr_src_adr(enc_snk_adr),
+		.fec2wr_src_dat(enc_snk_dat),
+		.fec2wr_src_stall(enc_snk_stall),
+		.fec2wr_src_ack(enc_snk_ack),
 
     .wb_slave_cyc(WB_fec.master.cyc),
 		.wb_slave_stb(WB_fec.master.stb),
@@ -290,11 +290,6 @@ module main;
       length = length & 'hffff;
       length = (length + 8) & ~'h07; // Multiple of 8
 
-      // rnd pkt drop generator
-      err = err_array[$dist_uniform(seed, 0, 6)];
-      acc_drop.write(`ADD_DROPP, err);
-      $write("\nDROPPING PKT WITH ERRO CODE %h \n", err);
-
       /* dummy addresses */
       pkt.dst        = '{'hff, 'hff, 'hff, 'hff, 'hff, 'hff};
       pkt.src        = '{1,2,3,4,5,6};
@@ -335,7 +330,7 @@ module main;
         send_bogus_etype++;
         dropper_en = 0;
       end;
-
+      
       if (dropper_en == 0)
         begin
         // rnd pkt drop generator
@@ -358,9 +353,9 @@ module main;
       fec_src.send(pkt);
       acc_fec.write(`ADD_FEC_EN, 4'h3);
       // Test at high max throughput:
-      //#8ns;
+      //#8ns;      
       //// if you want to test it comment out the $stop command from
-      // line 400 on
+      // line 400 on 
       // The problem is that the tx/rx packet verilog functions are not
       // blocking and the queue tx_pk and the fec_snk.recv(pkt) can't be
       // synchronized and the check of the decoded payload and encoded payload
