@@ -122,8 +122,9 @@ begin
   y_WB_FEC_DEC : if g_en_fec_dec generate
   FEC_DEC : wb_fec_decoder
     generic map (
-    g_num_block   => 4,
-    g_en_golay    => FALSE)
+    g_num_block     => 4,
+    g_oust_ethtype  => true,
+    g_en_golay      => false)
     port map (
       clk_i       => clk_i,
       rst_n_i     => rst_n_i,
@@ -147,8 +148,9 @@ begin
   y_WB_FEC_ENC : if g_en_fec_enc generate
   FEC_ENC: wb_fec_encoder
     generic map (
-      g_en_golay => FALSE
-      )
+      g_en_golay      => false,
+      g_num_block     => 4,
+      g_oust_ethtype  => true)
     port map (
       clk_i       => clk_i,
       rst_n_i     => rst_n_i,

@@ -19,6 +19,7 @@ entity wb_fec_mux is
   generic (
     g_num_block     : integer := 4;
     g_mux_class     : t_mux_class := c_default_classes;
+    g_oust_ethtype  : boolean := true;
     g_en_fec_enc    : boolean := true;
     g_en_fec_dec    : boolean := false;
     g_en_golay      : boolean := false;

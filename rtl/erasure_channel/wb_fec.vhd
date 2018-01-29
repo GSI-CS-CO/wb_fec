@@ -19,6 +19,7 @@ entity wb_fec is
   generic (
     g_num_block     : integer := 4;
     g_en_fec_enc    : boolean := true;
+    g_oust_ethtype  : boolean := true;
     g_en_fec_dec    : boolean := false;
     g_en_golay      : boolean := false;
     g_en_dec_time   : boolean := false);
@@ -52,8 +53,9 @@ begin
   y_WB_FEC_ENC : if g_en_fec_enc generate
   FEC_ENC : wb_fec_encoder
     generic map (
-      g_num_block  => 4,
-      g_en_golay   => FALSE)
+      g_num_block     => 4,
+      g_oust_ethtype  => g_oust_ethtype,
+      g_en_golay      => FALSE)
     port map (
       clk_i       => clk_i,
       rst_n_i     => rst_n_i,
@@ -76,8 +78,9 @@ begin
   y_WB_FEC_DEC : if g_en_fec_dec generate
   FEC_DEC : wb_fec_decoder
     generic map (
-    g_num_block   => 4,
-    g_en_golay    => FALSE)
+    g_num_block     => 4,
+    g_oust_ethtype  => g_oust_ethtype,
+    g_en_golay      => FALSE)
     port map (
       clk_i       => clk_i,
       rst_n_i     => rst_n_i,

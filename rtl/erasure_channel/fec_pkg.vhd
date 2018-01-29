@@ -210,7 +210,7 @@ package fec_pkg is
   constant c_fec_ctrl_reg : t_fec_ctrl_reg := (
     fec_ctrl_refresh  => '0',
     fec_code          => "000", -- Simple Code
-    fec_ethtype       => x"cafe",
+    fec_ethtype       => x"babe",
     eb_ethtype        => x"0800",
     fec_enc_en        => c_ENABLE,
     fec_dec_en        => c_ENABLE);
@@ -331,6 +331,7 @@ package fec_pkg is
   component wb_fec is
     generic (
       g_num_block   : integer := 4;
+      g_oust_ethtype: boolean := true;
       g_en_fec_enc  : boolean;
       g_en_fec_dec  : boolean;
       g_en_golay    : boolean;
@@ -357,6 +358,7 @@ package fec_pkg is
     generic (
       g_num_block     : integer := 4;
       g_mux_class     : t_mux_class := c_default_classes;
+      g_oust_ethtype  : boolean := true;
       g_en_fec_enc    : boolean := true;
       g_en_fec_dec    : boolean := false;
       g_en_golay      : boolean := false;
@@ -383,6 +385,7 @@ package fec_pkg is
   component wb_fec_decoder is
     generic (
       g_num_block   : integer := 4;
+      g_oust_ethtype: boolean := true;
       g_en_golay    : boolean := FALSE);
     port (
       clk_i         : in  std_logic;
@@ -416,6 +419,7 @@ package fec_pkg is
   component wb_fec_encoder is
     generic (
       g_num_block   : integer := 4;
+      g_oust_ethtype: boolean := true;
       g_en_golay    : boolean);
     port (
       clk_i         : in  std_logic;

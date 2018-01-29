@@ -22,6 +22,7 @@ use work.endpoint_pkg.all;
 entity wb_fec_decoder is
   generic (
     g_num_block   : integer := 4;
+    g_oust_ethtype: boolean := TRUE;
     g_en_golay    : boolean := FALSE);
     port (
       clk_i         : in  std_logic;
