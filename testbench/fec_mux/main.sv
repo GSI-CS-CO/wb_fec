@@ -202,7 +202,7 @@ module main;
     .wb_dat_o                 (WB_drop.master.dat_i),
     .wb_dat_i                 (WB_drop.master.dat_o));
 
-  wrf_loopback #(
+  wrf_fec_loopback #(
     .g_interface_mode           (PIPELINED),
     .g_address_granularity      (BYTE))
   WRF_LBK (
