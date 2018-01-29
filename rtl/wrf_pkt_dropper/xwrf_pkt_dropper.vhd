@@ -56,6 +56,7 @@ begin
 
  DROPPER : component wrf_pkt_dropper
    generic map (
+    g_ena_sim   => true,
     g_num_block => 4)
    port map (
      clk_i     => clk_i,

@@ -44,6 +44,8 @@ package wrf_pkt_dropper_pkg is
     refresh => '1');
 
   component wrf_pkt_wb_slave is
+    generic (
+      g_ena_sim : boolean := true);
     port (
       clk_i     : in  std_logic;
       rst_n_i   : in  std_logic;
@@ -53,8 +55,9 @@ package wrf_pkt_dropper_pkg is
   end component;
 
   component  wrf_pkt_dropper is
-    generic (
-      g_num_block   : integer := 4);
+    generic (    
+      g_ena_sim   : boolean := true;
+      g_num_block : integer := 4);
       port (
         clk_i     : in  std_logic;
         rst_n_i   : in  std_logic;
