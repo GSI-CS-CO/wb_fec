@@ -19,6 +19,7 @@ entity fec_hdr_gen is
     generic (
       g_id_width    : integer := 6;
       g_subid_width : integer := 3;
+      g_oust_ethtype: boolean := true;
       g_fec_type    : string  := "decoder"); -- decoder or encoder
     port (
       clk_i           : in  std_logic;
@@ -91,7 +92,11 @@ begin
             fec_hdr_o <= f_extract_eth(eth_hdr_len, eth_hdr_reg);
           elsif (eth_hdr_len <=  c_eth_hdr_len - 3) then
             fec_hdr_done_o <= '1';
-            fec_hdr_o <= ctrl_reg_i.eb_ethtype;
+            if (g_oust_ethtype = TRUE) then
+              fec_hdr_o <= ctrl_reg_i.eb_ethtype;
+            else
+              fec_hdr_o <= f_extract_eth(fec_hdr_len, eth_hdr_reg);
+            end if;
           else
             fec_hdr_done_o <= '0';
           end if;
@@ -121,7 +126,11 @@ begin
         if (fec_hdr_len <=  c_fec_hdr_len - 5) then
           fec_hdr_o <= f_extract_eth(fec_hdr_len, eth_hdr_reg);
         elsif (fec_hdr_len <=  c_fec_hdr_len - 4) then
-          fec_hdr_o <= ctrl_reg_i.fec_ethtype;
+          if (g_oust_ethtype = TRUE) then
+            fec_hdr_o <= ctrl_reg_i.fec_ethtype;
+          else
+            fec_hdr_o <= f_extract_eth(fec_hdr_len, eth_hdr_reg);
+          end if;
         elsif (fec_hdr_len <=  c_fec_hdr_len - 3) then
           fec_hdr_o <= fec_hdr.eth_pkt_len &
                        fec_hdr.fec_padding_crc;
