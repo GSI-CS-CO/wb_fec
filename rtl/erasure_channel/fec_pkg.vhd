@@ -373,7 +373,6 @@ package fec_pkg is
       eb2fec_snk_o    : out t_wrf_sink_out;
       fec2eb_src_i    : in  t_wrf_source_in;
       fec2eb_src_o    : out t_wrf_source_out;
-
       wr2fec_snk_i    : in  t_wrf_sink_in;
       wr2fec_snk_o    : out t_wrf_sink_out;
       fec2wr_src_i    : in  t_wrf_source_in;
