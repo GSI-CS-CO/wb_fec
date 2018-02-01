@@ -11,11 +11,12 @@
 
 
 #define EBM_NOREPLY         1<<28
-#define EBM_USEFEC          1<<24 
+#define EBM_USEFEC          1<<24
 
 uint8_t cpuId, cpuQty;
 
-
+uint32_t *pRemoteWB;
+uint32_t *pEndPoint;
 
 void show_msi()
 {
@@ -25,13 +26,13 @@ void show_msi()
 
 void isr0()
 {
-   mprintf("ISR0\n");   
+   mprintf("ISR0\n");
    show_msi();
 }
 
 void isr1()
 {
-   mprintf("ISR1\n");   
+   mprintf("ISR1\n");
    show_msi();
 }
 
@@ -39,59 +40,67 @@ void isr1()
 
 void ebmInit()
 {
-  
+
    int j;
-   
+
    while (*(pEbCfg + (EBC_SRC_IP>>2)) == EBC_DEFAULT_IP) {
      for (j = 0; j < (125000000/2); ++j) { asm("nop"); }
-     mprintf("#%02u: Waiting for IP from WRC...\n", cpuId);  
-   } 
+     mprintf("#%02u: Waiting for IP from WRC...\n", cpuId);
+   }
 
    ebm_init();
    ebm_config_meta(1500, 42, EBM_NOREPLY | EBM_USEFEC);                             //MTU, max EB msgs, flags
-   ebm_config_if(DESTINATION, 0xffffffffffff, 0xffffffff,                  0xebd0); //Dst: EB broadcast 
+   ebm_config_if(DESTINATION, 0xffffffffffff, 0xffffffff,                  0xebd0); //Dst: EB broadcast
    ebm_config_if(SOURCE,      0xd15ea5edbeef, *(pEbCfg + (EBC_SRC_IP>>2)), 0xebd0); //Src: bogus mac (will be replaced by WR), WR IP
 
 }
 
 
 void init()
-{ 
+{
 
   discoverPeriphery();
   cpuId = getCpuIdx();
 
-  uart_init_hw();   
+  uart_init_hw();
   ebmInit();
 
   isr_table_clr();
   irq_set_mask(0x01);
   irq_disable();
-   
+
 }
 
 
 
 
 void main(void) {
-   
-  int i,j;
+
+  int i = 1;
+  int j;
+
+  pRemoteWB  = (uint32_t *)0x8030000;
+  pEndPoint  = (uint32_t *)0x60130;
 
 
   init();
 
   for (j = 0; j < ((125000000/4)+(cpuId*2500000)); ++j) { asm("nop"); }
-  
-    
+
+
   mprintf("#%02u: FEC Test Packet Gen Ready, sending ...\n", cpuId);
-    
-  
+
+
    while (1) {
-    ebm_hi(0xaaa0);
-    ebm_op(0xaaa0, i + 0, EBM_WRITE);
-    ebm_op(0xaaa4, i + 1, EBM_WRITE);
-    i += 2;
+
+    ebm_hi((uint32_t)pRemoteWB);
+    ebm_op((uint32_t)pRemoteWB, i, EBM_WRITE);
+    ebm_op((uint32_t)pRemoteWB, i, EBM_WRITE);
+    ebm_op((uint32_t)pRemoteWB, i, EBM_WRITE);
+    ebm_op((uint32_t)pRemoteWB, i, EBM_WRITE);
+
+    i += 1;
     ebm_flush();
-    for (j = 0; j < ((125000000/4)); ++j) { asm("nop"); } 
+    for (j = 0; j < ((125000000/4)); ++j) { asm("nop"); }
   }
 }
