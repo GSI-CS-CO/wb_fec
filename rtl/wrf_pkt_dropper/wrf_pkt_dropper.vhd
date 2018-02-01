@@ -17,7 +17,8 @@ use work.wr_fabric_pkg.all;
 
 entity wrf_pkt_dropper is
   generic (
-    g_num_block   : integer := 4);
+    g_ena_sim   : boolean := true;
+    g_num_block : integer := 4);
     port (
       clk_i     : in  std_logic;
       rst_n_i   : in  std_logic;
