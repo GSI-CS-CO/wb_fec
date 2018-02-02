@@ -175,7 +175,9 @@ begin
         fec_stb_d     <= fec_stb_i;
         fec_hdr_stb_d <= fec_hdr_stb_i;
 
-        if (fec_stb_d = '1' and fec_stb_i = '0') then
+        if (ctrl_reg_i.rst_cnt = '1') then
+          id_cnt    <= (others => '0');
+        elsif (fec_stb_d = '1' and fec_stb_i = '0') then
           id_cnt    <= id_cnt + 1;
           subid_cnt <= (others => '0');
         end if;

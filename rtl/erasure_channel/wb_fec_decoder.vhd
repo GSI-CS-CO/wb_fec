@@ -177,10 +177,16 @@ begin
           when SEND_PAYLOAD =>
             if (eth_payload_stb = '0') then
               s_eth_strm <= IDLE;
-              fec_dec_cnt <= fec_dec_cnt + 1;
+              --fec_dec_cnt <= fec_dec_cnt + 1;
             else
             end if;
         end case;
+
+        if (ctrl_reg_i.rst_cnt = '1') then
+          fec_dec_cnt <= (others => '0');
+        elsif(s_eth_strm = SEND_PAYLOAD and eth_payload_stb = '0') then
+          fec_dec_cnt <= fec_dec_cnt + 1;
+        end if;
       end if;
     end if;
   end process;

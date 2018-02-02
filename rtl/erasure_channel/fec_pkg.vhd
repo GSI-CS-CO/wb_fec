@@ -205,6 +205,7 @@ package fec_pkg is
     eb_ethtype        : t_eth_type;
     fec_enc_en        : std_logic;
     fec_dec_en        : std_logic;
+    rst_cnt           : std_logic;
   end record;
 
   constant c_fec_ctrl_reg : t_fec_ctrl_reg := (
@@ -213,7 +214,8 @@ package fec_pkg is
     fec_ethtype       => x"babe",
     eb_ethtype        => x"0800",
     fec_enc_en        => c_ENABLE,
-    fec_dec_en        => c_ENABLE);
+    fec_dec_en        => c_ENABLE,
+    rst_cnt           => '1');
 
   type t_frame_fsm  is (
     INIT_HDR,

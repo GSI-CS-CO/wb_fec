@@ -111,6 +111,8 @@ begin
               wb_slave_o.dat  <= std_logic_vector(dec_err_cnt);
             when "1000" => -- number of enc errors
               wb_slave_o.dat  <= std_logic_vector(enc_err_cnt);
+            when "1001" =>
+              s_fec_ctrl.rst_cnt <= '1';
             when others =>
           end case;
 
@@ -120,23 +122,30 @@ begin
           end if;
 
         else
+            s_fec_ctrl.rst_cnt <= '0';
             s_fec_ctrl.fec_ctrl_refresh <= '0';
         end if;
 
         -- Encoding Error Counter
         enc_err_d <= fec_stat_reg_i.enc_err.fec_enc_err;
-        if ((enc_err_d(0) = '0' and fec_stat_reg_i.enc_err.fec_enc_err(0) = '1') or
+        if (s_fec_ctrl.rst_cnt <= '1') then
+          enc_err_cnt <= (others => '0');
+        elsif ((enc_err_d(0) = '0' and fec_stat_reg_i.enc_err.fec_enc_err(0) = '1') or
             (enc_err_d(1) = '0' and fec_stat_reg_i.enc_err.fec_enc_err(1) = '1')) then
           enc_err_cnt <= enc_err_cnt + 1;
         end if;
         -- Decoding Error Counter
         dec_err_d <= fec_stat_reg_i.dec_err.dec_err;
-        if (dec_err_d = '0' and fec_stat_reg_i.dec_err.dec_err = '1') then
+        if (s_fec_ctrl.rst_cnt <= '1') then
+          dec_err_cnt <= (others => '0');
+        elsif (dec_err_d = '0' and fec_stat_reg_i.dec_err.dec_err = '1') then
           dec_err_cnt <= dec_err_cnt + 1;
         end if;
         -- Jumbo Frame Error
         jumbo_pkt_d <= fec_stat_reg_i.dec_err.jumbo_frame;
-        if (jumbo_pkt_d = '0' and fec_stat_reg_i.dec_err.jumbo_frame = '1') then
+        if (s_fec_ctrl.rst_cnt <= '1') then
+          jumbo_pkt_cnt <= (others => '0');
+        elsif (jumbo_pkt_d = '0' and fec_stat_reg_i.dec_err.jumbo_frame = '1') then
           jumbo_pkt_cnt <= jumbo_pkt_cnt + 1;
         end if;
       end if;
