@@ -19,12 +19,21 @@ end wrf_pkt_wb_slave;
 
 architecture rtl of wrf_pkt_wb_slave is
   signal config : t_conf;
+  signal wb_adr : std_logic_vector(3 downto 0);
 begin
 
   -- this wb slave doesn't supoort them
   wb_o.int <= '0';
   wb_o.rty <= '0';
   wb_o.err <= '0';
+
+  SIM : if (g_ena_sim = true) generate
+    wb_adr <= wb_i.adr(3 downto 0);
+  end generate;
+
+  SYN : if (g_ena_sim = false) generate
+    wb_adr <= wb_i.adr(5 downto 2);
+  end generate;
 
   wb_process : process(clk_i)
   begin
@@ -37,58 +46,29 @@ begin
         wb_o.stall  <= '0';
         wb_o.ack    <= wb_i.cyc and wb_i.stb;
 
-        --SIM : if (g_ena_sim = true) generate 
-        --  if wb_i.cyc = '1' and wb_i.stb = '1' then
-        --    case wb_i.adr(2 downto 0) is
-        --      when "000"    =>
-        --        if wb_i.we = '1' then
-        --          config.drop <= wb_i.dat(3 downto 0);
-        --        end if;
-        --        wb_o.dat(3 downto 0)  <= config.drop;
-        --        wb_o.dat(31 downto 4) <= (others => '0');
-        --      when "001"     =>
-        --        if wb_i.we = '1' then
-        --          config.en <= wb_i.dat(0);
-        --        end if;
-        --        wb_o.dat(0)           <= config.en;
-        --        wb_o.dat(31 downto 1) <= (others => '0');
-        --      when others =>
-        --    end case;          
-        --    -- progates the changes in the reg
-        --    if (wb_i.we = '1') then
-        --      config.refresh <= '1';
-        --    end if;
-        --  else
-        --    config.refresh <= '0';
-        --  end if;
-        --end generate SIM;
-
-        --SYN : if (g_ena_sim = false) generate 
-          if wb_i.cyc = '1' and wb_i.stb = '1' then
-            case wb_i.adr(5 downto 2) is
-              when "0000"    =>
-                if wb_i.we = '1' then
-                  config.drop <= wb_i.dat(3 downto 0);
-                end if;
-                wb_o.dat(3 downto 0)  <= config.drop;
-                wb_o.dat(31 downto 4) <= (others => '0');
-              when "0001"     =>
-                if wb_i.we = '1' then
-                  config.en <= wb_i.dat(0);
-                end if;
-                wb_o.dat(0)           <= config.en;
-                wb_o.dat(31 downto 1) <= (others => '0');
-              when others =>
-            end case;            
-            -- progates the changes in the reg
-            if (wb_i.we = '1') then
-              config.refresh <= '1';
-            end if;
-          else
-            config.refresh <= '0';
+        if wb_i.cyc = '1' and wb_i.stb = '1' then
+          case wb_adr is
+            when "0000"    =>
+              if wb_i.we = '1' then
+                config.drop <= wb_i.dat(3 downto 0);
+              end if;
+              wb_o.dat(3 downto 0)  <= config.drop;
+              wb_o.dat(31 downto 4) <= (others => '0');
+            when "0001"     =>
+              if wb_i.we = '1' then
+                config.en <= wb_i.dat(0);
+              end if;
+              wb_o.dat(0)           <= config.en;
+              wb_o.dat(31 downto 1) <= (others => '0');
+            when others =>
+          end case;
+          -- progates the changes in the reg
+          if (wb_i.we = '1') then
+            config.refresh <= '1';
           end if;
-        --end generate SYN;
-
+        else
+          config.refresh <= '0';
+        end if;
       end if;
     end if;
   end process;
