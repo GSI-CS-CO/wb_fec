@@ -69,6 +69,21 @@ package wrf_pkt_dropper_pkg is
         wb_i      : in  t_wishbone_slave_in);
   end component;
 
+  component  wrf_pkt_dropper_one_shot is
+    generic (    
+      g_ena_sim   : boolean := true;
+      g_num_block : integer := 4);
+      port (
+        clk_i     : in  std_logic;
+        rst_n_i   : in  std_logic;
+        snk_i     : in  t_wrf_sink_in;
+        snk_o     : out t_wrf_sink_out;
+        src_i     : in  t_wrf_source_in;
+        src_o     : out t_wrf_source_out;
+        wb_o      : out t_wishbone_slave_out;
+        wb_i      : in  t_wishbone_slave_in);
+  end component;
+
   function f_pkt_drop (config : t_conf) return t_drop_conf ;
 
 end package wrf_pkt_dropper_pkg;
