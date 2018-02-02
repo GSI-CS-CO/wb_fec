@@ -278,7 +278,7 @@ begin
       else
         pad := to_integer(unsigned(padding.pad_pkt));
 
-        if (ctrl_reg_i.fec_enc_en =  c_ENABLE) then
+        if (ctrl_reg.fec_enc_en =  c_ENABLE) then
           snk_ack <= snk_i.cyc and snk_i.stb;
           if snk_i.cyc = '1' and snk_i.stb = '1' and snk_stall = '0' then
             if snk_i.adr = c_WRF_DATA then
@@ -328,21 +328,21 @@ begin
     end if;
   end process;
 
-  snk_stall   <=  src_i.stall when ctrl_reg_i.fec_enc_en = c_DISABLE else
+  snk_stall   <=  src_i.stall when ctrl_reg.fec_enc_en = c_DISABLE else
                   '1'         when snk_i.cyc = '0' and fec_stb = '1'  else
 
                   '0';
   snk_o.stall <= snk_stall;
 
-  snk_o.ack    <=  src_i.ack   when ctrl_reg_i.fec_enc_en = c_DISABLE else
-                   snk_ack     when ctrl_reg_i.fec_enc_en = c_ENABLE  else
+  snk_o.ack    <=  src_i.ack   when ctrl_reg.fec_enc_en = c_DISABLE else
+                   snk_ack     when ctrl_reg.fec_enc_en = c_ENABLE  else
                   '0';
 
-  snk_o.err    <=  src_i.err   when ctrl_reg_i.fec_enc_en = c_DISABLE else
-                   '0'         when ctrl_reg_i.fec_enc_en = c_ENABLE; --FIXME Error Handling
+  snk_o.err    <=  src_i.err   when ctrl_reg.fec_enc_en = c_DISABLE else
+                   '0'         when ctrl_reg.fec_enc_en = c_ENABLE; --FIXME Error Handling
 
-  snk_o.rty    <=  src_i.rty   when ctrl_reg_i.fec_enc_en = c_DISABLE else
-                   '0'         when ctrl_reg_i.fec_enc_en = c_ENABLE;
+  snk_o.rty    <=  src_i.rty   when ctrl_reg.fec_enc_en = c_DISABLE else
+                   '0'         when ctrl_reg.fec_enc_en = c_ENABLE;
 
   -- Tx to WR Farbric
   src_stb <=  '1'  when (s_fec_strm = SEND_FEC_HDR or
@@ -353,21 +353,21 @@ begin
                         fifo_empty = '0' else
               '0';
 
-  src_o.stb <=  snk_i.stb when ctrl_reg_i.fec_enc_en = c_DISABLE else
-                src_stb   when ctrl_reg_i.fec_enc_en = c_ENABLE else
+  src_o.stb <=  snk_i.stb when ctrl_reg.fec_enc_en = c_DISABLE else
+                src_stb   when ctrl_reg.fec_enc_en = c_ENABLE else
                 '0';
 
   --src_cyc   <=  src_stb or src_i.ack;
   src_cyc   <=  src_stb;
 
-  src_o.cyc <=  snk_i.cyc when ctrl_reg_i.fec_enc_en = c_DISABLE  else
-                src_cyc   when ctrl_reg_i.fec_enc_en = c_ENABLE   else
+  src_o.cyc <=  snk_i.cyc when ctrl_reg.fec_enc_en = c_DISABLE  else
+                src_cyc   when ctrl_reg.fec_enc_en = c_ENABLE   else
                 '0';
 
-  src_o.sel <=  snk_i.sel when  ctrl_reg_i.fec_enc_en = c_DISABLE else
+  src_o.sel <=  snk_i.sel when  ctrl_reg.fec_enc_en = c_DISABLE else
                 "11";
 
-  src_o.we  <=  snk_i.we when  ctrl_reg_i.fec_enc_en = c_DISABLE else
+  src_o.we  <=  snk_i.we when  ctrl_reg.fec_enc_en = c_DISABLE else
                 '1';
 
   wrf_adr_i <= c_WRF_STATUS     when s_fec_strm = SEND_STATUS       else
@@ -378,8 +378,8 @@ begin
                                      s_fec_strm = SEND_OOB1         else
                (others => '0');
 
-  src_o.adr <=  snk_i.adr   when ctrl_reg_i.fec_enc_en = c_DISABLE else
-                wrf_adr_o   when ctrl_reg_i.fec_enc_en = c_ENABLE;
+  src_o.adr <=  snk_i.adr   when ctrl_reg.fec_enc_en = c_DISABLE else
+                wrf_adr_o   when ctrl_reg.fec_enc_en = c_ENABLE;
 
   fec_pkt_i <= c_WRF_STATUS_FEC when s_fec_strm = SEND_STATUS       else
                fec_hdr          when s_fec_strm = SEND_FEC_HDR      else
@@ -389,8 +389,8 @@ begin
                OOB_frame_id     when s_fec_strm = SEND_OOB1         else
                (others => '0');
 
-  src_o.dat <= snk_i.dat        when ctrl_reg_i.fec_enc_en = c_DISABLE  else
-               fec_pkt_o        when ctrl_reg_i.fec_enc_en = c_ENABLE   else
+  src_o.dat <= snk_i.dat        when ctrl_reg.fec_enc_en = c_DISABLE  else
+               fec_pkt_o        when ctrl_reg.fec_enc_en = c_ENABLE   else
                (others => '0');
 
   wr_fifo_o <=  '1'  when s_fec_strm = SEND_STATUS      or

@@ -194,20 +194,20 @@ begin
                        s_eth_strm = SEND_STATUS) else
              '0';
 
-  src_o.stb <= snk_i.stb when ctrl_reg_i.fec_dec_en = c_DISABLE else
-               src_stb   when ctrl_reg_i.fec_dec_en = c_ENABLE  else
+  src_o.stb <= snk_i.stb when ctrl_reg.fec_dec_en = c_DISABLE else
+               src_stb   when ctrl_reg.fec_dec_en = c_ENABLE  else
                '0';
 
   src_cyc   <= src_stb or src_i.ack;
 
-  src_o.cyc <= snk_i.cyc when ctrl_reg_i.fec_dec_en = c_DISABLE else
-               src_cyc   when ctrl_reg_i.fec_dec_en = c_ENABLE  else
+  src_o.cyc <= snk_i.cyc when ctrl_reg.fec_dec_en = c_DISABLE else
+               src_cyc   when ctrl_reg.fec_dec_en = c_ENABLE  else
                '0';
 
-  src_o.sel <= snk_i.sel when ctrl_reg_i.fec_dec_en = c_DISABLE else
+  src_o.sel <= snk_i.sel when ctrl_reg.fec_dec_en = c_DISABLE else
                "11";
 
-  src_o.we  <= snk_i.we when ctrl_reg_i.fec_dec_en = c_DISABLE else
+  src_o.we  <= snk_i.we when ctrl_reg.fec_dec_en = c_DISABLE else
                '1';
 
   wrf_adr   <=  c_WRF_STATUS  when s_eth_strm = SEND_STATUS   else
@@ -215,8 +215,8 @@ begin
                                     eth_payload_stb = '1')    else -- SEND_PAYLOAD
                 (others => '0');
 
-  src_o.adr <=  snk_i.adr when ctrl_reg_i.fec_dec_en = c_DISABLE else
-                wrf_adr   when ctrl_reg_i.fec_dec_en = c_ENABLE  else
+  src_o.adr <=  snk_i.adr when ctrl_reg.fec_dec_en = c_DISABLE else
+                wrf_adr   when ctrl_reg.fec_dec_en = c_ENABLE  else
                 (others => '0');
 
   wrf_dat   <=  c_WRF_STATUS_FEC  when s_eth_strm = SEND_STATUS  else
@@ -224,8 +224,8 @@ begin
                 eth_payload       when eth_payload_stb = '1'     else -- SEND_PAYLOAD
                 (others => '0');
 
-  src_o.dat <= snk_i.dat  when ctrl_reg_i.fec_dec_en = c_DISABLE else
-               wrf_dat    when ctrl_reg_i.fec_dec_en = c_ENABLE  else
+  src_o.dat <= snk_i.dat  when ctrl_reg.fec_dec_en = c_DISABLE else
+               wrf_dat    when ctrl_reg.fec_dec_en = c_ENABLE  else
                (others => '0');
 
   -- Rx from WR Fabric
