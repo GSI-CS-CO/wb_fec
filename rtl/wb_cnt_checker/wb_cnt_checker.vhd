@@ -24,6 +24,7 @@ entity wb_cnt_checker is
 end wb_cnt_checker;
 
 architecture rtl of wb_cnt_checker is
+  signal eb_dat           : std_logic_vector(31 downto 0);
   signal eb_cnt           : unsigned(31 downto 0);
   signal eb_missing_cnt   : unsigned(31 downto 0);
 begin
@@ -41,6 +42,7 @@ begin
         wb_o.ack        <= '0';
         wb_o.dat        <= (others => '0');
         eb_cnt          <= (0 => '1', others => '0');
+        eb_dat          <= (others => '0');
         eb_missing_cnt  <= (others => '0');
       else
         wb_o.stall  <= '0';
@@ -50,20 +52,28 @@ begin
           case wb_i.adr(5 downto 2) is
             when "0000"    =>
               if wb_i.we = '1' then
-                if(eb_cnt /= unsigned(wb_i.dat)) then
-                  eb_missing_cnt <= eb_missing_cnt + unsigned(wb_i.dat) - eb_cnt - 1;
-                  eb_cnt <= eb_cnt + 1;
+                if(eb_dat /= wb_i.dat) then
+                  eb_missing_cnt <= eb_missing_cnt + unsigned(wb_i.dat) - unsigned(eb_dat) - 1;
                 end if;
+                eb_dat  <= wb_i.dat;
+                eb_cnt  <= eb_cnt + 1;
+              end if;
+              wb_o.dat(31 downto 0) <= eb_dat;
+            when "0001"     =>
+              if wb_i.we = '1' then
+                eb_cnt <= (others => '0');
               end if;
               wb_o.dat(31 downto 0) <= std_logic_vector(eb_cnt);
-            when "0001"     =>
+            when "0010"     =>
               if wb_i.we = '1' then
                 eb_missing_cnt <= (others => '0');
               end if;
               wb_o.dat(31 downto 0) <= std_logic_vector(eb_missing_cnt);
-            when "0010"     =>
+            when "0011"     =>
               if wb_i.we = '1' then
                 eb_cnt <= (others => '0');
+                eb_missing_cnt <= (others => '0');
+                eb_dat <= (others => '0');
               end if;
               wb_o.dat <= (others => '0');
             when others =>
