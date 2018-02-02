@@ -51,13 +51,13 @@ package fec_pkg is
   -- Fabric
   constant c_num_streams : integer := 2;
   type t_mux_class is array (c_num_streams - 1 downto 0) of std_logic_vector(7 downto 0);
-  constant c_default_classes : t_mux_class := ( 0 => x"40", 1 => x"80");
+  constant c_default_classes : t_mux_class := ( 0 => x"80", 1 => x"40");
   constant c_wrf_width      : integer := 16;
   constant c_wrf_adr_width  : integer := 2;
   subtype t_wrf_adr  is std_logic_vector(c_wrf_adr_width - 1 downto 0);
   subtype t_wrf_bus  is std_logic_vector(c_wrf_width - 1 downto 0);
   type t_wrf_bus_array is array (natural range <>) of t_wrf_bus;
-  constant c_WRF_STATUS_FEC   : t_wrf_bus := x"8005"; -- vCRC = 0, vSMAC = 1, err = 1, isHP = 1
+  constant c_WRF_STATUS_FEC   : t_wrf_bus := x"4005"; -- vCRC = 0, vSMAC = 1, err = 1, isHP = 1
   constant c_WRF_OOB_FEC      : t_wrf_bus := c_WRF_OOB_TYPE_TX & x"aaa";
 
   -- FIFOs
